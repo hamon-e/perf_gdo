@@ -34,13 +34,13 @@ function Header(props) {
                     if (props.location.pathname !== '/login' && props.location.pathname !== '/signup') {
                         setConnected(false);
                         setShowBar(false)
-                        props.history.push('/accueil')
+                        props.history.push('/login')
                     }
                 } 
             } else {
                 setShowBar(false)
-                if (props.location.pathname !== '/accueil') {
-                    props.history.push('/accueil')
+                if (props.location.pathname !== '/login') {
+                    props.history.push('/login')
                 }
                 setConnected(false);
             }
