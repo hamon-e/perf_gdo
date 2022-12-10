@@ -26,7 +26,6 @@ class User(Base):
     pwd_hash = Column(String)
     email = Column(String, unique=True)
 
-
     subscription_id = Column(Integer, ForeignKey("subscription.id"))
     status_id = Column(Integer, ForeignKey("userstatus.id"))
     role_id = Column(Integer, ForeignKey("userrole.id"))

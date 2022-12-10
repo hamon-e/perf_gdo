@@ -69,6 +69,11 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
 async def root():
     return {"message": "Hello World"}
 
+@router.post("/signup", response_model=bool)
+async def signup(user_info: schemas.UserSignUp, db: Session = Depends(get_db)):
+    crud.signup(db, user_info)
+    return True
+
 @router.post("/token", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = crud.authenticate_user(db, form_data.username, form_data.password)

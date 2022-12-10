@@ -5,7 +5,7 @@ import os
 
 #SQLALCHEMY_DATABASE_URL = "postgresql://postgres:password@postgresql-headless/postgres"
 #SQLALCHEMY_DATABASE_URL = "postgresql://postgres:aJfbvKdNNVn8LPh7iJQK@localhost/postgres"
-SQLALCHEMY_DATABASE_URL = os.environ['API_DB'] if os.environ['API_DB'] else "postgresql://postgres:password@localhost/postgres"
+SQLALCHEMY_DATABASE_URL = os.environ['API_DB'] if os.environ.get('API_DB') else "postgresql://postgres:password@host.docker.internal/postgres"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, pool_size=20, max_overflow=5)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

@@ -4,11 +4,19 @@ from pydantic import BaseModel
 from fastapi import UploadFile
 from datetime import date, datetime
 
+class UserSignUp(BaseModel):
+    email: str
+    password: str
+
+    class Config:
+        orm_mode = True
+
 class User(BaseModel):
     id: Optional[int]
     name: str
     surname: str
     email: str
+    role_id: int
 
     class Config:
         orm_mode = True

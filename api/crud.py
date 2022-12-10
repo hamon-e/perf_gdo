@@ -55,6 +55,10 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+def signup(db: Session, user_info: schemas.UserSignUp):
+    db.add(models.User(name='User', surname='User', pwd_hash=get_password_hash(user_info.password), email=user_info.email, role_id=1))
+    db.commit()
+
 def get_current_user(db: Session, token: str):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

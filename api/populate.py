@@ -20,7 +20,14 @@ def get_db():
         db.close()
 db = SessionLocal()
 
-user = models.User(name='Admin', surname='Admin', pwd_hash=crud.get_password_hash('qwerty'), email='admin@gmail.com')
+role = models.UserRole(id=0, name='admin')
+db.add(role)
+db.commit()
+role = models.UserRole(id=1, name='basic')
+db.add(role)
+db.commit()
+
+user = models.User(name='Admin', surname='Admin', pwd_hash=crud.get_password_hash('qwerty'), email='admin@gmail.com', role_id=0)
 db.add(user)
 db.commit()
 
@@ -78,3 +85,5 @@ db.commit()
 # voie = models.Voie(versionvoie_id=versionvoie.id, couloir_id=1, difficulty=5.60, color='#386DFA')
 # voie = models.Voie(versionvoie_id=versionvoie.id, couloir_id=1, difficulty=5.85, color='#FEF154')
 # voie = models.Voie(versionvoie_id=versionvoie.id, couloir_id=1, difficulty=7.35, color='#000000')
+
+
