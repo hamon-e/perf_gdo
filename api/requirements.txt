@@ -1,0 +1,15 @@
+fastapi
+sqlalchemy
+passlib
+python-jose
+psycopg2
+celery
+python-multipart
+uvicorn
+google-cloud-storage
+
+gspread
+google-auth
+pandas
+gevent
+psycopg
