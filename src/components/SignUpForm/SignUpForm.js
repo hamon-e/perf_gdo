@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import axios from 'axios';
 import {API_BASE_URL, ACCESS_TOKEN_NAME, RESTAURANT_ID} from '../../constants/apiConstants';
 import { withRouter, Redirect } from "react-router-dom";
-import "./LoginForm.css";
+import "./SignUpForm.css";
 import logo_login from './trayvisor_logo_login.png';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from '../LanguageSelector/LanguageSelector';
@@ -24,7 +24,7 @@ import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 const qs = require('qs');
 
-function LoginForm(props) {
+function SignUpForm(props) {
     const { t, i18n } = useTranslation('Login');
     const {connectedStateHook, errorMessageHook, showBarHook} = useContextObject();
     const [connected, setConnected] = connectedStateHook;
@@ -33,6 +33,7 @@ function LoginForm(props) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
 
     setShowBar(false)
 
@@ -43,24 +44,28 @@ function LoginForm(props) {
     function handlePassword(event) {
         setPassword(event.target.value)
     }
-    function handleSignup(event) {
-        props.history.push("/signup")
+
+    function handlePasswordConfirm(event) {
+        setPasswordConfirm(event.target.value)
     }
 
 
     async function handleSubmit() {
+        if (password == passwordConfirm) {
         const payload={
-            username: email,
+            email: email,
             password: password,
         }
 
         try {
-        const response = await axios.post(API_BASE_URL+'/token', qs.stringify(payload))
-            localStorage.setItem(ACCESS_TOKEN_NAME,response.data.access_token);
-            props.history.push('/home')
+        const response = await axios.post(API_BASE_URL+'/signup', payload)
+            props.history.push('/login')
         } catch (e) {
             console.log(e.message)
             updateErrorMessage(e.message)
+        }
+        } else {
+            updateErrorMessage("Mots de Passes Differents")
         }
     }
 
@@ -83,12 +88,15 @@ function LoginForm(props) {
 
                                 <TextField id="password" label="Password" value={password} onChange={handlePassword}/>
                             </Box>
+                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" component="form" sx={{ }} noValidate autoComplete="off" >
+                                <TextField id="password" label="Confirm Password" value={passwordConfirm} onChange={handlePasswordConfirm}/>
+                            </Box>
+
                         </Box>
                     </CardContent>
 
                     <CardActions>
-                        <Button size="small" onClick={handleSignup}>Creer un compte</Button>
-                        <Button size="small" onClick={handleSubmit} style={{marginLeft: '40%'}}>Valider</Button>
+                        <Button size="small" onClick={handleSubmit} style={{marginLeft: '80%'}}>Valider</Button>
                     </CardActions>
                 </Card>
             </Box>
@@ -96,4 +104,4 @@ function LoginForm(props) {
     )
 }
 
-export default withRouter(LoginForm);
+export default withRouter(SignUpForm);

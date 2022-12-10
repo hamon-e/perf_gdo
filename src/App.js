@@ -34,6 +34,8 @@ import Annotate from './components/Annotate/Annotate';
 import ListVoie from './components/ListVoie/ListVoie';
 import Crenaux from './components/Crenaux/Crenaux';
 import Tryout from './components/Tryout/Tryout';
+import SignUpForm from './components/SignUpForm/SignUpForm';
+import Home from './components/Home/Home';
 
 import {useContextObject} from './components/Context/Context';
 
@@ -99,8 +101,9 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 export default function PersistentDrawerLeft(props) {
   const theme = useTheme();
 
-  const {showBarHook, openHook, errorMessageHook, languageStateHook, headerTitleHook } = useContextObject();
+  const {showBarHook, openHook, errorMessageHook, languageStateHook, isAdminHook, headerTitleHook } = useContextObject();
   const [errorMessage, updateErrorMessage] = errorMessageHook;
+  const [isAdmin, setIsAdmin] = isAdminHook;
   const [showBar, setShowBar] = showBarHook;
   const [open, setOpen] = openHook;
 
@@ -163,7 +166,7 @@ export default function PersistentDrawerLeft(props) {
         <Divider />
 
         <List>
-          {['Inscriptions', 'Ma Progression', 'Ma Seance', 'Liste Voies', 'Crenaux'].map((text, index) => (
+          {['Home'].map((text, index) => (
           <Link to={"/" + text.toLowerCase().replace(/ /g,'') }>
             <ListItem key={text} disablePadding>
               <ListItemButton>
@@ -175,12 +178,38 @@ export default function PersistentDrawerLeft(props) {
             </ListItem>
           </Link>
           ))}
-            <ListItem key="LogOut" disablePadding>
+          {!isAdmin && ['Ma Progression', 'Ma Seance'].map((text, index) => (
+          <Link to={"/" + text.toLowerCase().replace(/ /g,'') }>
+            <ListItem key={text} disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+                </ListItemIcon>
+                <ListItemText primary={text} />
+              </ListItemButton>
+            </ListItem>
+          </Link>
+          ))}
+
+          {isAdmin && ['Liste Voies'].map((text, index) => (
+          <Link to={"/" + text.toLowerCase().replace(/ /g,'') }>
+            <ListItem key={text} disablePadding>
+              <ListItemButton>
+                <ListItemIcon>
+                  {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+                </ListItemIcon>
+                <ListItemText primary={text} />
+              </ListItemButton>
+            </ListItem>
+          </Link>
+          ))}
+
+            <ListItem key="Deconnection" disablePadding>
               <ListItemButton onClick={logout}>
                 <ListItemIcon>
                     <MailIcon />
                 </ListItemIcon>
-                <ListItemText primary="LogOut" />
+                <ListItemText primary="Deconnection" />
               </ListItemButton>
             </ListItem>
 
@@ -194,6 +223,13 @@ export default function PersistentDrawerLeft(props) {
             <Switch>
               <Route path="/login">
                 <LoginForm/>
+              </Route>
+              <Route path="/home">
+                <Home/>
+              </Route>
+
+              <Route path="/signup">
+                <SignUpForm/>
               </Route>
               <Route path="/accueil">
                 <Accueil/>

@@ -10,9 +10,10 @@ import axios from 'axios'
 
 function Header(props) {
 
-  const {showBarHook, connectedStateHook, userHook, errorMessageHook, languageStateHook, headerTitleHook } = useContextObject();
+  const {showBarHook, connectedStateHook, userHook, errorMessageHook, languageStateHook, isAdminHook, headerTitleHook } = useContextObject();
   const [connected, setConnected] = connectedStateHook;
   const [user, setUser] = userHook;
+  const [isAdmin, setIsAdmin] = isAdminHook;
   const [showBar, setShowBar] = showBarHook;
 
     useEffect(() => {
@@ -23,11 +24,14 @@ function Header(props) {
                     setConnected(true);
                     setUser(response.data)
                     setShowBar(true)
+                    if (response.data.role_id == 0) {
+                        setIsAdmin(true)
+                    }
                     if (props.location.pathname === '/login' || props.location.pathname === '/' || props.location.pathname === '/accueil') {
-                        props.history.push('/inscriptions')
+                        props.history.push('/home')
                     }
                 } catch (error) {
-                    if (props.location.pathname !== '/login') {
+                    if (props.location.pathname !== '/login' && props.location.pathname !== '/signup') {
                         setConnected(false);
                         setShowBar(false)
                         props.history.push('/accueil')
