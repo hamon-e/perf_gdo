@@ -71,7 +71,7 @@ function SignUpForm(props) {
 
     return(
         <div>
-            {(connected) && <Redirect to='/inscriptions' />}
+            {(connected) && <Redirect to='/home' />}
             <Box display="grid"   display="flex" justifyContent="center" alignItems="center" minHeight="90vh">
                 <Card sx={{ minWidth: 275 }}>
                     <CardContent>
@@ -81,14 +81,14 @@ function SignUpForm(props) {
                                 <img src="https://gdo.axyomes.com/origine/logo.png" alt="Trayvisor"></img>
                             </Box>
 
-                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" component="form" sx={{ }} noValidate autoComplete="off" >
+                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" sx={{ }} noValidate autoComplete="off" >
                                 <TextField id="email" label="Email" value={email} onChange={handleEmail}/>
                             </Box>
-                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" component="form" sx={{ }} noValidate autoComplete="off" >
+                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" sx={{ }} noValidate autoComplete="off" >
 
                                 <TextField id="password" label="Password" value={password} onChange={handlePassword}/>
                             </Box>
-                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" component="form" sx={{ }} noValidate autoComplete="off" >
+                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" sx={{ }} noValidate autoComplete="off" >
                                 <TextField id="password" label="Confirm Password" value={passwordConfirm} onChange={handlePasswordConfirm}/>
                             </Box>
 

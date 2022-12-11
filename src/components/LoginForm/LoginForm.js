@@ -26,10 +26,13 @@ const qs = require('qs');
 
 function LoginForm(props) {
     const { t, i18n } = useTranslation('Login');
-    const {connectedStateHook, errorMessageHook, showBarHook} = useContextObject();
+    const {connectedStateHook, errorMessageHook, showBarHook, isAdminHook, userHook} = useContextObject();
     const [connected, setConnected] = connectedStateHook;
     const [errorMessage, updateErrorMessage] = errorMessageHook;
   const [showBar, setShowBar] = showBarHook;
+  const [isAdmin, setIsAdmin] = isAdminHook;
+
+  const [user, setUser] = userHook;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -57,6 +60,12 @@ function LoginForm(props) {
         try {
         const response = await axios.post(API_BASE_URL+'/token', qs.stringify(payload))
             localStorage.setItem(ACCESS_TOKEN_NAME,response.data.access_token);
+             const tmp = await axios.get(API_BASE_URL+'/me/', { headers: { 'Authorization': "Bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
+                    setConnected(true);
+                    setUser(tmp.data)
+            if (tmp.data.role_id == 0) {
+                setIsAdmin(true)
+            }
             props.history.push('/home')
         } catch (e) {
             console.log(e.message)
@@ -66,7 +75,7 @@ function LoginForm(props) {
 
     return(
         <div>
-            {(connected) && <Redirect to='/inscriptions' />}
+            {(connected) && <Redirect to='/home' />}
             <Box display="grid"   display="flex" justifyContent="center" alignItems="center" minHeight="90vh">
                 <Card sx={{ minWidth: 275 }}>
                     <CardContent>
@@ -76,10 +85,10 @@ function LoginForm(props) {
                                 <img src="https://gdo.axyomes.com/origine/logo.png" alt="Trayvisor"></img>
                             </Box>
 
-                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" component="form" sx={{ }} noValidate autoComplete="off" >
+                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" sx={{ }} noValidate autoComplete="off" >
                                 <TextField id="email" label="Email" value={email} onChange={handleEmail}/>
                             </Box>
-                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" component="form" sx={{ }} noValidate autoComplete="off" >
+                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" sx={{ }} noValidate autoComplete="off" >
 
                                 <TextField id="password" label="Password" value={password} onChange={handlePassword}/>
                             </Box>

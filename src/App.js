@@ -178,7 +178,7 @@ export default function PersistentDrawerLeft(props) {
             </ListItem>
           </Link>
           ))}
-          {!isAdmin && ['Ma Progression', 'Ma Seance'].map((text, index) => (
+          {!isAdmin && ['Ma Progression', 'Ma Seance', 'Historique'].map((text, index) => (
           <Link to={"/" + text.toLowerCase().replace(/ /g,'') }>
             <ListItem key={text} disablePadding>
               <ListItemButton>
@@ -191,7 +191,7 @@ export default function PersistentDrawerLeft(props) {
           </Link>
           ))}
 
-          {isAdmin && ['Liste Voies'].map((text, index) => (
+          {isAdmin && ['Liste Voies', 'Palette Couleurs', 'Statistiques', 'Users'].map((text, index) => (
           <Link to={"/" + text.toLowerCase().replace(/ /g,'') }>
             <ListItem key={text} disablePadding>
               <ListItemButton>
@@ -224,10 +224,6 @@ export default function PersistentDrawerLeft(props) {
               <Route path="/login">
                 <LoginForm/>
               </Route>
-              <Route path="/home">
-                <Home/>
-              </Route>
-
               <Route path="/signup">
                 <SignUpForm/>
               </Route>
@@ -235,6 +231,9 @@ export default function PersistentDrawerLeft(props) {
                 <Accueil/>
               </Route>
 
+              <PrivateRoute path="/home">
+                <Home/>
+              </PrivateRoute>
               <PrivateRoute path="/inscriptions">
                 <Products />
               </PrivateRoute>

@@ -57,8 +57,11 @@ import FullCalendar from '@fullcalendar/react' // must go before plugins
 import dayGridPlugin from '@fullcalendar/daygrid' // a plugin!
 
 function Home(props) {
-    const {headerTitleHook} = useContextObject();
+    const {headerTitleHook, showBarHook} = useContextObject();
     const [headerTitle, setHeaderTitle] = headerTitleHook;
+      const [showBar, setShowBar] = showBarHook;
+
+    setShowBar(true)
 
     useEffect(() => {
         async function start() {
