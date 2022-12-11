@@ -141,8 +141,8 @@ function Products(props) {
     const [open, setOpen] = React.useState(false);
 
     const [value, setValue] = React.useState(0);
-    const [mobile, setMobile] = React.useState(window.innerWidth);
-    const [widthSize, setWidthSize] = React.useState(0);
+    const [mobile, setMobile] = React.useState(false);
+    const [widthSize, setWidthSize] = React.useState(window.innerWidth);
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
