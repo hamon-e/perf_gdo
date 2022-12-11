@@ -141,7 +141,7 @@ function Products(props) {
     const [open, setOpen] = React.useState(false);
 
     const [value, setValue] = React.useState(0);
-    const [mobile, setMobile] = React.useState(false);
+    const [mobile, setMobile] = React.useState(window.innerWidth);
     const [widthSize, setWidthSize] = React.useState(0);
 
     const handleChange = (event, newValue) => {
@@ -362,7 +362,7 @@ function Products(props) {
     }, [])
 
     useEffect(() => {
-            if (widthSize && widthSize < 900) {
+            if (widthSize < 900) {
                 setMobile(true)
                 console.log("Mobile")
             } else {
