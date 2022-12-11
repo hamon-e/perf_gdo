@@ -273,6 +273,12 @@ function Products(props) {
         ],
     };
 
+    for (const elem of MAP['areas']) {
+        elem['coords'] = elem['coords'].map(e => e / 2.1)
+    }
+
+
+
     const URL_1 = 'gdo-1.png';
     const MAP_1 = {
         name: 'my-map-1',
@@ -619,7 +625,7 @@ function Products(props) {
                                 <ImageMapper src={URL_1} map={MAP_1} width={939/2} height={1596/2} onClick={areaClick}/>
                         </Grid>
                         <Grid item xs={12}>
-                                <ImageMapper src={URL_2} map={MAP_2} width={1326/2} height={1671/2} onClick={areaClick}/>
+                                <ImageMapper src={URL_2} map={MAP_2} width={1056/2} height={1656/2} onClick={areaClick}/>
                         </Grid>
                     </Grid>
 
