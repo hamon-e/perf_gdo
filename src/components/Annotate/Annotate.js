@@ -144,6 +144,8 @@ function Products(props) {
     const [mobile, setMobile] = React.useState(false);
     const [widthSize, setWidthSize] = React.useState(window.innerWidth);
 
+    const [imageIndex, setImageIndex] = React.useState(0);
+
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
@@ -357,6 +359,19 @@ function Products(props) {
         console.log(window.innerWidth)
     }
 
+    function onScroll(event) {
+        console.log(event)
+        var tmp = imageIndex
+        console.log(tmp)
+        if (event.deltaY < 0 && tmp > 0){
+            tmp = tmp - 1
+        } else if (event.deltaY >= 0 && tmp < 1){
+            tmp = tmp + 1
+        }
+        console.log(tmp)
+        setImageIndex(tmp)
+    }
+
     useEffect(() => {
         async function start() {
             await refreshVoie()
@@ -364,6 +379,9 @@ function Products(props) {
         start()
         setHeaderTitle("Ajouter une Seance")
         window.addEventListener("resize", handleResize);
+        //window.addEventListener('scroll', onScroll, false);
+        //window.addEventListener('touchstart', onScroll);
+       window.addEventListener('wheel', onScroll);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -621,12 +639,8 @@ function Products(props) {
                             <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '' }}>
                     <Grid container spacing={2}>
 
-                        <Grid item xs={12}>
-                                <ImageMapper src={URL_1} map={MAP_1} width={939/2} height={1596/2} onClick={areaClick}/>
-                        </Grid>
-                        <Grid item xs={12}>
-                                <ImageMapper src={URL_2} map={MAP_2} width={1056/2} height={1656/2} onClick={areaClick}/>
-                        </Grid>
+                        {imageIndex == 0 && <ImageMapper src={URL_1} map={MAP_1} width={939/2.5} height={1596/2.5} onClick={areaClick}/> }
+                        {imageIndex == 1 && <ImageMapper src={URL_2} map={MAP_2} width={1056/2.5} height={1656/2.5} onClick={areaClick}/> }
                     </Grid>
 
 
