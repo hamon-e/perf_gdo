@@ -41,6 +41,8 @@ import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 
+import Grid from '@mui/material/Grid';
+
 import {
   DataGrid,
   GridToolbarDensitySelector,
@@ -55,6 +57,11 @@ import { styled } from '@mui/material/styles';
 
 import FullCalendar from '@fullcalendar/react' // must go before plugins
 import dayGridPlugin from '@fullcalendar/daygrid' // a plugin!
+
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
 
 function Home(props) {
     const {headerTitleHook, showBarHook} = useContextObject();
@@ -74,6 +81,56 @@ function Home(props) {
 
     return(
         <div className="productpage" style={{padding: '20px', width: '90%'}}>
+                    <Grid container spacing={5}>
+                        <Grid item xs={5}>
+            <Card sx={{ minWidth: 275 }}>
+                <CardContent>
+                    <Typography sx={{ fontSize: 18 }} color="text.secondary" gutterBottom>
+                        Events
+                    </Typography>
+                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                        Noel des GDOs
+                    </Typography>
+                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                        Galette des rois
+                    </Typography>
+                </CardContent>
+            </Card>
+
+                    </Grid>
+                        <Grid item xs={5}>
+            <Card sx={{ minWidth: 275 }}>
+                <CardContent>
+                    <Typography sx={{ fontSize: 18 }} color="text.secondary" gutterBottom>
+                        Recommendations
+                    </Typography>
+                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                        Decouvrir le devers
+                    </Typography>
+                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                        Grimper en tete
+                    </Typography>
+                </CardContent>
+            </Card>
+                    </Grid>
+                        <Grid item xs={5}>
+            <Card sx={{ minWidth: 275 }}>
+                <CardContent>
+                    <Typography sx={{ fontSize: 18 }} color="text.secondary" gutterBottom>
+                        Best Perfs
+                    </Typography>
+                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                        ...
+                    </Typography>
+                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                        ...
+                    </Typography>
+                </CardContent>
+            </Card>
+                    </Grid>
+
+ 
+                    </Grid>
         </div> 
     )
 }

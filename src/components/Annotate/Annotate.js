@@ -120,6 +120,16 @@ function a11yProps(index) {
   };
 }
 
+    var touchstartY = 0;
+    var touchendY = 0;
+var g_value = 0;
+var g_imageIndex = 0;
+var lastMove = 0;
+var g_voies = [];
+
+
+
+const fixedWidth = window.innerWidth;
 
 function Products(props) {
     const {isAdminHook, userHook, restaurantHook, headerTitleHook} = useContextObject();
@@ -144,10 +154,12 @@ function Products(props) {
     const [mobile, setMobile] = React.useState(false);
     const [widthSize, setWidthSize] = React.useState(window.innerWidth);
 
+
     const [imageIndex, setImageIndex] = React.useState(0);
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
+        g_value = newValue
     };
 
     const URL = 'gdo.png';
@@ -284,15 +296,161 @@ function Products(props) {
     const URL_1 = 'gdo-1.png';
     const MAP_1 = {
         name: 'my-map-1',
-        areas: []
+        areas: [
+            { "id": "1", "title": "1", "name": "1",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(255, 173, 173, 0.15)",
+              "coords": [145,1339,291,1249,252,87,90,36] },
+            { "id": "2", "title": "2", "name": "2",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(255, 214, 165, 0.15)",
+              "coords": [299,1567,368,1506,324,112,252,88,290,1249] },
+            { "id": "3", "title": "3", "name": "3",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(253, 255, 182, 0.15)",
+              "coords": [366,1404,496,1387,489,1068,542,1062,520,122,325,111,355,1078] },
+            { "id": "4", "title": "4", "name": "4",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(202, 255, 91, 0.15)",
+              "coords": [552,1480,596,1555,540,817,556,98,520,122,537,818,542,1062] },
+            { "id": "5", "title": "5", "name": "5",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(155, 246, 255, 0.15)",
+              "coords": [596,1554,682,1542,626,813,651,103,557,97,543,688,541,816] },
+            { "id": "6", "title": "6", "name": "6",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(160, 196, 255, 0.15)",
+              "coords": [683,1541,759,1530,700,809,730,109,697,106,652,102,626,811] },
+            { "id": "7", "title": "7", "name": "7",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(189, 178, 255, 0.15)",
+              "coords": [760,1530,833,1518,772,805,773,682,800,113,731,110,706,683,700,809] },
+        ]
     }
+    for (const elem of MAP_1['areas']) {
+        elem['coords'] = elem['coords'].map(e => e / 2.8)
+    }
+
  
     const URL_2 = 'gdo-2.png';
     const MAP_2 = {
         name: 'my-map-2',
-        areas: []
+        areas: [
+            { "id": "10", "title": "10", "name": "10",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(255, 173, 173, 0.15)",
+              "coords": [95,1616,193,1606,213,1278,214,1159,216,594,233,298,237,67,125,59,127,293,114,592,124,861,121,1047,113,1167,114,1285,108,1281] },
+            { "id": "11", "title": "11", "name": "11",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(255, 214, 165, 0.15)",
+              "coords": [193,1605,278,1595,297,1269,301,1153,313,593,333,301,338,74,237,68,234,298,217,593,214,1037,214,1278] },
+            { "id": "12", "title": "12", "name": "12",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(253, 255, 182, 0.15)",
+              "coords": [279,1595,371,1585,394,1268,403,1263,404,1149,419,1027,426,868,426,764,416,591,441,305,441,78,339,73,333,300,313,593,304,1031,300,1154,297,1271] },
+            { "id": "13", "title": "13", "name": "13",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(202, 255, 91, 0.15)",
+              "coords": [371,1583,404,1265,411,1153,464,592,517,28,441,80,441,305,416,593,423,701,427,801,427,887,421,984,419,1027,405,1149,404,1246] },
+            { "id": "14", "title": "14", "name": "14",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(155, 246, 255, 0.15)",
+              "coords": [372,1586,527,1567,571,1254,577,1144,837,51,518,29] },
+            { "id": "15", "title": "15", "name": "15",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(160, 196, 255, 0.15)",
+              "coords": [528,1566,629,1554,664,1244,677,1242,677,1131,693,1016,838,51,577,1142,572,1249] },
+            { "id": "17", "title": "17", "name": "17",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(189, 178, 255, 0.15)",
+              "coords": [630,1553,724,1543,759,1237,768,1126,804,596,842,320,868,109,830,107,798,320,757,595,713,888,695,1016,678,1132,677,1242,664,1245] },
+            { "id": "18", "title": "18", "name": "18",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(255, 198, 255, 0.15)",
+              "coords": [724,1542,801,1535,837,1230,843,1121,875,595,915,323,932,112,867,107,841,320,804,595,768,1125,760,1236] },
+            { "id": "19", "title": "19", "name": "19",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(255, 255, 252, 0.15)",
+              "coords": [802,1534,871,1526,917,1224,933,1221,934,1115,947,1039,963,897,965,780,961,673,954,595,1008,328,1011,118,933,113,916,322,875,597,844,1120,838,1229] },
+
+        ]
     }
- 
+    for (const elem of MAP_2['areas']) {
+        elem['coords'] = elem['coords'].map(e => e / 2.8)
+    }
+
+
+    const URL_3 = 'gdo-3.png';
+     const MAP_3 = {
+        name: 'my-map-3',
+        areas: [
+            { "id": "20", "title": "20", "name": "20",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(255, 173, 173, 0.15)",
+              "coords": [170,1676,251,1666,195,844,192,553,212,43,134,36,115,552,111,846] },
+            { "id": "21", "title": "21", "name": "21",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(255, 214, 165, 0.15)",
+              "coords": [252,1665,330,1655,264,843,286,63,257,62,255,47,213,43,193,553,196,845] },
+            { "id": "22", "title": "22", "name": "22",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(253, 255, 182, 0.15)",
+              "coords": [331,1655,407,1644,336,840,358,69,286,62,265,842] },
+            { "id": "23", "title": "23", "name": "23",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(202, 255, 91, 0.15)",
+              "coords": [402,1559,507,1547,450,847,445,93,359,68,338,839] },
+            { "id": "24", "title": "24", "name": "24",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(155, 246, 255, 0.15)",
+              "coords": [507,1547,609,1534,576,845,563,104,445,96,451,849] },
+            { "id": "25", "title": "25", "name": "25",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(160, 196, 255, 0.15)",
+              "coords": [609,1534,707,1523,677,112,563,104,574,807] },
+            { "id": "26", "title": "26", "name": "26",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(189, 178, 255, 0.15)",
+              "coords": [706,1523,794,1513,794,560,797,119,678,112] }, 
+            { "id": "27", "title": "27", "name": "27",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(255, 198, 255, 0.15)",
+              "coords": [795,1512,882,1501,888,879,914,778,890,773,890,562,794,560] },
+        ],
+    };
+
+    for (const elem of MAP_3['areas']) {
+        elem['coords'] = elem['coords'].map(e => e / 2.8)
+    }
+
+    const URL_4 = 'gdo-4.png';
+     const MAP_4 = {
+        name: 'my-map-4',
+        areas: [
+            { "id": "28", "title": "28", "name": "28",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(255, 173, 173, 0.15)",
+              "coords": [131,1258,275,1287,266,103,127,121,128,374,44,371,128,504] },
+            { "id": "29", "title": "29", "name": "29",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(255, 214, 165, 0.15)",
+              "coords": [275,1287,506,1334,494,714,511,74,266,103] },
+            { "id": "30", "title": "30", "name": "30",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(253, 255, 182, 0.25)",
+              "coords": [507,1335,691,1372,697,722,702,51,511,74,494,714] },
+            { "id": "31", "title": "31", "name": "31",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black", "preFillColor": "rgba(202, 255, 91, 0.15)",
+              "coords": [691,1371,825,1398,841,36,703,51] },
+        ],
+    };
+
+    for (const elem of MAP_4['areas']) {
+        elem['coords'] = elem['coords'].map(e => e / 2.8)
+    }
+
+
 
 
     const handleClickOpen = (event) => {
@@ -324,8 +482,17 @@ function Products(props) {
         setSelectedDifficulty(tmp.difficulty)
     }
 
+    function chooseColor(event) {
+        setSelectedColor(event.target.id)
+        const tmp = voies.find((e) => e.couloir_id == selectedNumber && e.color == event.target.id)
+        setSelectedId(tmp.id)
+        setSelectedDifficulty(tmp.difficulty)
+    }
+
     function handleSelectedNumberChange(event) {
         setSelectedNumber(event.target.value)
+        setSelectedColor(false)
+        setSelectedColors(voies.filter((e) => e.couloir_id == event.target.value).map((e) => e.color))
     }
 
     function handleSelectedTopChange(event) {
@@ -352,6 +519,7 @@ function Products(props) {
     async function refreshVoie() {
         var response = await axios.get(API_BASE_URL+'/voies', { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
         await setVoies(response.data)
+        g_voies = response.data
     }
 
     function handleResize() {
@@ -360,17 +528,40 @@ function Products(props) {
     }
 
     function onScroll(event) {
-        console.log(event)
-        var tmp = imageIndex
-        console.log(tmp)
+        console.log(g_value, g_imageIndex)
+        if (g_value == 0) {
+        var tmp = g_imageIndex
         if (event.deltaY < 0 && tmp > 0){
             tmp = tmp - 1
-        } else if (event.deltaY >= 0 && tmp < 1){
+        } else if (event.deltaY >= 0 && tmp < 3){
             tmp = tmp + 1
         }
-        console.log(tmp)
         setImageIndex(tmp)
+            g_imageIndex = tmp
+        }
     }
+
+    function handleGesure() {
+        if (g_value == 0) {
+        if (Math.abs(touchendY - touchstartY) > 50) {
+        var tmp = g_imageIndex
+        if (touchendY < touchstartY && tmp < 3) {
+            tmp = tmp + 1
+        }
+        if (touchendY > touchstartY && tmp > 0) {
+            tmp = tmp - 1
+        }
+
+        setImageIndex(tmp)
+            g_imageIndex = tmp
+        }
+
+
+        }
+
+    }
+
+
 
     useEffect(() => {
         async function start() {
@@ -381,7 +572,23 @@ function Products(props) {
         window.addEventListener("resize", handleResize);
         //window.addEventListener('scroll', onScroll, false);
         //window.addEventListener('touchstart', onScroll);
-       window.addEventListener('wheel', onScroll);
+        window.addEventListener('wheel', function(event) {
+        if(Date.now() - lastMove > 800) {
+            onScroll(event)
+            lastMove = Date.now();
+        }
+        });
+        window.addEventListener('touchend', function(event) {
+            touchendY = event.changedTouches[0].clientY;
+        if(Date.now() - lastMove > 40) {
+            handleGesure();
+            lastMove = Date.now();
+        }
+        }, false); 
+        window.addEventListener('touchstart', function(event) {
+            touchstartY = event.changedTouches[0].clientY;
+        }, false);
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -402,12 +609,7 @@ function Products(props) {
     }
 
     async function areaClick(area, index) {
-        var tmp_voies = voies
-        if (!tmp_voies.lenght) {
-            var response = await axios.get(API_BASE_URL+'/voies', { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
-            tmp_voies = response.data
-            setVoies(tmp_voies)
-        } 
+        var tmp_voies = g_voies
         const tmp = tmp_voies.find((e) => e.couloir_id == parseInt(area.id, 10))
         if (tmp) {
             setSelectedId(tmp.id)
@@ -420,13 +622,41 @@ function Products(props) {
         console.log(area, index)
     }
 
+    function difficultyFormat(difficulty) {
+        const floor = Math.floor(difficulty)
+        const decimal = difficulty - floor
+        console.log(decimal)
+        if (decimal >= 0.24 && decimal <= 0.26) {
+            return floor + "a"
+        }
+        if (decimal >= 0.34 && decimal <= 0.36) {
+            return floor + "a+"
+        }
+        if (decimal >= 0.49 && decimal <= 0.51) {
+            return floor + "b"
+        }
+        if (decimal >= 0.59 && decimal <= 0.61) {
+            return floor + "b+"
+        }
+        if (decimal >= 0.74 && decimal <= 0.76) {
+            return floor + "c"
+        }
+        if (decimal >= 0.84 && decimal <= 0.86) {
+            return floor + "c+"
+        }
+        console.log(difficulty)
+        return "Bug"
+
+    }
+
 
     //<img src="https://lesgdo.org/photo/hdv/M6c6df169982e9963e49c.png" style={{ 'max-width': '100%', height: 'auto'}}/>
     return(
         <div className="productpage">
 
             <Dialog open={open} onClose={handleClose} >
-                <DialogTitle id="alert-dialog-title"> {"Ajouter"} </DialogTitle>
+                {selectedColor && <div>
+                <DialogTitle id="alert-dialog-title"> {"Confirmer"} </DialogTitle>
                 <DialogContent>
                     <Box sx={{ flexGrow: 1 }}>
                         <Grid container spacing={2}>
@@ -436,32 +666,43 @@ function Products(props) {
                                     <div>
                                         <TextField fullWidth select 
                                         value={selectedNumber}
-                                        label="Numero"
+                                        label="Couloir"
                                         onChange={handleSelectedNumberChange}
                                     >
                                             { [ ...Array(31).keys() ].map((x) => <MenuItem value={x + 1}>{x + 1}</MenuItem>) }
                                         </TextField>
                                     </div>
                                     <div>
-                                        <TextField fullWidth select
+                                        <Select fullWidth 
                                         value={selectedColor}
-                                        label="Couleur"
+                                        label="Voie"
                                         onChange={handleSelectedColorChange}
-                                        sx={{backgroundColor: selectedColor, color: selectedColor == '#000000' ? 'white' : 'black'}}
-                                    >
+                                        sx={{backgroundColor: selectedColor, color: selectedColor == '#000000' ? 'white !important' : 'black', '&.MuiMenuItem-root:hover': {
+            border: "2px solid green"
+          }
+}}
+                                          MenuProps={{
+    PaperProps: {
+      sx: {
+        "& .MuiMenuItem-root.Mui-selected": {
+          backgroundColor: selectedColor
+        },
+        "& .MuiMenuItem-root:hover": {
+          backgroundColor: "hsla(120, 60%, 70%, 0.3);"
+        },
+        "& .MuiMenuItem-root.Mui-selected:hover": {
+          backgroundColor: "hsla(120, 60%, 70%, 0.3);"
+        }
+      }
+    }
+  }}
+                                   >
                                             {selectedColors.map((e) => (
                                                 <MenuItem value={e}
                                                 sx={{backgroundColor: e, color: e == '#000000' ? 'white' : 'black'}}
-                                            >{e}</MenuItem>
+                                            >{ difficultyFormat(voies.find((x) => x.couloir_id == selectedNumber && x.color == e).difficulty) }</MenuItem>
                                             ))}
-                                    </TextField>
-                                </div>
-                                <div>
-                                    <TextField fullWidth disabled
-                                    value={selectedDifficulty}
-                                    label="Difficulty"
-                                />
-
+                                    </Select>
                                 </div>
                                 <div>  
                                     <Typography id="input-slider" gutterBottom> Hauteur </Typography> 
@@ -486,14 +727,32 @@ function Products(props) {
                 <Button onClick={handleClose}>Cancel</Button>
                 <Button variant="contained" onClick={submitForm}>Valider</Button>
             </DialogActions>
+    </div>
+                }
+    {!selectedColor && <div>
+                <DialogTitle id="alert-dialog-title"> {"Choisir Voie: Couloir " + selectedNumber} </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ flexGrow: 1 }}>
+                        <Grid container spacing={2}>
+                            <Grid item xs={10}>
+                                { selectedColors.map((e) => 
+                                <Box sx={{ width: '25ch', height: '5ch', backgroundColor: e, cursor: 'pointer'}} id={e} onClick={chooseColor} > </Box>
+                                )}
+                            </Grid>
+                    </Grid>
+                </Box>
+            </DialogContent>
+
+
+        </div>}
         </Dialog>
 
 
         <Box sx={{ width: '90%' }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', paddingTop: '5px', paddingLeft: '10px' }}>
 
-                    <Grid container spacing={2}>
-                        <Grid item xs={4}>
+                    <Grid container spacing={1}>
+                        <Grid item xs={6}>
  
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
@@ -506,13 +765,11 @@ function Products(props) {
 
                         </Grid>
 
-                        <Grid item xs={4}>
+                        <Grid item xs={6}>
 
                 <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
                     <Tab label="Visuel" {...a11yProps(0)} />
                     <Tab label="Tableau" {...a11yProps(1)} />
-
-
                 </Tabs>
                         </Grid>
                         </Grid>
@@ -527,7 +784,7 @@ function Products(props) {
 
                         </Grid>
                         <Grid item xs={4}>
-                            <Slider defaultValue={[3,9]} valueLabelDisplay="auto" step={0.5} min={3} max={9} /> 
+                            {/*                    <Slider defaultValue={[3,9]} valueLabelDisplay="auto" step={0.5} min={3} max={9} />  */}
                         </Grid>
 
 
@@ -535,30 +792,18 @@ function Products(props) {
 
     </Box>
 
+            {!mobile && 
     <Paper sx={{ width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '20px' }}>
         <TableContainer sx={{ maxHeight: 440 }}>
             <Table stickyHeader aria-label="sticky table">
                 <TableHead>
                     <TableRow>
-                        <TableCell align="left" colSpan={3}>
-                            Plexi
-                        </TableCell>
-                        <TableCell align="left" colSpan={5}>
-                            Verin Gauche
-                        </TableCell>
-                        <TableCell align="left" colSpan={10}>
-                            Devers
-                        </TableCell>
+                        <TableCell align="left" colSpan={3}> Plexi </TableCell>
+                        <TableCell align="left" colSpan={5}> Verin Gauche </TableCell>
+                        <TableCell align="left" colSpan={10}> Devers </TableCell>
                     </TableRow>
                     <TableRow>
-                        {[...Array(19).keys()].map((column) => (
-                            <TableCell
-                            key={column}
-                            style={{ top: 57}}
-                        >
-                                {column + 1}
-                        </TableCell>
-                        ))}
+                        {[...Array(19).keys()].map((column) => ( <TableCell key={column + 1} style={{ top: 57}} > {column + 1} </TableCell>))}
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -584,25 +829,12 @@ function Products(props) {
                         <Table stickyHeader aria-label="sticky table">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell align="left" colSpan={4}>
-                                        Verin Droit
-                                    </TableCell>
-                                    <TableCell align="left" colSpan={5}>
-                                        Dalle
-                                    </TableCell>
-                                    <TableCell align="left" colSpan={4}>
-                                        9m
-                                    </TableCell>
+                                    <TableCell align="left" colSpan={3}> Verin Droit </TableCell>
+                                    <TableCell align="left" colSpan={5}> Dalle </TableCell>
+                                    <TableCell align="left" colSpan={4}> 9m </TableCell>
                                 </TableRow>
                                 <TableRow>
-                                    {[...Array(12).keys()].map((column) => (
-                                        <TableCell
-                                        key={column}
-                                        style={{ top: 57}}
-                                    >
-                                            {column + 20}
-                                    </TableCell>
-                                    ))}
+                                    {[...Array(12).keys()].map((column) => ( <TableCell key={column + 20} style={{ top: 57}} > {column + 20} </TableCell>))}
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -626,6 +858,137 @@ function Products(props) {
                                 </TableContainer>
 
                             </Paper>
+            }
+            {mobile && 
+    <Paper sx={{ width: '90%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '20px' }}>
+        <TableContainer sx={{ maxHeight: 440, maxWidth: fixedWidth - 25}}>
+            <Table stickyHeader aria-label="sticky table">
+                <TableHead>
+                    <TableRow>
+                        <TableCell align="left" colSpan={3}> Plexi </TableCell>
+                        <TableCell align="left" colSpan={4}> Verin Gauche </TableCell>
+                    </TableRow>
+                    <TableRow>
+                        {[...Array(7).keys()].map((column) => ( <TableCell key={column + 1} style={{ top: 57}} > {column + 1} </TableCell>))}
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+
+                    {[...Array(10).keys()].map((index) => (
+                        <TableRow  key={index}>
+                            {[...Array(7).keys()].map((column) => {
+                                const tmp = voies.filter((e) => e.couloir_id == column + 1)[index]
+                                if (tmp) {
+                                    return <TableCell class="mycell" key={tmp.id} style={{backgroundColor:tmp.color, color: tmp.color}} onClick={handleClickOpen}>{tmp.id}</TableCell>
+                                } else {
+                                    return <TableCell> </TableCell>
+                                }
+                            })}
+                                </TableRow>
+                    )).filter((e) => (e.props.children.find((e) => (e.props.class)) )
+                    )}
+
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+   
+                    <TableContainer sx={{ maxHeight: 440, maxWidth: fixedWidth - 25, paddingTop: '100px'}}>
+                        <Table stickyHeader aria-label="sticky table">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell align="left" colSpan={11}> Devers </TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    {[...Array(11).keys()].map((column) => ( <TableCell key={column + 10} style={{top: 57}} > {column + 10} </TableCell>))}
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+
+                                                   {[...Array(10).keys()].map((index) => (
+                        <TableRow  key={index}>
+                            {[...Array(11).keys()].map((column) => {
+                                const tmp = voies.filter((e) => e.couloir_id == column + 20)[index]
+                                if (tmp) {
+                                    return <TableCell class="mycell" key={tmp.id} style={{backgroundColor:tmp.color, color: tmp.color}} onClick={handleClickOpen}>{tmp.id}</TableCell>
+                                } else {
+                                    return <TableCell> </TableCell>
+                                }
+                            })}
+                                </TableRow>
+                    )).filter((e) => (e.props.children.find((e) => (e.props.class)) )
+                    )} 
+
+
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+
+                    <TableContainer sx={{ maxHeight: 440, maxWidth: fixedWidth - 25, paddingTop: '100px'}}>
+                        <Table stickyHeader aria-label="sticky table">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell align="left" colSpan={4}> Verin Droit </TableCell>
+                                    <TableCell align="left" colSpan={4}> Dalle </TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    {[...Array(8).keys()].map((column) => ( <TableCell key={column + 20} style={{ top: 57}} > {column + 20} </TableCell>))}
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+
+                                {[...Array(10).keys()].map((index) => (
+                                    <TableRow  key={index}>
+                                        {[...Array(8).keys()].map((column) => {
+                                            const tmp = voies.filter((e) => e.couloir_id == column + 20)[index]
+                                            if (tmp) {
+                                                return <TableCell class="mycell" key={tmp.id} style={{backgroundColor:tmp.color, color: tmp.color}} onClick={handleClickOpen}>{tmp.id}</TableCell>
+                                            } else {
+                                                return <TableCell></TableCell>
+                                            }
+                                        })}
+                                            </TableRow>
+                                )).filter((e) => (e.props.children.find((e) => (e.props.class)) )
+                                )}
+
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+
+                    <TableContainer sx={{ maxHeight: 440, maxWidth: fixedWidth - 25, paddingTop: '100px'}}>
+                        <Table stickyHeader aria-label="sticky table">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell align="left" colSpan={4}> 9m </TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    {[...Array(4).keys()].map((column) => ( <TableCell key={column + 28} style={{ top: 57}} > {column + 28} </TableCell>))}
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+
+                                {[...Array(10).keys()].map((index) => (
+                                    <TableRow  key={index}>
+                                        {[...Array(4).keys()].map((column) => {
+                                            const tmp = voies.filter((e) => e.couloir_id == column + 28)[index]
+                                            if (tmp) {
+                                                return <TableCell class="mycell" key={tmp.id} style={{backgroundColor:tmp.color, color: tmp.color}} onClick={handleClickOpen}>{tmp.id}</TableCell>
+                                            } else {
+                                                return <TableCell></TableCell>
+                                            }
+                                        })}
+                                            </TableRow>
+                                )).filter((e) => (e.props.children.find((e) => (e.props.class)) )
+                                )}
+
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+
+
+                    {fixedWidth}
+                            </Paper>
+            }
+
 
 
 
@@ -639,8 +1002,10 @@ function Products(props) {
                             <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '' }}>
                     <Grid container spacing={2}>
 
-                        {imageIndex == 0 && <ImageMapper src={URL_1} map={MAP_1} width={939/2.5} height={1596/2.5} onClick={areaClick}/> }
-                        {imageIndex == 1 && <ImageMapper src={URL_2} map={MAP_2} width={1056/2.5} height={1656/2.5} onClick={areaClick}/> }
+                        {imageIndex == 0 && <ImageMapper src={URL_1} map={MAP_1} width={939/2.8} height={1596/2.8} onClick={areaClick}/> }
+                        {imageIndex == 1 && <ImageMapper src={URL_2} map={MAP_2} width={1056/2.8} height={1656/2.8} onClick={areaClick}/> }
+                        {imageIndex == 2 && <ImageMapper src={URL_3} map={MAP_3} width={1002/2.8} height={1690/2.8} onClick={areaClick}/> }
+                        {imageIndex == 3 && <ImageMapper src={URL_4} map={MAP_4} width={903/2.8} height={1452/2.8} onClick={areaClick}/> }
                     </Grid>
 
 
