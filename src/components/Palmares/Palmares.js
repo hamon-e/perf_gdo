@@ -138,7 +138,11 @@ function Palmares(props) {
         if (newValue == 0) {
             setVoies(saveVoies.filter((e) => palmares.find((p) => p == e.id)))
         } else {
-            setVoies(saveVoies.filter((e) => !palmares.length || palmares.find((p) => p != e.id)))
+            if (!palmares.length) {
+                setVoies(saveVoies)
+            } else {
+                setVoies(saveVoies.filter((e) => !palmares.find((p) => p == e.id)))
+            }
         }
     };
 
@@ -182,7 +186,6 @@ function Palmares(props) {
     function difficultyFormat(difficulty) {
         const floor = Math.floor(difficulty)
         const decimal = difficulty - floor
-        console.log(decimal)
         if (decimal >= 0.24 && decimal <= 0.26) {
             return floor + "a"
         }
@@ -201,7 +204,6 @@ function Palmares(props) {
         if (decimal >= 0.84 && decimal <= 0.86) {
             return floor + "c+"
         }
-        console.log(difficulty)
         return "Bug"
 
     }
