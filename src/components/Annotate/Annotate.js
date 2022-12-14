@@ -964,18 +964,18 @@ function Products(props) {
                         <Table stickyHeader aria-label="sticky table">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell align="left" colSpan={11}> Devers </TableCell>
+                                    <TableCell align="left" colSpan={10}> Devers </TableCell>
                                 </TableRow>
                                 <TableRow>
-                                    {[...Array(11).keys()].map((column) => ( <TableCell key={column + 10} style={{top: 57}} > {column + 10} </TableCell>))}
+                                    {[...Array(10).keys()].map((column) => ( <TableCell key={column + 10} style={{top: 57}} > {column + 10} </TableCell>))}
                                 </TableRow>
                             </TableHead>
                             <TableBody>
 
                                                    {[...Array(10).keys()].map((index) => (
                         <TableRow  key={index}>
-                            {[...Array(11).keys()].map((column) => {
-                                const tmp = voies.filter((e) => e.couloir_id == column + 20)[index]
+                            {[...Array(10).keys()].map((column) => {
+                                const tmp = voies.filter((e) => e.couloir_id == column + 10)[index]
                                 if (tmp) {
                                     return <TableCell class="mycell" key={tmp.id} style={{backgroundColor:tmp.color, color: tmp.color}} onClick={handleClickOpen}>{tmp.id}</TableCell>
                                 } else {
@@ -1053,7 +1053,6 @@ function Products(props) {
                                 </TableContainer>
 
 
-                    {fixedWidth}
                             </Paper>
             }
 

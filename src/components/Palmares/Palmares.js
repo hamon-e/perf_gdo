@@ -108,7 +108,8 @@ function Palmares(props) {
     const {isAdminHook, userHook, restaurantHook, headerTitleHook, openHook} = useContextObject();
     const [headerTitle, setHeaderTitle] = headerTitleHook;
 
-    const [selectedDifficulty, setSelectedDifficulty] = React.useState(0);
+    const [selectedDifficulty, setSelectedDifficulty] = React.useState([3, 9]);
+
     const [selectedId, setSelectedId] = React.useState(0);
     const [selectedNumber, setSelectedNumber] = React.useState(0);
     const [selectedColor, setSelectedColor] = React.useState(0);
@@ -132,6 +133,147 @@ function Palmares(props) {
     const [imageIndex, setImageIndex] = React.useState(0);
 
     const [days, setDays] = React.useState([])
+
+    const handleClose = () => {
+        setOpen(false);
+    };
+
+    const URL = 'gdo.png';
+    const MAP = {
+        name: 'my-map',
+        areas: [
+            { "id": "1", "title": "1", "name": "1",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [230,1354,382,1250,332,65,153,23] },
+            { "id": "2", "title": "2", "name": "2",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [399,1570,472,1500,409,84,331,65] },
+            { "id": "3", "title": "3", "name": "3",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [409,85,611,94,643,1054,594,1059,606,1371,468,1387,456,1113] },
+            { "id": "4", "title": "4", "name": "4",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [656,1474,698,1555,638,806,646,73,611,94] },
+            { "id": "5", "title": "5", "name": "5",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [698,1555,785,1542,735,799,745,77,646,72,638,803] },
+            { "id": "6", "title": "6", "name": "6",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [786,1541,864,1527,811,794,827,82,745,75,735,799] },
+            { "id": "7", "title": "7", "name": "7",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [865,1526,941,1515,876,789,902,87,828,83,812,795] },
+            { "id": "8", "title": "8", "name": "8",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [886,901,893,751,884,613,875,790] },
+            { "id": "10", "title": "10", "name": "10",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [929,1384,975,1378,956,1115,947,1013,952,537,976,93,903,88,886,537,888,904] },
+            { "id": "11", "title": "11", "name": "11",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [975,1378,1025,1371,1027,1104,1025,1010,1030,535,1039,292,1048,94,975,92,963,292,952,536,947,1016,956,1114] },
+            { "id": "12", "title": "12", "name": "12",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1025,1371,1080,1362,1106,1098,1115,1095,1115,999,1136,858,1139,640,1130,534,1156,288,1156,102,1050,95,1041,291,1030,534,1027,1010] },
+            { "id": "13", "title": "13", "name": "13",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1156,99,1239,78,1138,885,1124,1004,1118,1095,1079,1360,1109,1098,1129,921,1141,709,1129,532,1158,291] },
+            { "id": "14", "title": "14", "name": "14",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1239,78,1499,90,1260,991,1253,1081,1209,1343,1080,1361,1117,1097] },
+            { "id": "15", "title": "15", "name": "15",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1209,1346,1292,1332,1329,1077,1340,1072,1343,977,1359,883,1495,113,1500,90,1264,990,1220,1290] },
+            { "id": "17", "title": "17", "name": "17",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1372,1319,1294,1331,1330,1075,1342,1071,1343,979,1422,526,1464,297,1496,115,1535,117,1475,527] },
+            { "id": "18", "title": "18", "name": "18",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1371,1322,1435,1313,1468,1060,1482,966,1524,523,1558,297,1577,118,1535,116,1475,523] },
+            { "id": "19", "title": "19", "name": "19",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1494,1305,1436,1312,1468,1059,1481,965,1525,524,1580,120,1629,120,1626,299,1573,522,1586,663,1579,792,1570,875,1554,960,1551,1050,1547,1338] },
+            { "id": "20", "title": "20", "name": "20",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1639,1401,1705,1392,1623,753,1627,521,1682,125,1632,120,1627,300,1574,521,1588,670,1581,750,1571,869] },
+            { "id": "21", "title": "21", "name": "21",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1708,1391,1759,1382,1675,747,1725,130,1714,126,1684,123,1629,521,1623,750] },
+            { "id": "22", "title": "22", "name": "22",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1803,1377,1761,1381,1674,747,1726,130,1772,131,1717,745] },
+            { "id": "23", "title": "23", "name": "23",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1795,1301,1869,1289,1807,747,1801,517,1813,141,1774,134,1716,744] },
+            { "id": "24", "title": "24", "name": "24",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1867,1289,1927,1281,1888,146,1812,141,1802,517,1807,743] },
+            { "id": "25", "title": "25", "name": "25",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1927,1281,1982,1274,1962,149,1889,144] },
+            { "id": "26", "title": "26", "name": "26",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [1985,1274,2031,1264,2053,507,2071,153,1963,150] },
+            { "id": "27", "title": "27", "name": "27",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [2034,1265,2086,1258,2121,511,2052,511] },
+            { "id": "28", "title": "28", "name": "28",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [2086,1258,2175,1296,2230,515,2121,511] },
+            { "id": "29", "title": "29", "name": "29",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [2176,1297,2303,1352,2315,948,2352,521,2230,517] },
+            { "id": "30", "title": "30", "name": "30",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [2412,1400,2306,1354,2315,946,2352,523,2469,530,2438,976] },
+            { "id": "31", "title": "31", "name": "31",
+              "shape": "poly",
+              "fillColor": "#eab54d4d", "strokeColor": "black",
+              "coords": [2490,1436,2412,1401,2469,530,2554,533] },
+
+
+        ],
+    };
+
+    const ratio = 5
+
+    for (const elem of MAP['areas']) {
+        elem['coords'] = elem['coords'].map(e => e / 5)
+    }
+
+    const [MAP_1, setMap] = React.useState({
+            name: 'my-map',
+            areas: []
+    })
+
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
@@ -174,6 +316,19 @@ function Palmares(props) {
 
 
     useEffect(() => {
+            if (widthSize &&  widthSize < 900) {
+                if (!mobile) {
+                    setOpenMenu(false)
+                }
+                setMobile(true)
+                console.log("Mobile")
+            } else {
+                setMobile(false)
+            }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [widthSize])
+
+    useEffect(() => {
         async function start() {
             await refreshVoie()
             await getPalmares()
@@ -208,15 +363,75 @@ function Palmares(props) {
 
     }
 
+    function handleDifficultyChange(event, difficulty) {
+        if (difficulty != selectedDifficulty) {
+            setSelectedDifficulty(difficulty)
+            if (value == 0) {
+                setVoies(saveVoies.filter((e) => palmares.find((p) => p == e.id))
+                    .filter((e) => e.difficulty >= difficulty[0] && e.difficulty <= difficulty[1]))
+            } else {
+                if (!palmares.length) {
+                    setVoies(saveVoies.filter((e) => e.difficulty >= difficulty[0] && e.difficulty <= difficulty[1]))
+                } else {
+                    setVoies(saveVoies.filter((e) => !palmares.find((p) => p == e.id))
+                        .filter((e) => e.difficulty >= difficulty[0] && e.difficulty <= difficulty[1]))
+                }
+            }
+        }
+    }
+
+    const handleClickOpen = (event, test) => {
+        const tmp = voies.find((e) => e.id == event.target.id)
+        setSelectedId(tmp.id)
+        const e = MAP.areas.find((e) => e.id == tmp.couloir_id)
+        e['active'] = false
+        e['preFillColor'] = '#eab54d4d'
+        console.log(tmp)
+        setMap({
+            name: 'my-map',
+            areas: [e]
+        })
+        setOpen(true);
+    };
+
 
     //<img src="https://lesgdo.org/photo/hdv/M6c6df169982e9963e49c.png" style={{ 'max-width': '100%', height: 'auto'}}/>
     return(
         <div className="productpage">
 
+
+
+            <Dialog open={open} onClose={handleClose} >
+                <DialogTitle id="alert-dialog-title"> {"Detail"} </DialogTitle>
+                <DialogContent>
+                    <Box sx={{ flexGrow: 1 }}>
+                        <Grid container spacing={2}>
+                            <ImageMapper src={URL} map={MAP_1} width={2604/ratio} height={1596/ratio} />
+                        </Grid>
+                    </Box>
+                </DialogContent>
+            </Dialog>
+
+
+
+
+
+
                 <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
                     <Tab label="Accomplies" {...a11yProps(0)} />
                     <Tab label="A faire" {...a11yProps(1)} />
                 </Tabs>
+
+                <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '40px' }}>
+                    <Grid container spacing={1}>
+                        <Grid item xs={2}>
+                            Difficulté
+                        </Grid>
+                        <Grid item xs={3}>
+                           <Slider onChange={handleDifficultyChange} value={selectedDifficulty} valueLabelDisplay="auto" step={1} min={3} max={9} marks={[{value:3, label:"3"}, {value:9, label:"9"}]} />
+                        </Grid>
+                    </Grid>
+                </Box>
 
             {!mobile && 
     <Paper sx={{ width: '85%', marginLeft: 'auto', marginRight: 'auto', marginTop: '50px' }}>
@@ -239,7 +454,7 @@ function Palmares(props) {
                             {[...Array(19).keys()].map((column) => {
                                 const tmp = voies.filter((e) => e.couloir_id == column + 1)[index]
                                 if (tmp) {
-                                    return <TableCell class="mycell" key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}>{difficultyFormat(tmp.difficulty)}</TableCell>
+                                    return <TableCell class="mycell" id={tmp.id} key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}  onClick={handleClickOpen} >{difficultyFormat(tmp.difficulty)}</TableCell>
                                 } else {
                                     return <TableCell> </TableCell>
                                 }
@@ -270,7 +485,7 @@ function Palmares(props) {
                                         {[...Array(12).keys()].map((column) => {
                                             const tmp = voies.filter((e) => e.couloir_id == column + 20)[index]
                                             if (tmp) {
-                                    return <TableCell class="mycell" key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}>{difficultyFormat(tmp.difficulty)}</TableCell>
+                                    return <TableCell class="mycell" id={tmp.id} key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}  onClick={handleClickOpen} >{difficultyFormat(tmp.difficulty)}</TableCell>
                                             } else {
                                                 return <TableCell></TableCell>
                                             }
@@ -305,7 +520,7 @@ function Palmares(props) {
                             {[...Array(7).keys()].map((column) => {
                                 const tmp = voies.filter((e) => e.couloir_id == column + 1)[index]
                                 if (tmp) {
-                                    return <TableCell class="mycell" key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}>{difficultyFormat(tmp.difficulty)}</TableCell>
+                                    return <TableCell class="mycell" id={tmp.id} key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}  onClick={handleClickOpen} >{difficultyFormat(tmp.difficulty)}</TableCell>
                                 } else {
                                     return <TableCell> </TableCell>
                                 }
@@ -322,20 +537,20 @@ function Palmares(props) {
                         <Table stickyHeader aria-label="sticky table">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell align="left" colSpan={11}> Devers </TableCell>
+                                    <TableCell align="left" colSpan={10}> Devers </TableCell>
                                 </TableRow>
                                 <TableRow>
-                                    {[...Array(11).keys()].map((column) => ( <TableCell key={column + 10} style={{top: 57}} > {column + 10} </TableCell>))}
+                                    {[...Array(10).keys()].map((column) => ( <TableCell key={column + 10} style={{top: 57}} > {column + 10} </TableCell>))}
                                 </TableRow>
                             </TableHead>
                             <TableBody>
 
                                                    {[...Array(10).keys()].map((index) => (
                         <TableRow  key={index}>
-                            {[...Array(11).keys()].map((column) => {
-                                const tmp = voies.filter((e) => e.couloir_id == column + 20)[index]
+                            {[...Array(10).keys()].map((column) => {
+                                const tmp = voies.filter((e) => e.couloir_id == column + 10)[index]
                                 if (tmp) {
-                                    return <TableCell class="mycell" key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}>{difficultyFormat(tmp.difficulty)}</TableCell>
+                                    return <TableCell class="mycell" id={tmp.id} key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}  onClick={handleClickOpen} >{difficultyFormat(tmp.difficulty)}</TableCell>
                                 } else {
                                     return <TableCell> </TableCell>
                                 }
@@ -367,7 +582,7 @@ function Palmares(props) {
                                         {[...Array(8).keys()].map((column) => {
                                             const tmp = voies.filter((e) => e.couloir_id == column + 20)[index]
                                             if (tmp) {
-                                    return <TableCell class="mycell" key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}>{difficultyFormat(tmp.difficulty)}</TableCell>
+                                    return <TableCell class="mycell" id={tmp.id} key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}  onClick={handleClickOpen} >{difficultyFormat(tmp.difficulty)}</TableCell>
                                             } else {
                                                 return <TableCell></TableCell>
                                             }
@@ -397,7 +612,7 @@ function Palmares(props) {
                                         {[...Array(4).keys()].map((column) => {
                                             const tmp = voies.filter((e) => e.couloir_id == column + 28)[index]
                                             if (tmp) {
-                                    return <TableCell class="mycell" key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}>{difficultyFormat(tmp.difficulty)}</TableCell>
+                                    return <TableCell class="mycell" id={tmp.id} key={tmp.id} style={{textAlign: 'center', backgroundColor:tmp.color, color: tmp.color == '#000000' ? 'white' : 'black'}}  onClick={handleClickOpen} >{difficultyFormat(tmp.difficulty)}</TableCell>
                                             } else {
                                                 return <TableCell></TableCell>
                                             }
@@ -410,19 +625,8 @@ function Palmares(props) {
                                     </Table>
                                 </TableContainer>
 
-
-                    {fixedWidth}
                             </Paper>
             }
-
-
-
-
-
-
-
-
-
                     </div> 
     )
 }
