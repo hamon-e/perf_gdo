@@ -135,7 +135,31 @@ async def get_crenaux(current_user: schemas.User = Depends(get_current_user), db
 
 @router.post("/crenau", response_model=List[schemas.Crenau])
 async def post_crenau(crenau: schemas.Crenau, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    crud.post_crenau(crenau, db, current_user)
+    crud.post_crenau(db, current_user, crenau)
+    return True
+
+@router.get("/userseance", response_model=List[schemas.UserSeance])
+async def get_userseance(date: date, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return crud.get_userseance(db, current_user, date)
+
+@router.get("/palmares", response_model=List[int])
+async def get_palmares(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return crud.get_palmares(db, current_user)
+
+@router.get("/userseance_days", response_model=List[datetime])
+async def get_userseance_days(date: date, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    tmp = crud.get_userseance_days(db, current_user, date)
+    print(tmp)
+    return tmp
+
+@router.post("/userseance", response_model=bool)
+async def post_userseance(userseance: schemas.UserSeance, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    crud.post_userseance(db, current_user, userseance)
+    return True
+
+@router.delete("/userseance", response_model=bool)
+async def delete_userseance(userseance_id: int, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    crud.delete_userseance(db, current_user, userseance_id)
     return True
 
 app.include_router(router)

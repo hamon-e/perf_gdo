@@ -87,3 +87,16 @@ class Crenau(BaseModel):
     class Config:
         orm_mode = True
 
+class UserSeance(BaseModel):
+    id: Optional[int]
+    date: date
+    voie_id: int
+    en_tete: bool
+    top: int
+    pause: int
+    voie: Optional[Voie]
+
+    class Config:
+        orm_mode = True
+
+

@@ -87,12 +87,12 @@ class UserSeance(Base):
     __tablename__ = "userseance"
 
     id = Column(Integer, primary_key=True, index=True)
+    date = Column(DateTime)
     user_id = Column(Integer, ForeignKey("user.id"))
-    seance_id = Column(Integer, ForeignKey("seance.id"))
     voie_id = Column(Integer, ForeignKey("voie.id"))
+    voie = relationship('Voie')
     en_tete = Column(Boolean)
-    top = Column(Boolean)
-    degaine = Column(Integer)
+    top = Column(Integer)
     pause = Column(Integer)
 
 class CrenauType(Base):

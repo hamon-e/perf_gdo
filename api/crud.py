@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, date
+
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
@@ -124,3 +125,29 @@ def post_crenau(db: Session, current_user: schemas.User, crenau: schemas.Crenau)
     del tmp['id']
     db.add(models.Crenau(**tmp))
     db.commit()
+
+def get_userseance(db: Session, current_user: schemas.User, date: date):
+    return db.query(models.UserSeance).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.date == date).all()
+
+def get_userseance_days(db: Session, current_user: schemas.User, date: date):
+    start = datetime(year=date.year, month=date.month, day=1)
+    end = start + timedelta(days=31)
+    tmp = db.query(models.UserSeance.date).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.date >= start).filter(models.UserSeance.date < end).distinct().all()
+    return [r.date for r in tmp]
+
+def post_userseance(db: Session, current_user: schemas.User, userseance: schemas.UserSeance):
+    tmp = userseance.dict()
+    del tmp['id']
+    del tmp['voie']
+    tmp['user_id'] = current_user.id
+    print(tmp)
+    db.add(models.UserSeance(**tmp))
+    db.commit()
+
+def delete_userseance(db: Session, current_user: schemas.User, userseance_id: int):
+   db.query(models.UserSeance).filter(models.UserSeance.id == userseance_id).delete()
+   db.commit()
+
+def get_palmares(db: Session, current_user: schemas.User):
+    tmp = db.query(models.UserSeance.voie_id).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.top == 100).filter(models.UserSeance.pause == 0).distinct().all()
+    return [r.voie_id for r in tmp]
