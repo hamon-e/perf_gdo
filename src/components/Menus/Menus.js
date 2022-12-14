@@ -193,13 +193,13 @@ const data3 = {
 
                     <Box sx={{ flexGrow: 1 }}>
                         <Grid container spacing={4}>
-                            <Grid item xs={6}>
+                            <Grid item xs={12} md={6}>
                                 <Line data={data} />
                             </Grid>
-                            <Grid item xs={3}>
+                            <Grid item xs={6} md={3}>
                                 <Doughnut data={data2} />
                             </Grid>
-                            <Grid item xs={3}>
+                            <Grid item xs={6} md={3}>
                                 <Doughnut data={data3} />
                             </Grid>
                         </Grid>
@@ -210,10 +210,10 @@ const data3 = {
 
                     <Box sx={{ flexGrow: 1 }}>
                         <Grid container spacing={2}>
-                            <Grid item xs={8}>
+                            <Grid item xs={12} md={8}>
                                 <Line data={data} />
                             </Grid>
-                            <Grid item xs={4}>
+                            <Grid item xs={4} md={4}>
                                 <Doughnut data={data2} />
                             </Grid>
                         </Grid>
@@ -224,10 +224,10 @@ const data3 = {
 
                     <Box sx={{ flexGrow: 1 }}>
                         <Grid container spacing={2}>
-                            <Grid item xs={8}>
+                            <Grid item xs={12} md={8}>
                                 <Line data={data} />
                             </Grid>
-                            <Grid item xs={4}>
+                            <Grid item xs={4} md={4}>
                                 <Doughnut data={data2} />
                             </Grid>
                         </Grid>
