@@ -1101,7 +1101,7 @@ function Products(props) {
                                 <List>
                                     { insertedRoutes.map((e) => 
                                         <ListItem disablePadding>
-                                                <Box sx={{ width: '4ch', height: '4ch', backgroundColor: e.voie.color, textAlign: 'center'}}  >
+                                                <Box sx={{ width: '4ch', height: '4ch', backgroundColor: e.voie.color, textAlign: 'center', color: e.voie.color == '#000000' ? 'white !important' : 'black'}}  >
                                                     <div style={{paddingTop: '5px'}}>{ difficultyFormat(e.voie.difficulty) }</div>
                                                 </Box>
                                                 <div style={{paddingLeft: '10px'}}>{"couloir: " + e.voie.couloir_id}</div>
