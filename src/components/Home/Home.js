@@ -110,6 +110,9 @@ function Home(props) {
                     <Typography sx={{ mb: 1.5 }} color="text.secondary">
                         Grimper en tete
                     </Typography>
+                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                        Faire de la dalle
+                    </Typography>
                 </CardContent>
             </Card>
                     </Grid>
@@ -128,6 +131,22 @@ function Home(props) {
                 </CardContent>
             </Card>
                     </Grid>
+                        <Grid item xs={5}>
+            <Card sx={{ minWidth: 275 }}>
+                <CardContent>
+                    <Typography sx={{ fontSize: 18 }} color="text.secondary" gutterBottom>
+                        Suggestions
+                    </Typography>
+                    <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                        dalle: 6a couloir 18
+                    </Typography>
+                   <Typography sx={{ mb: 1.5 }} color="text.secondary">
+                       devers: 6a couloir 14
+                    </Typography>
+                </CardContent>
+            </Card>
+                    </Grid>
+
 
  
                     </Grid>

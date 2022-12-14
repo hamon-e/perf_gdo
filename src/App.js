@@ -36,6 +36,8 @@ import Crenaux from './components/Crenaux/Crenaux';
 import Tryout from './components/Tryout/Tryout';
 import SignUpForm from './components/SignUpForm/SignUpForm';
 import Home from './components/Home/Home';
+import History from './components/History/History';
+import Palmares from './components/Palmares/Palmares';
 
 import {useContextObject} from './components/Context/Context';
 
@@ -246,6 +248,15 @@ export default function PersistentDrawerLeft(props) {
               <PrivateRoute path="/listevoies">
                     <ListVoie />
               </PrivateRoute>
+              <PrivateRoute path="/historique">
+                    <History />
+              </PrivateRoute>
+              <PrivateRoute path="/palmares">
+                    <Palmares />
+              </PrivateRoute>
+
+
+
               <PrivateRoute path="/crenaux">
                     <Crenaux/>
               </PrivateRoute>

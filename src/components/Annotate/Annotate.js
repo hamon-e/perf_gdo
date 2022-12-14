@@ -34,6 +34,7 @@ import MenuItem from '@mui/material/MenuItem';
 
 import InboxIcon from '@mui/icons-material/Inbox';
 import DraftsIcon from '@mui/icons-material/Drafts';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import Skeleton from '@mui/material/Skeleton';
 
@@ -61,6 +62,8 @@ import IconButton from '@mui/material/IconButton';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
+
+import { PickersDay } from '@mui/x-date-pickers/PickersDay';
 
 import {
   DataGrid,
@@ -132,7 +135,7 @@ var g_voies = [];
 const fixedWidth = window.innerWidth;
 
 function Products(props) {
-    const {isAdminHook, userHook, restaurantHook, headerTitleHook} = useContextObject();
+    const {isAdminHook, userHook, restaurantHook, headerTitleHook, openHook} = useContextObject();
     const [headerTitle, setHeaderTitle] = headerTitleHook;
 
     const [selectedDifficulty, setSelectedDifficulty] = React.useState(0);
@@ -145,9 +148,11 @@ function Products(props) {
     const [selectedPause, setSelectedPause] = React.useState(0);
 
     const [insertedRoutes, setInsertedRoutes] = React.useState([])
+    const [selectedDate, setSelectedDate] = React.useState(new Date())
 
     const [voies, setVoies] = React.useState([]);
 
+    const [openMenu, setOpenMenu] = openHook;
     const [open, setOpen] = React.useState(false);
 
     const [value, setValue] = React.useState(0);
@@ -156,6 +161,8 @@ function Products(props) {
 
 
     const [imageIndex, setImageIndex] = React.useState(0);
+
+    const [days, setDays] = React.useState([])
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
@@ -376,7 +383,7 @@ function Products(props) {
         ]
     }
     for (const elem of MAP_2['areas']) {
-        elem['coords'] = elem['coords'].map(e => e / 2.8)
+        elem['coords'] = elem['coords'].map(e => e / 3)
     }
 
 
@@ -420,7 +427,7 @@ function Products(props) {
     };
 
     for (const elem of MAP_3['areas']) {
-        elem['coords'] = elem['coords'].map(e => e / 2.8)
+        elem['coords'] = elem['coords'].map(e => e / 3)
     }
 
     const URL_4 = 'gdo-4.png';
@@ -451,6 +458,19 @@ function Products(props) {
     }
 
 
+    function formatDate(date) {
+        var d = new Date(date),
+            month = '' + (d.getMonth() + 1),
+            day = '' + d.getDate(),
+            year = d.getFullYear();
+
+        if (month.length < 2) 
+            month = '0' + month;
+        if (day.length < 2) 
+            day = '0' + day;
+
+        return [year, month, day].join('-');
+    }
 
 
     const handleClickOpen = (event) => {
@@ -503,17 +523,50 @@ function Products(props) {
         setSelectedPause(event.target.value)
     }
 
-    function submitForm() {
-        console.log(insertedRoutes)
-        const tmp = insertedRoutes
-        tmp.push({id: selectedId, tete: selectedTete, top: selectedTop, pause: selectedPause})
-        setInsertedRoutes(tmp)
-        console.log(tmp)
+    async function deleteRoute(event) {
+        //const tmp = insertedRoutes.filter((e) => e.id != event.target.parentElement.id)
+        //setInsertedRoutes(tmp)
+        var response = await axios.delete(API_BASE_URL+'/userseance?userseance_id=' + event.target.parentElement.id, { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
+        await refreshInsertedRoutes()
+    }
+
+    async function submitForm() {
+        //console.log(insertedRoutes)
+        //const tmp = insertedRoutes
+        //tmp.push({id: selectedId, tete: selectedTete, top: selectedTop, pause: selectedPause})
+        //setInsertedRoutes(tmp)
+        //console.log(tmp)
+        const payload = {
+            voie_id: selectedId,
+            en_tete: selectedTete,
+            top: selectedTop,
+            pause: selectedPause,
+            date: formatDate(selectedDate)
+        }
+
+        const config = {
+            headers: {
+                "Accept": "application/json, text/plain, */*",
+                "Content-Type": "application/json",
+                "Authorization": "Bearer "+localStorage.getItem(ACCESS_TOKEN_NAME)
+            }
+        }
+
+        var response = await axios.post(API_BASE_URL+'/userseance', payload, config)
+        await refreshInsertedRoutes()
 
         setSelectedTete(true)
+        setSelectedTop(100)
+        setSelectedPause(0)
         setSelectedColor(0)
         setSelectedNumber(0)
         setOpen(false)
+    }
+
+    async function refreshInsertedRoutes(date = null) {
+        const tmp = date ? date : selectedDate
+        var response = await axios.get(API_BASE_URL+'/userseance?date=' + formatDate(tmp), { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
+        await setInsertedRoutes(response.data)
     }
 
     async function refreshVoie() {
@@ -561,11 +614,20 @@ function Products(props) {
 
     }
 
+    async function getDays(date = null) {
+        const tmp = date ? date : selectedDate
+        var response = await axios.get(API_BASE_URL+'/userseance_days?date=' + formatDate(tmp), { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
+        await setDays(response.data)
+    }
+
+
 
 
     useEffect(() => {
         async function start() {
             await refreshVoie()
+            await refreshInsertedRoutes()
+            await getDays()
         }
         start()
         setHeaderTitle("Ajouter une Seance")
@@ -578,22 +640,14 @@ function Products(props) {
             lastMove = Date.now();
         }
         });
-        window.addEventListener('touchend', function(event) {
-            touchendY = event.changedTouches[0].clientY;
-        if(Date.now() - lastMove > 40) {
-            handleGesure();
-            lastMove = Date.now();
-        }
-        }, false); 
-        window.addEventListener('touchstart', function(event) {
-            touchstartY = event.changedTouches[0].clientY;
-        }, false);
-
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
-            if (widthSize < 900) {
+            if (widthSize &&  widthSize < 900) {
+                if (!mobile) {
+                    setOpenMenu(false)
+                }
                 setMobile(true)
                 console.log("Mobile")
             } else {
@@ -602,6 +656,19 @@ function Products(props) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [widthSize])
 
+
+
+    function touchstart(event) {
+      touchstartY = event.changedTouches[0].clientY;
+    }
+
+    function touchend(event) {
+        touchendY = event.changedTouches[0].clientY;
+        if(Date.now() - lastMove > 40) {
+            handleGesure();
+            lastMove = Date.now();
+        }
+    }
 
 
     function valuetext(value) {
@@ -681,25 +748,10 @@ function Products(props) {
             border: "2px solid green"
           }
 }}
-                                          MenuProps={{
-    PaperProps: {
-      sx: {
-        "& .MuiMenuItem-root.Mui-selected": {
-          backgroundColor: selectedColor
-        },
-        "& .MuiMenuItem-root:hover": {
-          backgroundColor: "hsla(120, 60%, 70%, 0.3);"
-        },
-        "& .MuiMenuItem-root.Mui-selected:hover": {
-          backgroundColor: "hsla(120, 60%, 70%, 0.3);"
-        }
-      }
-    }
-  }}
                                    >
                                             {selectedColors.map((e) => (
                                                 <MenuItem value={e}
-                                                sx={{backgroundColor: e, color: e == '#000000' ? 'white' : 'black'}}
+                                                sx={{backgroundColor: e + " !important", color: e == '#000000' ? 'white' : 'black'}}
                                             >{ difficultyFormat(voies.find((x) => x.couloir_id == selectedNumber && x.color == e).difficulty) }</MenuItem>
                                             ))}
                                     </Select>
@@ -757,6 +809,22 @@ function Products(props) {
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
                                 label="Date"
+                                value={selectedDate}
+                                onChange={(newValue) => {
+                                    setSelectedDate(newValue);
+                                    refreshInsertedRoutes(newValue)
+                                }}
+                                onMonthChange={getDays}
+                                renderDay={(day, _value, DayComponentProps) => {
+                                    const isSelected = !DayComponentProps.outsideCurrentMonth && days.find((e) => {
+                                        const tmp = new Date(e)
+                                        return tmp.getDate() == day.date()
+                                    })
+
+                                    return (
+                                        <PickersDay style={isSelected && {backgroundColor: 'rgba(255, 173, 173, 0.65)'}} {...DayComponentProps} />
+                                    );
+                                }}
                                 renderInput={(params) => <TextField {...params} />}
                             />
 
@@ -995,16 +1063,16 @@ function Products(props) {
 
                         </TabPanel>
 
-                        <TabPanel value={value} index={0}>
+                        <TabPanel value={value} index={0} >
 
                             {mobile &&
 
                             <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '' }}>
-                    <Grid container spacing={2}>
+                    <Grid container spacing={2}  onTouchStart={touchstart} onTouchEnd={touchend}>
 
                         {imageIndex == 0 && <ImageMapper src={URL_1} map={MAP_1} width={939/2.8} height={1596/2.8} onClick={areaClick}/> }
-                        {imageIndex == 1 && <ImageMapper src={URL_2} map={MAP_2} width={1056/2.8} height={1656/2.8} onClick={areaClick}/> }
-                        {imageIndex == 2 && <ImageMapper src={URL_3} map={MAP_3} width={1002/2.8} height={1690/2.8} onClick={areaClick}/> }
+                        {imageIndex == 1 && <ImageMapper src={URL_2} map={MAP_2} width={1056/3} height={1656/3} onClick={areaClick}/> }
+                        {imageIndex == 2 && <ImageMapper src={URL_3} map={MAP_3} width={1002/3} height={1690/3} onClick={areaClick}/> }
                         {imageIndex == 3 && <ImageMapper src={URL_4} map={MAP_4} width={903/2.8} height={1452/2.8} onClick={areaClick}/> }
                     </Grid>
 
@@ -1033,12 +1101,13 @@ function Products(props) {
                                 <List>
                                     { insertedRoutes.map((e) => 
                                         <ListItem disablePadding>
-                                            <ListItemButton>
-                                                <ListItemIcon>
-                                                    <InboxIcon />
-                                                </ListItemIcon>
-                                                <ListItemText primary={voies.find((tmp) => tmp.id == e.id).couloir_id +  ": " + voies.find((tmp) => tmp.id == e.id).difficulty +  ": " + voies.find((tmp) => tmp.id == e.id).color } />
-                                            </ListItemButton>
+                                                <Box sx={{ width: '4ch', height: '4ch', backgroundColor: e.voie.color, textAlign: 'center'}}  >
+                                                    <div style={{paddingTop: '5px'}}>{ difficultyFormat(e.voie.difficulty) }</div>
+                                                </Box>
+                                                <div style={{paddingLeft: '10px'}}>{"couloir: " + e.voie.couloir_id}</div>
+                                                <IconButton aria-label="delete" id={e.id} onClick={deleteRoute}>
+                                                    <DeleteIcon id={e.id}/>
+                                                </IconButton>
                                         </ListItem>
                                     )}
                                     </List>
