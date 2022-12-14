@@ -209,7 +209,9 @@ function History(props) {
                                         <div style={{paddingTop: '5px'}}>{ difficultyFormat(e.voie.difficulty) }</div>
                                     </Box>
                                     <div style={{paddingLeft: '10px'}}>{"couloir: " + e.voie.couloir_id}</div>
+                                    {e.pause != 0 && 
                                     <div style={{paddingLeft: '10px'}}>{"pause: " + e.pause}</div>
+                                    }
                                     {e.top != 100 && 
                                     <div style={{paddingLeft: '10px'}}>{"hauteur: " + e.top + "%"}</div>
                                     }

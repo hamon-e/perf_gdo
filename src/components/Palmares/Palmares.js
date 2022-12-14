@@ -138,7 +138,7 @@ function Palmares(props) {
         if (newValue == 0) {
             setVoies(saveVoies.filter((e) => palmares.find((p) => p == e.id)))
         } else {
-            setVoies(saveVoies.filter((e) => palmares.find((p) => p != e.id)))
+            setVoies(saveVoies.filter((e) => !palmares.length || palmares.find((p) => p != e.id)))
         }
     };
 
