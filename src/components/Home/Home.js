@@ -82,7 +82,7 @@ function Home(props) {
     return(
         <div className="productpage" style={{padding: '20px', width: '90%'}}>
                     <Grid container spacing={5}>
-                        <Grid item xs={5}>
+                        <Grid item md={5} xs={12}>
             <Card sx={{ minWidth: 275 }}>
                 <CardContent>
                     <Typography sx={{ fontSize: 18 }} color="text.secondary" gutterBottom>
@@ -98,7 +98,7 @@ function Home(props) {
             </Card>
 
                     </Grid>
-                        <Grid item xs={5}>
+                        <Grid item md={5} xs={12}>
             <Card sx={{ minWidth: 275 }}>
                 <CardContent>
                     <Typography sx={{ fontSize: 18 }} color="text.secondary" gutterBottom>
@@ -116,7 +116,7 @@ function Home(props) {
                 </CardContent>
             </Card>
                     </Grid>
-                        <Grid item xs={5}>
+                        <Grid item md={5} xs={12}>
             <Card sx={{ minWidth: 275 }}>
                 <CardContent>
                     <Typography sx={{ fontSize: 18 }} color="text.secondary" gutterBottom>
@@ -131,7 +131,7 @@ function Home(props) {
                 </CardContent>
             </Card>
                     </Grid>
-                        <Grid item xs={5}>
+                        <Grid item md={5} xs={12}>
             <Card sx={{ minWidth: 275 }}>
                 <CardContent>
                     <Typography sx={{ fontSize: 18 }} color="text.secondary" gutterBottom>

@@ -38,6 +38,7 @@ import SignUpForm from './components/SignUpForm/SignUpForm';
 import Home from './components/Home/Home';
 import History from './components/History/History';
 import Palmares from './components/Palmares/Palmares';
+import Palette from './components/Palette/Palette';
 
 import {useContextObject} from './components/Context/Context';
 
@@ -260,6 +261,10 @@ export default function PersistentDrawerLeft(props) {
               <PrivateRoute path="/crenaux">
                     <Crenaux/>
               </PrivateRoute>
+              <PrivateRoute path="/palettecouleurs">
+                    <Palette />
+              </PrivateRoute>
+
 
             </Switch>
             <AlertComponent errorMessage={errorMessage} hideError={updateErrorMessage}/>

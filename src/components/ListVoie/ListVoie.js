@@ -109,6 +109,7 @@ function ListVoie(props) {
   const [createDifficulty, setCreateDifficulty] = React.useState(0);
 
   const [createColor, setCreateColor] = useState();
+  const [palette, setPalette] = useState({});
 
   const handleCreateColorChange = (value) => {
     setCreateColor(value);
@@ -217,6 +218,13 @@ function ListVoie(props) {
         setOpenCreate(false)
     }
 
+    async function getColors() {
+        var response = await axios.get(API_BASE_URL+'/colors', { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
+        const tmp = response.data.reduce((pv, cv) => {pv[cv] = cv ; return pv}, {})
+        console.log(tmp)
+        setPalette(tmp)
+    }
+
        
     useEffect(() => {
         async function start() {
@@ -226,6 +234,7 @@ function ListVoie(props) {
                 setSelectedVersion(response.data[0].id)
                 refreshVoie(response.data[0].id)
             }
+            await getColors()
 
         }
         start()
@@ -328,7 +337,7 @@ const styles = theme => ({
 
                                         </div>
                                 <div>
-                                    <ColorPicker value={createColor} onChange={handleCreateColorChange} defaultValue="transparent"/>
+                                    <ColorPicker palette={palette} value={createColor} onChange={handleCreateColorChange} defaultValue="transparent"/>
                                     </div>
 
 

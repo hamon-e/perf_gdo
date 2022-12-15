@@ -385,7 +385,7 @@ function Palmares(props) {
         setSelectedId(tmp.id)
         const e = MAP.areas.find((e) => e.id == tmp.couloir_id)
         e['active'] = false
-        e['preFillColor'] = '#eab54d4d'
+        e['preFillColor'] = 'rgba(255, 173, 173, 0.7)'
         console.log(tmp)
         setMap({
             name: 'my-map',
@@ -424,10 +424,10 @@ function Palmares(props) {
 
                 <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '40px' }}>
                     <Grid container spacing={1}>
-                        <Grid item xs={2}>
+                        <Grid item md={2} xs={4}>
                             Difficulté
                         </Grid>
-                        <Grid item xs={3}>
+                        <Grid item md={3} xs={8}>
                            <Slider onChange={handleDifficultyChange} value={selectedDifficulty} valueLabelDisplay="auto" step={1} min={3} max={9} marks={[{value:3, label:"3"}, {value:9, label:"9"}]} />
                         </Grid>
                     </Grid>
