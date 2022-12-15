@@ -80,6 +80,7 @@ class Voie(Base):
     couloir = relationship("Couloir")
     color = Column(String)
     difficulty = Column(Float)
+    active = Column(Boolean)
 
     versionvoie_id = Column(Integer, ForeignKey("versionvoie.id"))
 

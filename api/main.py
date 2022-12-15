@@ -162,4 +162,9 @@ async def delete_userseance(userseance_id: int, current_user: schemas.User = Dep
     crud.delete_userseance(db, current_user, userseance_id)
     return True
 
+@router.get("/colors", response_model=List[str])
+async def get_colors(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return crud.get_colors(db, current_user)
+
+
 app.include_router(router)

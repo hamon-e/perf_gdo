@@ -151,3 +151,7 @@ def delete_userseance(db: Session, current_user: schemas.User, userseance_id: in
 def get_palmares(db: Session, current_user: schemas.User):
     tmp = db.query(models.UserSeance.voie_id).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.top == 100).filter(models.UserSeance.pause == 0).distinct().all()
     return [r.voie_id for r in tmp]
+
+def get_colors(db: Session, current_user: schemas.User):
+    tmp = db.query(models.Voie.color).distinct().all()
+    return [r.color for r in tmp]
