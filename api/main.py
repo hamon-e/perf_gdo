@@ -93,6 +93,10 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 def read_users(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return current_user
 
+@router.get("/users/", response_model=List[schemas.User])
+def read_users(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return crud.get_users(db)
+
 @router.get("/seances", response_model=List[schemas.Seance])
 async def get_seances(start: datetime, end: datetime, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     seances = crud.get_seances(db, current_user, start, end)

@@ -25,6 +25,9 @@ ALGORITHM = "HS256"
 def get_user(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
+def get_users(db: Session):
+    return db.query(models.User).all()
+
 def new_user(db: Session, user: schemas.User):
     tmp = user.dict()
     del tmp['category']
