@@ -659,11 +659,11 @@ function Products(props) {
 
 
     function touchstart(event) {
-      touchstartY = event.changedTouches[0].clientY;
+      touchstartY = event.changedTouches[0].clientX;
     }
 
     function touchend(event) {
-        touchendY = event.changedTouches[0].clientY;
+        touchendY = event.changedTouches[0].clientX;
         if(Date.now() - lastMove > 40) {
             handleGesure();
             lastMove = Date.now();
