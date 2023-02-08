@@ -194,7 +194,7 @@ export default function PersistentDrawerLeft(props) {
           </Link>
           ))}
 
-          {isAdmin && ['Liste Voies', 'Palette Couleurs', 'Statistiques', 'Users'].map((text, index) => (
+          {isAdmin && ['Liste Voies', 'Statistiques', 'Users'].map((text, index) => (
           <Link to={"/" + text.toLowerCase().replace(/ /g,'') }>
             <ListItem key={text} disablePadding>
               <ListItemButton>
@@ -258,11 +258,12 @@ export default function PersistentDrawerLeft(props) {
 
 
 
+              <PrivateRoute path="/users">
+                    <Users />
+              </PrivateRoute>
+
               <PrivateRoute path="/crenaux">
                     <Crenaux/>
-              </PrivateRoute>
-              <PrivateRoute path="/palettecouleurs">
-                    <Palette />
               </PrivateRoute>
 
 

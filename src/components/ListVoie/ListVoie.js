@@ -170,6 +170,20 @@ function ListVoie(props) {
         setOpenCreate(true)
     }
 
+    async function handleNewVersion(event) {
+        const payload = {
+            date: new Date()
+        }
+        await axios.post(API_BASE_URL+'/versionvoie', payload, { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
+        var response = await axios.get(API_BASE_URL+'/versionvoie', { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
+        setVersionVoie(response.data)
+        if (response.data[0]) {
+            setSelectedVersion(response.data[0].id)
+            refreshVoie(response.data[0].id)
+        }
+    }
+
+
     async function submitForm() {
         const payload = {
             id: selectedId,
@@ -370,7 +384,11 @@ const styles = theme => ({
 
 
 
-</Grid>
+                    </Grid>
+
+                    <Grid item xs={2}>
+        <Fab aria-label='Add' color='primary'> <IconButton size="large" onClick={handleNewVersion} > <AddIcon /> </IconButton> </Fab>
+                    </Grid>
 
 
                     </Grid>
