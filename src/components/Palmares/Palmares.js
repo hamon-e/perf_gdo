@@ -277,6 +277,10 @@ function Palmares(props) {
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
+        console.log(newValue)
+        if (newValue == 0) {
+            setVoies(saveVoies)
+        } 
         if (newValue == 1) {
             setVoies(saveVoies.filter((e) => palmares.find((p) => p == e.id)))
         } 
@@ -287,10 +291,6 @@ function Palmares(props) {
                 setVoies(saveVoies.filter((e) => !palmares.find((p) => p == e.id)))
             }
         }
-        if (newValue == 0) {
-            setVoies(saveVoies)
-        } 
-
     };
 
     function formatDate(date) {
@@ -311,12 +311,12 @@ function Palmares(props) {
     async function refreshVoie() {
         var response = await axios.get(API_BASE_URL+'/voies', { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
         saveVoies = response.data
+        setVoies(response.data)
     }
 
     async function getPalmares() {
         var response = await axios.get(API_BASE_URL+'/palmares', { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
         palmares = response.data
-        setVoies(saveVoies.filter((e) => palmares.find((p) => p == e.id)))
     }
 
 
