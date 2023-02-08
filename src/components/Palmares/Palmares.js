@@ -277,17 +277,17 @@ function Palmares(props) {
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
-        if (newValue == 0) {
+        if (newValue == 1) {
             setVoies(saveVoies.filter((e) => palmares.find((p) => p == e.id)))
         } 
-        if (newValue == 1) {
+        if (newValue == 2) {
             if (!palmares.length) {
                 setVoies(saveVoies)
             } else {
                 setVoies(saveVoies.filter((e) => !palmares.find((p) => p == e.id)))
             }
         }
-        if (newValue == 2) {
+        if (newValue == 0) {
             setVoies(saveVoies)
         } 
 
@@ -423,9 +423,9 @@ function Palmares(props) {
 
 
                 <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-                    <Tab label="Toutes" {...a11yProps(2)} />
-                    <Tab label="Accomplies" {...a11yProps(0)} />
-                    <Tab label="A faire" {...a11yProps(1)} />
+                    <Tab label="Toutes" {...a11yProps(0)} />
+                    <Tab label="Accomplies" {...a11yProps(1)} />
+                    <Tab label="A faire" {...a11yProps(2)} />
                 </Tabs>
 
                 <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '40px' }}>
