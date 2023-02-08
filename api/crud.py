@@ -100,6 +100,7 @@ def get_voies(db: Session, current_user: schemas.User, version_id: int):
 
 def post_voie(db: Session, current_user: schemas.User, voie: schemas.Voie):
     tmp = voie.dict()
+    tmp['active'] = True
     del tmp['couloir']
     id = tmp['id']
     del tmp['id']
