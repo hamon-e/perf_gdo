@@ -181,7 +181,7 @@ export default function PersistentDrawerLeft(props) {
             </ListItem>
           </Link>
           ))}
-          {!isAdmin && ['Ma Progression', 'Ma Seance', 'Historique', 'Palmares'].map((text, index) => (
+          {!isAdmin && ['Ma Seance', 'Historique', 'Palmares', 'Ma Progression'].map((text, index) => (
           <Link to={"/" + text.toLowerCase().replace(/ /g,'') }>
             <ListItem key={text} disablePadding>
               <ListItemButton>
