@@ -86,8 +86,12 @@ def get_seances(db: Session, current_user: schemas.User, start: date, end: date)
     print(db.query(models.Seance).filter(models.Seance.start >= start).filter(models.Seance.start <= end).all())
     return db.query(models.Seance).filter(models.Seance.start >= start).filter(models.Seance.start <= end).all()
 
-def get_versionvoie(db: Session, current_user: schemas.User):
-    return db.query(models.VersionVoie).order_by(models.VersionVoie.date).all()
+def get_versionvoie(db: Session):
+    return db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).all()
+
+def post_versionvoie(db: Session, date: datetime):
+    db.add(models.VersionVoie(date=date))
+    db.commit()
 
 def get_voies(db: Session, current_user: schemas.User, version_id: int):
     if version_id == -1:

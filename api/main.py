@@ -104,8 +104,13 @@ async def get_seances(start: datetime, end: datetime, current_user: schemas.User
 
 @router.get("/versionvoie", response_model=List[schemas.VersionVoie])
 async def get_versionvoie(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    versionvoie = crud.get_versionvoie(db, current_user)
+    versionvoie = crud.get_versionvoie(db)
     return versionvoie
+
+@router.post("/versionvoie", response_model=bool)
+async def post_versionvoie(date: schemas.VersionVoie, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    crud.post_versionvoie(db, date.date)
+    return True
 
 @router.get("/voies", response_model=List[schemas.Voie])
 async def get_voies(version_id: int = -1, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):

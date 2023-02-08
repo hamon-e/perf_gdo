@@ -43,7 +43,7 @@ class Seance(BaseModel):
         orm_mode = True
 
 class VersionVoie(BaseModel):
-    id: int
+    id: Optional[int]
     date: datetime
 
     class Config:
