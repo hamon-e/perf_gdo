@@ -155,13 +155,13 @@ def compute_dashboard_coverage(db: Session, current_user: schemas.User):
     else:
         tmp['coverage_devers'] = 1
     if tmp['coverage_devers'] == 0:
-        tmp['coverage_devers'] == 0.01
+        tmp['coverage_devers'] = 0.01
     if tmp['coverage_9m'] == 0:
-        tmp['coverage_9m'] == 0.01
+        tmp['coverage_9m'] = 0.01
     if tmp['coverage_diedre'] == 0:
-        tmp['coverage_diedre'] == 0.01
+        tmp['coverage_diedre'] = 0.01
     if tmp['coverage_dalle'] == 0:
-        tmp['coverage_dalle'] == 0.01
+        tmp['coverage_dalle'] = 0.01
 
     tmp['tete_ratio'] = round(tmp['tete'] / (tmp['tete'] + tmp['moulinette']), 2)
     return tmp
@@ -170,7 +170,7 @@ def compute_dashboard_nbr_of_seances(db: Session, current_user: schemas.User):
     start = datetime.today().replace(day=1).replace(hour=1)
     next_month = datetime.today().replace(day=28).replace(hour=1) + timedelta(days=4)
     end = next_month - timedelta(days=next_month.day)
-    nbr_of_seances = db.query(models.UserSeance.date).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.date >= start).filter(models.UserSeance.date <= end).distinct.count()
+    nbr_of_seances = db.query(models.UserSeance.date).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.date >= start).filter(models.UserSeance.date <= end).distinct().count()
     print(nbr_of_seances)
     return nbr_of_seances
 
