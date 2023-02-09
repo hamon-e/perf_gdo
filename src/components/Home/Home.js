@@ -103,10 +103,15 @@ function Home(props) {
     const [dataDD, setDataDD] = React.useState({labels: [], datasets: []});
     const [dataDDD, setDataDDD] = React.useState({labels: [], datasets: []});
 
-    const [percent, setPercent] = React.useState("75%")
-    const [tete, setTete] = React.useState("30%")
-    const [maxlevel, setMaxLevel] = React.useState("6a")
+    const [seance, setSeance] = React.useState(-1)
+    const [percent, setPercent] = React.useState(-1)
+    const [percents, setPercents] = React.useState([])
+    const [tete, setTete] = React.useState(-1)
+    const [maxlevel, setMaxLevel] = React.useState(-1)
     const URL = 'gdo.png';
+
+    const [mobile, setMobile] = React.useState(false);
+    const [widthSize, setWidthSize] = React.useState(window.innerWidth);
 
     const MAP = {
         name: 'my-map',
@@ -231,7 +236,7 @@ function Home(props) {
 
         ],
     };
-    const ratio = window.innerWidth > 900 ? 4 : 7
+    const ratio = window.innerWidth > 900 ? 4 : 11.5
 
     for (const elem of MAP['areas']) {
 
@@ -244,6 +249,30 @@ function Home(props) {
     })
 
 
+    function difficultyFormat(difficulty) {
+        const floor = Math.floor(difficulty)
+        const decimal = difficulty - floor
+        if (decimal >= 0.24 && decimal <= 0.26) {
+            return floor + "a"
+        }
+        if (decimal >= 0.34 && decimal <= 0.36) {
+            return floor + "a+"
+        }
+        if (decimal >= 0.49 && decimal <= 0.51) {
+            return floor + "b"
+        }
+        if (decimal >= 0.59 && decimal <= 0.61) {
+            return floor + "b+"
+        }
+        if (decimal >= 0.74 && decimal <= 0.76) {
+            return floor + "c"
+        }
+        if (decimal >= 0.84 && decimal <= 0.86) {
+            return floor + "c+"
+        }
+        return "Bug"
+
+    }
     
     const plugin ={
     id: 'text',
@@ -257,7 +286,7 @@ function Home(props) {
     ctx.font = fontSize + "em sans-serif";
     ctx.textBaseline = "middle";
 
-    var text = percent,
+    var text = percent * 100 + "%",
         textX = Math.round((width - ctx.measureText(text).width) / 2),
         textY = height / 2;
 
@@ -279,7 +308,7 @@ function Home(props) {
     ctx.font = fontSize + "em sans-serif";
     ctx.textBaseline = "middle";
 
-    var text = maxlevel,
+    var text = difficultyFormat(maxlevel),
         textX = Math.round((width - ctx.measureText(text).width) / 2),
         textY = height / 2;
 
@@ -300,7 +329,7 @@ function Home(props) {
     ctx.font = fontSize + "em sans-serif";
     ctx.textBaseline = "middle";
 
-    var text = tete,
+    var text = tete * 100 + "%",
         textX = Math.round((width - ctx.measureText(text).width) / 2),
         textY = height / 2;
 
@@ -382,29 +411,54 @@ function pickHexO(color1, color2, weight) {
     setShowBar(true)
 
     useEffect(() => {
+            if (widthSize &&  widthSize < 900) {
+                if (!mobile) {
+                    //setOpenMenu(false)
+                }
+                setMobile(true)
+                console.log("Mobile")
+            } else {
+                setMobile(false)
+            }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [widthSize])
+
+    useEffect(() => {
         async function start() {
+            const response = await axios.get(API_BASE_URL+'/dashboard', { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
+            const data = response.data
+            setMaxLevel(data.max_lvl)
+            setTete(data.tete_ratio)
+            setPercent(data.coverage)
+            setSeance(data.nbr_of_seances)
+            const tmp_percents = [data.coverage_dalle, data.coverage_devers, data.coverage_diedre, data.coverage_9m]
+            setPercents(tmp_percents)
+            console.log(response)
+            console.log(tmp_percents)
+
             const tmp = {
                 labels: ['Dalle', 'Diedre', 'Devers', '9m'], 
   datasets: [
     {
       label: '',
-      data: [100, 2, 10, 5],
-      backgroundColor: [pickHex([108, 174, 59], [170, 42, 42], 1), pickHex([108, 174, 59], [170, 42, 42], 0.02), pickHex([108, 174, 59], [170, 42, 42], 0.1), pickHex([108, 174, 59], [170, 42, 42], 0.8)],
+        data: tmp_percents.map(e => e * 100),
+      backgroundColor: tmp_percents.map(e => pickHex([108, 174, 59], [170, 42, 42], e))
     },
 
   ]}
+
             setData(tmp)
 
             console.log("Here")
             console.log(        pickHex([108, 174, 59], [170, 42, 42], 0.59),)
             const tmp2 = {
-            labels: ['Red'],
+            labels: ['Coverage'],
   datasets: [
     {
-      label: '# of Votes',
-      data: [59, 100-59],
+      label: 'Coverage',
+      data: [data.coverage * 100, 100-data.coverage* 100],
       backgroundColor: [
-        pickHex([108, 174, 59], [170, 42, 42], 1),
+        pickHex([108, 174, 59], [170, 42, 42], data.coverage),
         'rgba(255, 255, 255, 1)',
       ],
       borderWidth: 1,
@@ -416,8 +470,8 @@ function pickHexO(color1, color2, weight) {
             labels: ['Tete', 'Moulinette'],
   datasets: [
     {
-      label: '# of Votes',
-      data: [30, 100-30],
+      label: 'Tete',
+      data: [data.tete_ratio*100, 100-data.tete_ratio*100],
       backgroundColor: [
         pickHex([108, 174, 59], [170, 42, 42], 1),
         pickHex([108, 174, 59], [170, 42, 42], 0),
@@ -436,9 +490,9 @@ function pickHexO(color1, color2, weight) {
   datasets: [
     {
       label: '# of Votes',
-        data: [2*100/4.5, 100-2*100/4.5],
+        data: [(data.max_lvl - 2)*100/4.5, 100-(data.max_lvl- 2)*100/4.5],
       backgroundColor: [
-          pickHex([108, 174, 59], [170, 42, 42], 2.0/4.5),
+          pickHex([108, 174, 59], [170, 42, 42], (data.max_lvl- 2.0)/4.5),
         'rgba(255, 255, 255, 1)',
       ],
       borderWidth: 1,
@@ -489,48 +543,68 @@ function renderCount(nbr) {
         <div className="productpage" style={{padding: '20px', width: '90%'}}>
 
                     <Grid container spacing={2}>
-                        <Grid item md={3} xs={6}>
+                        <Grid item md={3} xs={7}>
                             <Card sx={{}}>
                 <CardContent>
-                                <div style={{height:'200px',width:'150px', marginLeft: 'auto', marginRight: 'auto'}}>
-                        <Doughnut ref={chartRef} data={dataD} options={options} plugins={[plugin]}/>
+       <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+           Voies realisees
+        </Typography>
+                                <div style={{height:'200px',width: !mobile && '150px' || '150px', marginLeft: 'auto', marginRight: 'auto'}}>
+                                    {percent != -1 && <Doughnut ref={chartRef} data={dataD} options={options} plugins={[plugin]}/>}
                         </div>
 
-                                <div style={{height:'500px',width:'110px', marginLeft: 'auto', marginRight: 'auto', paddingTop: '20px'}}>
-                            <Bar options={options} data={data}  />
+                                <div style={{height: !mobile && '500px' || '230px',width:'110px', marginLeft: 'auto', marginRight: 'auto', paddingTop: '20px'}}>
+                                    <Bar options={options} data={data}  />
                         </div>
                 </CardContent>
             </Card>
 
                     </Grid>
-                        <Grid item md={9} xs={6}>
+                        <Grid item md={9} xs={5}>
 
                             <Grid container columnSpacing={3} rowSpacing={4}>
                                 <Grid item md={4} xs={11}>
-                                    <Card sx={{ minWidth: 250 }}>
+                                    <Card sx={{ minWidth: !mobile && 250 || 160 }}>
                                         <CardContent>
-                                            <Doughnut data={dataDD} options={options} plugins={[pluginTete]}/>
+       <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+           Grimpe en Tete
+        </Typography>
+        <div>
+
+            {tete != -1 && <Doughnut data={dataDD} options={options} plugins={[pluginTete]}/>}
+                                        </div>
                                         </CardContent>
                                     </Card>
                                 </Grid>
                                 <Grid item md={2} xs={1}>
                                 </Grid>
                                 <Grid item md={4} xs={11}>
-                                    <Card sx={{ minWidth: 250 }}>
+                                    <Card sx={{ minWidth: !mobile && 250 || 160 }}>
                                         <CardContent>
-                                            <Doughnut data={dataDDD} options={options} plugins={[pluginMax]}/>
+       <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+           Niveau maximum
+        </Typography>
+
+        <div>
+            {maxlevel != -1 && <Doughnut data={dataDDD} options={options} plugins={[pluginMax]}/>}
+                                        </div>
                                         </CardContent>
                                     </Card>
                                 </Grid>
 
                             </Grid>
 
+                            {!mobile && 
+                                <div>
                             <Grid item md={10} xs={12}>
-                                <Card sx={{ minWidth: 275, textAlign: 'center'}}>
+                                <Card sx={{  minWidth: !mobile && 275 || 160 , textAlign: 'center'}}>
                                     <CardContent>
+
+                                        {seance != -1 && 
+       <Typography sx={{ fontSize: 22 }} color="text.secondary" >
                                         <CountUp
                                         start={0}
-                                        end={5}
+                                        end={seance}
                                         duration={0.5}
                                         separator=" "
                                         decimals={0}
@@ -542,13 +616,62 @@ function renderCount(nbr) {
                                         //return val
                                         //}}
                                         />
+
+        </Typography>
+                                        }
                                         </CardContent>
                                  </Card>
                             </Grid>
                             <Grid item md={10} xs={12} sx={{paddingTop: '10px'}}>
-                                <Card sx={{ minWidth: 275 }}>
+                                <Card sx={{ minWidth: !mobile && 275 || 150 }}>
                                     <CardContent>
-                                        <Typography sx={{ fontSize: 18 }} color="text.secondary" gutterBottom>
+       <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
+                                            Suggestions
+        </Typography>
+
+                                        <div style={{marginLeft: 'auto', marginRight: 'auto', textAlign: 'center', display: 'flex', alignSelf: 'center', alignItems: 'center' }}>
+                                        <ImageMapper src={URL} map={MAP_1} width={2604/ratio} height={1596/ratio} />
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        </div>
+                            }
+                        </Grid>
+                        {mobile &&
+                                <div style={{paddingTop: '10px'}}>
+                            <Grid item md={10} xs={12}>
+                                <Card sx={{  minWidth: '90vi' , textAlign: 'center'}}>
+                                    <CardContent>
+
+                                        {seance != -1 && 
+                                        <Typography sx={{ fontSize: 14 }} color="text.secondary" >
+                                        <CountUp
+                                        start={0}
+                                        end={seance}
+                                        duration={0.5}
+                                        separator=" "
+                                        decimals={0}
+                                        delay={0}
+                                        decimal=","
+                                        suffix=" Seances enregistrees pour ce mois"
+                                        //formattingFn={(val) => {
+                                        //console.log(val)
+                                        //return val
+                                        //}}
+                                        />
+
+                                        </Typography>
+                                        }
+                                        </CardContent>
+
+                                 </Card>
+                            </Grid>
+
+                            <Grid item md={10} xs={12} sx={{paddingTop: '10px'}}>
+                                <Card sx={{ minWidth: !mobile && 275 || 150 }}>
+                                    <CardContent>
+                                        <Typography sx={{ fontSize: 14 }} color="text.secondary" gutterBottom>
                                             Suggestions
                                         </Typography>
                                         <div style={{marginLeft: 'auto', marginRight: 'auto', textAlign: 'center', display: 'flex', alignSelf: 'center', alignItems: 'center' }}>
@@ -557,7 +680,9 @@ function renderCount(nbr) {
                                     </CardContent>
                                 </Card>
                             </Grid>
-                        </Grid>
+                        </div>
+
+                        }
 
                     </Grid>
                 </div> 

@@ -372,6 +372,9 @@ function Palmares(props) {
         if (difficulty != selectedDifficulty) {
             setSelectedDifficulty(difficulty)
             if (value == 0) {
+                setVoies(saveVoies.filter((e) => e.difficulty >= difficulty[0] && e.difficulty <= difficulty[1]))
+            }
+            else if (value == 1) {
                 setVoies(saveVoies.filter((e) => palmares.find((p) => p == e.id))
                     .filter((e) => e.difficulty >= difficulty[0] && e.difficulty <= difficulty[1]))
             } else {
