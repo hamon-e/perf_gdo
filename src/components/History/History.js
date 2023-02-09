@@ -293,7 +293,9 @@ function History(props) {
         const tmp = date ? date : selectedDate
         var response = await axios.get(API_BASE_URL+'/userseance_days?date=' + formatDate(tmp), { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
         await setDays(response.data)
-        setSelectedDate(response.data[response.data.length - 1])
+        setSelectedDate(date)
+        if (!date)
+            setSelectedDate(response.data[response.data.length - 1])
         await refreshInsertedRoutes(response.data[response.data.length - 1])
     }
 
