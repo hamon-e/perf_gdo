@@ -491,9 +491,9 @@ function pickHexO(color1, color2, weight) {
   datasets: [
     {
       label: '# of Votes',
-        data: [(data.max_lvl - 2)*100/4.5, 100-(data.max_lvl- 2)*100/4.5],
+        data: [(data.max_lvl - 4)*100/4.5, 100-(data.max_lvl- 4)*100/4.5],
       backgroundColor: [
-          pickHex([108, 174, 59], [170, 42, 42], (data.max_lvl- 2.0)/4.5),
+          pickHex([108, 174, 59], [170, 42, 42], (data.max_lvl- 4.0)/4.5),
         'rgba(255, 255, 255, 1)',
       ],
       borderWidth: 1,
