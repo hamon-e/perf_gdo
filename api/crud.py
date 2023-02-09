@@ -82,6 +82,19 @@ def get_current_user(db: Session, token: str):
         raise credentials_exception
     return user
 
+def get_dashboard(db: Session, current_user: schemas.User):
+    tmp = {
+    'max_lvl': 7.35,
+    'tete_ratio': 0.30,
+    'coverage': 0.50,
+    'coverage_dalle': 0.10,
+    'coverage_devers': 0.20,
+    'coverage_diedre': 0.50,
+    'coverage_9m': 0.70,
+    'nbr_of_seances': 7
+    }
+    return tmp
+
 def get_seances(db: Session, current_user: schemas.User, start: date, end: date):
     print(db.query(models.Seance).filter(models.Seance.start >= start).filter(models.Seance.start <= end).all())
     return db.query(models.Seance).filter(models.Seance.start >= start).filter(models.Seance.start <= end).all()

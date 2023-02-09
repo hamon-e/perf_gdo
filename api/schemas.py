@@ -61,6 +61,16 @@ class Couloir(BaseModel):
     class Config:
         orm_mode = True
 
+class Dashboard(BaseModel):
+    max_lvl: float
+    tete_ratio: float
+    coverage: float
+    coverage_dalle: float
+    coverage_devers: float
+    coverage_diedre: float
+    coverage_9m: float
+    nbr_of_seances: int
+
 class Voie(BaseModel):
     id: Optional[int]
     couloir: Optional[Couloir]

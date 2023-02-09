@@ -93,6 +93,10 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 def read_users(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return current_user
 
+@router.get("/dashboard", response_model=schemas.Dashboard)
+async def get_voies(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return crud.get_dashboard(db, current_user)
+
 @router.get("/users/", response_model=List[schemas.User])
 def read_users(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return crud.get_users(db)
@@ -116,6 +120,7 @@ async def post_versionvoie(date: schemas.VersionVoie, current_user: schemas.User
 async def get_voies(version_id: int = -1, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     versionvoie = crud.get_voies(db, current_user, version_id)
     return versionvoie
+
 
 @router.post("/voie", response_model=bool)
 async def post_voie(voie: schemas.Voie, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
