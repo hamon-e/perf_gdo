@@ -135,26 +135,26 @@ def compute_dashboard_coverage(db: Session, current_user: schemas.User):
         else:
             nbr['nbr_devers'] = nbr['nbr_devers'] + 1
     if nbr['nbr'] != 0:
-        tmp['coverage'] = tmp['coverage'] / nbr['nbr']
+        tmp['coverage'] = round(tmp['coverage'] / nbr['nbr'], 2)
     else:
         tmp['coverage'] = 1
     if nbr['nbr_diedre'] != 0:
-        tmp['coverage_diedre'] = tmp['coverage_diedre'] / nbr['nbr_diedre']
+        tmp['coverage_diedre'] = round(tmp['coverage_diedre'] / nbr['nbr_diedre'], 2)
     else:
         tmp['coverage_diedre'] = 1
     if nbr['nbr_dalle'] != 0:
-        tmp['coverage_dalle'] = tmp['coverage_dalle'] / nbr['nbr_dalle']
+        tmp['coverage_dalle'] = round(tmp['coverage_dalle'] / nbr['nbr_dalle'], 2)
     else:
         tmp['coverage_dalle'] = 1
     if nbr['nbr_9m'] != 0:
-        tmp['coverage_9m'] = tmp['coverage_9m'] / nbr['nbr_9m']
+        tmp['coverage_9m'] = round(tmp['coverage_9m'] / nbr['nbr_9m'], 2)
     else:
         tmp['coverage_9m'] = 1
     if nbr['nbr_devers'] != 0:
-        tmp['coverage_devers'] = tmp['coverage_devers'] / nbr['nbr_devers']
+        tmp['coverage_devers'] = round(tmp['coverage_devers'] / nbr['nbr_devers'], 2)
     else:
         tmp['coverage_devers'] = 1
-    tmp['tete_ratio'] = tmp['tete'] / (tmp['tete'] + tmp['moulinette'])
+    tmp['tete_ratio'] = round(tmp['tete'] / (tmp['tete'] + tmp['moulinette']), 2)
     return tmp
 
 def compute_dashboard_nbr_of_seances(db: Session, current_user: schemas.User):
