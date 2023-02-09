@@ -154,6 +154,15 @@ def compute_dashboard_coverage(db: Session, current_user: schemas.User):
         tmp['coverage_devers'] = round(tmp['coverage_devers'] / nbr['nbr_devers'], 2)
     else:
         tmp['coverage_devers'] = 1
+    if tmp['coverage_devers'] == 0:
+        tmp['coverage_devers'] == 0.01
+    if tmp['coverage_9m'] == 0:
+        tmp['coverage_9m'] == 0.01
+    if tmp['coverage_diedre'] == 0:
+        tmp['coverage_diedre'] == 0.01
+    if tmp['coverage_dalle'] == 0:
+        tmp['coverage_dalle'] == 0.01
+
     tmp['tete_ratio'] = round(tmp['tete'] / (tmp['tete'] + tmp['moulinette']), 2)
     return tmp
 
