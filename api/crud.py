@@ -82,17 +82,93 @@ def get_current_user(db: Session, token: str):
         raise credentials_exception
     return user
 
-def get_dashboard(db: Session, current_user: schemas.User):
+def compute_dashboard_coverage(db: Session, current_user: schemas.User):
+    version = db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).first()
+    all_user = db.query(models.UserSeance.voie_id).filter(models.UserSeance.top == 100).filter(models.UserSeance.voie_id.in_(db.query(models.Voie.id).filter(models.Voie.versionvoie_id == version.id))).distinct().all()
+    all_user_tete = db.query(models.UserSeance.en_tete).filter(models.UserSeance.voie_id.in_(db.query(models.Voie.id).filter(models.Voie.versionvoie_id == version.id))).all()
     tmp = {
-    'max_lvl': 7.35,
-    'tete_ratio': 0.30,
-    'coverage': 0.50,
-    'coverage_dalle': 0.10,
-    'coverage_devers': 0.20,
-    'coverage_diedre': 0.50,
-    'coverage_9m': 0.70,
-    'nbr_of_seances': 7
-    }
+    'coverage': 0,
+    'coverage_dalle': 0,
+    'coverage_devers': 0,
+    'coverage_diedre': 0,
+    'coverage_9m': 0,
+    'max_lvl': 0,
+    'tete': 0,
+    'moulinette': 0
+     }
+    for elem in all_user_tete:
+        if elem[0] == True:
+            tmp['tete'] = tmp['tete'] + 1
+        else:
+            tmp['moulinette'] = tmp['moulinette'] + 1
+
+    for elem in all_user:
+        voie = db.query(models.Voie).filter(models.Voie.id == elem[0]).first()
+        if voie.difficulty >= tmp['max_lvl']:
+            tmp['max_lvl'] = voie.difficulty
+        tmp['coverage'] = tmp['coverage'] + 1
+        if voie.couloir_id in [2,3]:
+            tmp['coverage_diedre'] = tmp['coverage_diedre'] + 1
+        elif voie.couloir_id in [1, 23,24,25,26,26,27]:
+            tmp['coverage_dalle'] = tmp['coverage_dalle'] + 1
+        elif voie.couloir_id in [28,29,30,31]:
+            tmp['coverage_9m'] = tmp['coverage_9m'] + 1
+        else:
+            tmp['coverage_devers'] = tmp['coverage_devers'] + 1
+
+    all = db.query(models.Voie).filter(models.Voie.versionvoie_id == version.id).all()
+    nbr = {
+    'nbr': 0,
+    'nbr_dalle': 0,
+    'nbr_devers': 0,
+    'nbr_diedre': 0,
+    'nbr_9m': 0,
+     }
+    for elem in all:
+        nbr['nbr'] = nbr['nbr'] + 1
+        if elem.couloir_id in [2,3]:
+            nbr['nbr_diedre'] = nbr['nbr_diedre'] + 1
+        elif elem.couloir_id in [1, 23,24,25,26,26,27]:
+            nbr['nbr_dalle'] = nbr['nbr_dalle'] + 1
+        elif elem.couloir_id in [28,29,30,31]:
+            nbr['nbr_9m'] = nbr['nbr_9m'] + 1
+        else:
+            nbr['nbr_devers'] = nbr['nbr_devers'] + 1
+    if nbr['nbr'] != 0:
+        tmp['coverage'] = tmp['coverage'] / nbr['nbr']
+    else:
+        tmp['coverage'] = 1
+    if nbr['nbr_diedre'] != 0:
+        tmp['coverage_diedre'] = tmp['coverage_diedre'] / nbr['nbr_diedre']
+    else:
+        tmp['coverage_diedre'] = 1
+    if nbr['nbr_dalle'] != 0:
+        tmp['coverage_dalle'] = tmp['coverage_dalle'] / nbr['nbr_dalle']
+    else:
+        tmp['coverage_dalle'] = 1
+    if nbr['nbr_9m'] != 0:
+        tmp['coverage_9m'] = tmp['coverage_9m'] / nbr['nbr_9m']
+    else:
+        tmp['coverage_9m'] = 1
+    if nbr['nbr_devers'] != 0:
+        tmp['coverage_devers'] = tmp['coverage_devers'] / nbr['nbr_devers']
+    else:
+        tmp['coverage_devers'] = 1
+    tmp['tete_ratio'] = tmp['tete'] / (tmp['tete'] + tmp['moulinette'])
+    return tmp
+
+def compute_dashboard_nbr_of_seances(db: Session, current_user: schemas.User):
+    start = datetime.today().replace(day=1).replace(hour=1)
+    next_month = datetime.today().replace(day=28).replace(hour=1) + timedelta(days=4)
+    end = next_month - timedelta(days=next_month.day)
+    nbr_of_seances = db.query(models.UserSeance).filter(models.UserSeance.date >= start).filter(models.UserSeance.date <= end).count()
+    print(nbr_of_seances)
+    return nbr_of_seances
+
+def get_dashboard(db: Session, current_user: schemas.User):
+    tmp = compute_dashboard_coverage(db, current_user)
+    print(tmp)
+    tmp['nbr_of_seances'] = compute_dashboard_nbr_of_seances(db, current_user)
     return tmp
 
 def get_seances(db: Session, current_user: schemas.User, start: date, end: date):
