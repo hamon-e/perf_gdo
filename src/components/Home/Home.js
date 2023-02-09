@@ -363,6 +363,7 @@ const options = {
   },
   y: {
       display: false,
+      max: 100,
     grid: {
       display: false
     }
