@@ -84,8 +84,8 @@ def get_current_user(db: Session, token: str):
 
 def compute_dashboard_coverage(db: Session, current_user: schemas.User):
     version = db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).first()
-    all_user = db.query(models.UserSeance.voie_id).filter(models.UserSeance.top == 100).filter(models.UserSeance.voie_id.in_(db.query(models.Voie.id).filter(models.Voie.versionvoie_id == version.id))).distinct().all()
-    all_user_tete = db.query(models.UserSeance.en_tete).filter(models.UserSeance.voie_id.in_(db.query(models.Voie.id).filter(models.Voie.versionvoie_id == version.id))).all()
+    all_user = db.query(models.UserSeance.voie_id).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.top == 100).filter(models.UserSeance.voie_id.in_(db.query(models.Voie.id).filter(models.Voie.versionvoie_id == version.id))).distinct().all()
+    all_user_tete = db.query(models.UserSeance.en_tete).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.voie_id.in_(db.query(models.Voie.id).filter(models.Voie.versionvoie_id == version.id))).all()
     tmp = {
     'coverage': 0,
     'coverage_dalle': 0,
@@ -161,7 +161,7 @@ def compute_dashboard_nbr_of_seances(db: Session, current_user: schemas.User):
     start = datetime.today().replace(day=1).replace(hour=1)
     next_month = datetime.today().replace(day=28).replace(hour=1) + timedelta(days=4)
     end = next_month - timedelta(days=next_month.day)
-    nbr_of_seances = db.query(models.UserSeance).filter(models.UserSeance.date >= start).filter(models.UserSeance.date <= end).count()
+    nbr_of_seances = db.query(models.UserSeance).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.date >= start).filter(models.UserSeance.date <= end).count()
     print(nbr_of_seances)
     return nbr_of_seances
 
