@@ -108,3 +108,52 @@ class Crenau(Base):
     id = Column(Integer, primary_key=True, index=True)
     type_id = Column(Integer, ForeignKey("crenautype.id"))
     cron = Column(String)
+
+class Contest(Base):
+    __tablename__ = "contest"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+
+class ZoneContest(Base):
+    __tablename__ = "zonecontest"
+
+    id = Column(Integer, primary_key=True, index=True)
+    contest_id = Column(Integer, ForeignKey("contest.id"))
+    name = Column(String)
+
+class BlocContest(Base):
+    __tablename__ = "bloccontest"
+
+    id = Column(Integer, primary_key=True, index=True)
+    contest_id = Column(Integer, ForeignKey("contest.id"))
+    zone_id = Column(Integer, ForeignKey("zonecontest.id"))
+    name = Column(String)
+    top = Column(Integer)
+    difficulty = Column(Integer)
+
+class UserContest(Base):
+    __tablename__ = "usercontest"
+
+    id = Column(Integer, primary_key=True, index=True)
+    contest_id = Column(Integer, ForeignKey("contest.id"))
+    name = Column(String)
+    score = Column(Integer)
+    age = Column(Integer)
+    difficulty = Column(Integer)
+
+class ResultContest(Base):
+    __tablename__ = "resultcontest"
+
+    id = Column(Integer, primary_key=True, index=True)
+    contest_id = Column(Integer, ForeignKey("contest.id"))
+    bloc_id = Column(Integer, ForeignKey("bloccontest.id"))
+    user_id = Column(Integer, ForeignKey("usercontest.id"))
+
+class ResultSpeedContest(Base):
+    __tablename__ = "speedresultcontest"
+
+    id = Column(Integer, primary_key=True, index=True)
+    contest_id = Column(Integer, ForeignKey("contest.id"))
+    user_id = Column(Integer, ForeignKey("usercontest.id"))
+    time = Column(Float)

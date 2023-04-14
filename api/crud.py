@@ -261,3 +261,129 @@ def get_palmares(db: Session, current_user: schemas.User):
 def get_colors(db: Session, current_user: schemas.User):
     tmp = db.query(models.Voie.color).distinct().all()
     return [r.color for r in tmp]
+
+def get_contest_users(db: Session, contest_id: int):
+    tmp = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).all()
+    return tmp
+
+def get_contest_user(db: Session, contest_id: int, user_id: int):
+    tmp = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).filter(models.UserContest.id == user_id).first()
+    return tmp
+
+def create_contest_user(db: Session, user: schemas.UserContest):
+    tmp = user.dict()
+    del tmp['id']
+    if not db.query(models.UserContest).filter(models.UserContest.contest_id == user.contest_id).filter(models.UserContest.name == tmp['name']).first():
+        tmp['score'] = 0
+        tmp2 = models.UserContest(**tmp)
+        db.add(tmp2)
+        db.commit()
+        return tmp2
+
+def create_contest_zone(db: Session, zone: schemas.ZoneContest):
+    tmp = zone.dict()
+    del tmp['id']
+    db.add(models.ZoneContest(**tmp))
+    db.commit()
+    return True
+
+def create_contest_bloc(db: Session, bloc: schemas.BlocContest):
+    print(bloc)
+    tmp = bloc.dict()
+    del tmp['id']
+    db.add(models.BlocContest(**tmp))
+    db.commit()
+    return True
+
+def get_contest_blocs(db: Session, contest_id: int, zone_id: int):
+    tmp = db.query(models.BlocContest).filter(models.BlocContest.contest_id == contest_id).filter(models.BlocContest.zone_id == zone_id).order_by(models.BlocContest.difficulty).all()
+    return tmp
+
+def get_contest_zones(db: Session, contest_id: int):
+    tmp = db.query(models.ZoneContest).filter(models.ZoneContest.contest_id == contest_id).all()
+    return tmp
+
+def get_contests(db: Session):
+    tmp = db.query(models.Contest).all()
+    return tmp
+
+def create_contest(db: Session, contest: schemas.Contest):
+    tmp = contest.dict()
+    del tmp['id']
+    print(tmp)
+    db.add(models.Contest(**tmp))
+    db.commit()
+    return True
+
+def get_contest_bloc_res(db: Session, contest_id: int, user_id: int):
+    tmp = db.query(models.ResultContest).filter(models.ResultContest.contest_id == contest_id).filter(models.ResultContest.user_id == user_id).all()
+    return tmp
+
+def compute_score(db: Session, contest_id: int):
+    tmp = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).all()
+    for elem in tmp:
+        score = 0
+        res = db.query(models.ResultContest).filter(models.ResultContest.contest_id == contest_id).filter(models.ResultContest.user_id == elem.id).all()
+        for bloc in res:
+            x = db.query(models.BlocContest).filter(models.BlocContest.id == bloc.bloc_id).first()
+            score += 1000/x.top if x.top else 1000
+        elem.score = score
+        db.commit()
+
+def post_contest_bloc_res(db: Session, contest_id: int, user_id: int, bloc_id: int):
+    tmp = db.query(models.ResultContest).filter(models.ResultContest.contest_id == contest_id).filter(models.ResultContest.user_id == user_id).filter(models.ResultContest.bloc_id == bloc_id).first()
+    if tmp:
+        db.query(models.ResultContest).filter(models.ResultContest.contest_id == contest_id).filter(models.ResultContest.user_id == user_id).filter(models.ResultContest.bloc_id == bloc_id).delete()
+        db.query(models.BlocContest).filter(models.BlocContest.id == bloc_id).update({'top': models.BlocContest.top - 1})
+    else:
+        db.add(models.ResultContest(contest_id=contest_id, bloc_id=bloc_id, user_id=user_id))
+        db.query(models.BlocContest).filter(models.BlocContest.id == bloc_id).update({'top': models.BlocContest.top + 1})
+    db.commit()
+    compute_score(db, contest_id)
+    return True
+
+def post_contest_speed_res(db: Session, contest_id: int, user_id: int, time: float):
+    tmp = db.query(models.ResultSpeedContest).filter(models.ResultSpeedContest.contest_id == contest_id).filter(models.ResultSpeedContest.user_id == user_id).first()
+    if tmp:
+        db.query(models.ResultSpeedContest).filter(models.ResultSpeedContest.id == tmp.id).update({'time': time})
+    else:
+        db.add(models.ResultSpeedContest(contest_id=contest_id, time=time, user_id=user_id))
+    db.commit()
+    return True
+
+def get_contest_speed(db: Session, contest_id: int, user_id: int):
+    tmp = db.query(models.ResultSpeedContest).filter(models.ResultSpeedContest.contest_id == contest_id).filter(models.ResultSpeedContest.user_id == user_id).first()
+    return tmp.time if tmp else -1
+
+def get_contest_classement(db: Session, contest_id: int):
+    tmp = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).order_by(models.UserContest.score.desc()).all()
+    return tmp
+
+def get_contest_user_speed_classement(db: Session, contest_id: int, user_id: int):
+    user = db.query(models.UserContest).filter(models.UserContest.id == user_id).first()
+    users = [x[0] for x in db.query(models.UserContest.id).filter(models.UserContest.contest_id == contest_id).filter(models.UserContest.age == user.age).all()]
+    tmp = db.query(models.ResultSpeedContest).filter(models.ResultSpeedContest.contest_id == contest_id).filter(models.ResultSpeedContest.user_id.in_(users)).order_by(models.ResultSpeedContest.time.asc()).all()
+    i = 1
+    for x in tmp:
+        if x.user_id == user_id:
+            break
+        i += 1
+    return i
+
+def get_speed_contest_top(db: Session, contest_id: int):
+    tmp = db.query(models.ResultSpeedContest).filter(models.ResultSpeedContest.contest_id == contest_id).order_by(models.ResultSpeedContest.time.asc()).all()
+    return tmp
+
+def get_contest_top(db: Session, contest_id: int):
+    tmp = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).order_by(models.UserContest.score.desc()).limit(5).all()
+    return tmp
+
+def get_contest_user_classement(db: Session, contest_id: int, user_id: int):
+    user = db.query(models.UserContest).filter(models.UserContest.id == user_id).first()
+    tmp = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).filter(models.UserContest.difficulty == user.difficulty).order_by(models.UserContest.score.desc()).all()
+    i = 1
+    for x in tmp:
+        if x.id == user_id:
+            break
+        i += 1
+    return i

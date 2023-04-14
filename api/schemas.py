@@ -109,4 +109,58 @@ class UserSeance(BaseModel):
     class Config:
         orm_mode = True
 
+class Contest(BaseModel):
+    id: Optional[int]
+    name: str
+
+    class Config:
+        orm_mode = True
+
+class ZoneContest(BaseModel):
+    id: Optional[int]
+    name: str
+    contest_id: int
+
+    class Config:
+        orm_mode = True
+
+class BlocContest(BaseModel):
+    id: Optional[int]
+    contest_id: int
+    zone_id: int
+    name: str
+    top: int
+    difficulty: int
+
+    class Config:
+        orm_mode = True
+
+class UserContest(BaseModel):
+    id: Optional[int]
+    contest_id: int
+    name: str
+    score: int
+    age: int
+    difficulty: int
+
+    class Config:
+        orm_mode = True
+
+class ResultContest(BaseModel):
+    id: Optional[int]
+    contest_id: int
+    bloc_id: int
+    user_id: int
+
+    class Config:
+        orm_mode = True
+
+class ResultSpeedContest(BaseModel):
+    id: Optional[int]
+    contest_id: int
+    time: float
+    user_id: int
+
+    class Config:
+        orm_mode = True
 

@@ -180,5 +180,61 @@ async def delete_userseance(userseance_id: int, current_user: schemas.User = Dep
 async def get_colors(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return crud.get_colors(db, current_user)
 
+@router.get("/contests", response_model=List[schemas.Contest])
+async def get_contests(db: Session = Depends(get_db)):
+    return crud.get_contests(db)
+
+@router.post("/contest", response_model=bool)
+async def create_contest(contest: schemas.Contest, db: Session = Depends(get_db)):
+    print(contest)
+    return crud.create_contest(db, contest)
+
+@router.get("/contest_zones", response_model=List[schemas.ZoneContest])
+async def get_contest_zones(contest_id: int, db: Session = Depends(get_db)):
+    return crud.get_contest_zones(db, contest_id)
+
+@router.post("/contest_zone", response_model=bool)
+async def create_contest_zone(zone: schemas.ZoneContest, db: Session = Depends(get_db)):
+    return crud.create_contest_zone(db, zone)
+
+@router.get("/contest_blocs", response_model=List[schemas.BlocContest])
+async def get_contest_blocs(contest_id: int, zone_id: int, db: Session = Depends(get_db)):
+    return crud.get_contest_blocs(db, contest_id, zone_id)
+
+@router.post("/contest_bloc", response_model=bool)
+async def create_contest_bloc(bloc: schemas.BlocContest, db: Session = Depends(get_db)):
+    return crud.create_contest_bloc(db, bloc)
+
+@router.get("/contest_users", response_model=List[schemas.UserContest])
+async def get_contest_users(contest_id: int, db: Session = Depends(get_db)):
+    return crud.get_contest_users(db, contest_id)
+
+@router.post("/contest_user", response_model=schemas.UserContest)
+async def create_contest_user(user: schemas.UserContest, db: Session = Depends(get_db)):
+    return crud.create_contest_user(db, user)
+
+@router.get("/contest_bloc_res", response_model=List[schemas.ResultContest])
+async def get_contest_users(contest_id: int, user_id: int, db: Session = Depends(get_db)):
+    return crud.get_contest_bloc_res(db, contest_id, user_id)
+
+@router.post("/contest_bloc_res", response_model=bool)
+async def get_contest_users(res: schemas.ResultContest, db: Session = Depends(get_db)):
+    return crud.post_contest_bloc_res(db, res.contest_id, res.user_id, res.bloc_id)
+
+@router.get("/contest_user_classement", response_model=int)
+async def get_contest_users(contest_id: int, user_id: int, db: Session = Depends(get_db)):
+    return crud.get_contest_user_classement(db, contest_id, user_id)
+
+@router.post("/contest_speed", response_model=int)
+async def post_contest_speed_res(res: schemas.ResultSpeedContest, db: Session = Depends(get_db)):
+    return crud.post_contest_speed_res(db, res.contest_id, res.user_id, res.time)
+
+@router.get("/contest_speed", response_model=int)
+async def get_contest_speed(contest_id: int, user_id: int, db: Session = Depends(get_db)):
+    return crud.get_contest_speed(db, contest_id, user_id)
+
+@router.get("/contest_user_speed_classement", response_model=int)
+async def get_contest_user_speed_classement(contest_id: int, user_id: int, db: Session = Depends(get_db)):
+    return crud.get_contest_user_speed_classement(db, contest_id, user_id)
 
 app.include_router(router)
