@@ -300,7 +300,7 @@ def get_contest_blocs(db: Session, contest_id: int, zone_id: int):
     return tmp
 
 def get_contest_zones(db: Session, contest_id: int):
-    tmp = db.query(models.ZoneContest).filter(models.ZoneContest.contest_id == contest_id).all()
+    tmp = db.query(models.ZoneContest).filter(models.ZoneContest.contest_id == contest_id).order_by(models.ZoneContest.name).all()
     return tmp
 
 def get_contests(db: Session):
