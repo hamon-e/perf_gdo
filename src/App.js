@@ -39,6 +39,8 @@ import Home from './components/Home/Home';
 import History from './components/History/History';
 import Palmares from './components/Palmares/Palmares';
 import Palette from './components/Palette/Palette';
+import Contest from './components/Contest/Contest';
+import CreateContest from './components/CreateContest/CreateContest';
 
 import {useContextObject} from './components/Context/Context';
 
@@ -224,6 +226,14 @@ export default function PersistentDrawerLeft(props) {
 
           <div className="d-flex align-items-center flex-column">
             <Switch>
+              <Route path="/contest">
+                <Contest/>
+              </Route>
+              <Route path="/createcontest">
+                <CreateContest/>
+              </Route>
+
+
               <Route path="/login">
                 <LoginForm/>
               </Route>
