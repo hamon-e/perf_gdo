@@ -326,7 +326,7 @@ def compute_score(db: Session, contest_id: int):
         res = db.query(models.ResultContest).filter(models.ResultContest.contest_id == contest_id).filter(models.ResultContest.user_id == elem.id).all()
         for bloc in res:
             x = db.query(models.BlocContest).filter(models.BlocContest.id == bloc.bloc_id).first()
-            score += 1000/x.top if x.top else 1000
+            score += (1000/x.top if x.top else 1000) * (x.difficulty + 1)
         elem.score = score
         db.commit()
 
