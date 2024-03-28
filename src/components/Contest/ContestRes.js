@@ -176,7 +176,7 @@ function ContestRes(props) {
   const [res, setRes] = React.useState([])
   const [resSpeed, setResSpeed] = React.useState([])
 
-  const contest_id = 1
+  const contest_id = 3
 
   const [page, setPage] = React.useState(0);
   const [pageVoie, setPageVoie] = React.useState(0);
