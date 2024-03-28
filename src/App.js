@@ -40,6 +40,7 @@ import History from './components/History/History';
 import Palmares from './components/Palmares/Palmares';
 import Palette from './components/Palette/Palette';
 import Contest from './components/Contest/Contest';
+import ContestRes from './components/Contest/ContestRes';
 import CreateContest from './components/CreateContest/CreateContest';
 
 import {useContextObject} from './components/Context/Context';
@@ -229,6 +230,11 @@ export default function PersistentDrawerLeft(props) {
               <Route path="/contest">
                 <Contest/>
               </Route>
+
+              <Route path="/contest_classement">
+                <ContestRes/>
+              </Route>
+
               <Route path="/createcontest">
                 <CreateContest/>
               </Route>

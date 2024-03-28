@@ -31,7 +31,7 @@ function Header(props) {
                         props.history.push('/home')
                     }
                 } catch (error) {
-                    if (props.location.pathname !== '/login' && props.location.pathname !== '/signup' && props.location.pathname !== '/createcontest' && props.location.pathname !== '/contest') {
+                    if (props.location.pathname !== '/login' && props.location.pathname !== '/signup' && props.location.pathname !== '/createcontest' && props.location.pathname !== '/contest' && props.location.pathname !== '/contest_classement') {
                         setConnected(false);
                         setShowBar(false)
                         props.history.push('/login')

@@ -188,7 +188,7 @@ function Contest(props) {
 
   const [tempsVitesse, setTempsVitesse] = React.useState("")
 
-    const contest_id = 3
+    const contest_id = 1
   const [page, setPage] = React.useState(0);
   const [pageVoie, setPageVoie] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -232,7 +232,8 @@ function Contest(props) {
           name: newName,
           //          age: newAge == "adulte" ? 0 : 1,
           difficulty: newDifficulty == "tranquille" ? 0 : 1,
-          score: 0
+          score: 0,
+          score_voie: 0
       }
       var response = await axios.post(API_BASE_URL+'/contest_user', payload)
       setOpen(false)
