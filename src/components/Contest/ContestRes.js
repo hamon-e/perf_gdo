@@ -176,7 +176,7 @@ function ContestRes(props) {
   const [res, setRes] = React.useState([])
   const [resSpeed, setResSpeed] = React.useState([])
 
-  const contest_id = 3
+  const contest_id = 1
 
   const [page, setPage] = React.useState(0);
   const [pageVoie, setPageVoie] = React.useState(0);
@@ -212,7 +212,7 @@ const columns = [
     field: 'score_vitesse',
     headerName: 'Score Vitesse',
     width: 140,
-    valueGetter: (value, row) => `${resSpeed.find((e) => e.user_id == value.id).time}`,
+    valueGetter: (value, row) => `${resSpeed.find((e) => e.user_id == value.id) && resSpeed.find((e) => e.user_id == value.id).time || 99999}`,
   },
 ];
 
