@@ -250,6 +250,14 @@ async def post_contest_speed_res(res: schemas.ResultSpeedContest, db: Session = 
 async def get_contest_speed(contest_id: int, user_id: int, db: Session = Depends(get_db)):
     return crud.get_contest_speed(db, contest_id, user_id)
 
+@router.get("/contest_res", response_model=List[schemas.UserContest])
+async def get_contest_speed(contest_id: int, db: Session = Depends(get_db)):
+    return crud.get_contest_classement(db, contest_id)
+
+@router.get("/contest_speed_res", response_model=List[schemas.ResultSpeedContest])
+async def get_contest_speed(contest_id: int, db: Session = Depends(get_db)):
+    return crud.get_contest_speed_res(db, contest_id)
+
 @router.get("/contest_user_speed_classement", response_model=int)
 async def get_contest_user_speed_classement(contest_id: int, user_id: int, db: Session = Depends(get_db)):
     return crud.get_contest_user_speed_classement(db, contest_id, user_id)

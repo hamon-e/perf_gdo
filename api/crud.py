@@ -341,8 +341,21 @@ def compute_score(db: Session, contest_id: int):
         res = db.query(models.ResultContest).filter(models.ResultContest.contest_id == contest_id).filter(models.ResultContest.user_id == elem.id).all()
         for bloc in res:
             x = db.query(models.BlocContest).filter(models.BlocContest.id == bloc.bloc_id).first()
-            score += (1000/x.top if x.top else 1000) * (x.difficulty + 1)
+            score += 250
         elem.score = score
+        db.commit()
+
+def compute_score_voie(db: Session, contest_id: int):
+    tmp = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).all()
+    for elem in tmp:
+        score = 0
+        res = db.query(models.ResultContestVoie).filter(models.ResultContestVoie.contest_id == contest_id).filter(models.ResultContestVoie.user_id == elem.id).join(models.VoieContest).order_by(models.VoieContest.difficulty).all()
+        for voie in res[-3:]:
+            x = db.query(models.VoieContest).filter(models.VoieContest.id == voie.voie_id).first()
+            score += 500 + 100 * (x.difficulty - 1)
+        if len(res[-3:]) == 3 and res[-3] == 11:
+            score = 5000
+        elem.score_voie = score
         db.commit()
 
 def post_contest_bloc_res(db: Session, contest_id: int, user_id: int, bloc_id: int):
@@ -366,7 +379,7 @@ def post_contest_voie_res(db: Session, contest_id: int, user_id: int, voie_id: i
         db.add(models.ResultContestVoie(contest_id=contest_id, voie_id=voie_id, user_id=user_id))
         db.query(models.VoieContest).filter(models.VoieContest.id == voie_id).update({'top': models.VoieContest.top + 1})
     db.commit()
-    compute_score(db, contest_id)
+    compute_score_voie(db, contest_id)
     return True
 
 
@@ -385,6 +398,10 @@ def get_contest_speed(db: Session, contest_id: int, user_id: int):
 
 def get_contest_classement(db: Session, contest_id: int):
     tmp = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).order_by(models.UserContest.score.desc()).all()
+    return tmp
+
+def get_contest_speed_res(db: Session, contest_id: int):
+    tmp = db.query(models.ResultSpeedContest).filter(models.ResultSpeedContest.contest_id == contest_id).order_by(models.ResultSpeedContest.time.asc()).all()
     return tmp
 
 def get_contest_user_speed_classement(db: Session, contest_id: int, user_id: int):

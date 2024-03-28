@@ -151,6 +151,7 @@ class UserContest(BaseModel):
     contest_id: int
     name: str
     score: int
+    score_voie: int
     difficulty: int
 
     class Config:
@@ -183,4 +184,3 @@ class ResultSpeedContest(BaseModel):
 
     class Config:
         orm_mode = True
-

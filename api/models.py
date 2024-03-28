@@ -150,6 +150,7 @@ class UserContest(Base):
     contest_id = Column(Integer, ForeignKey("contest.id"))
     name = Column(String)
     score = Column(Integer)
+    score_voie = Column(Integer)
     #age = Column(Integer)
     difficulty = Column(Integer)
 
