@@ -65,8 +65,79 @@ import FormLabel from '@mui/material/FormLabel';
 
 import Autocomplete from '@mui/material/Autocomplete';
 
+import LastPageIcon from '@mui/icons-material/LastPage';
+import FirstPageIcon from '@mui/icons-material/FirstPage';
+import PropTypes from 'prop-types';
+import { useTheme } from '@mui/material/styles';
+import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
+
+import TableFooter from '@mui/material/TableFooter';
+import TablePagination from '@mui/material/TablePagination';
+
 import TextField from '@mui/material/TextField';
 const qs = require('qs');
+
+function TablePaginationActions(props) {
+  const theme = useTheme();
+  const { count, page, rowsPerPage, onPageChange } = props;
+
+  const handleFirstPageButtonClick = (event) => {
+    onPageChange(event, 0);
+  };
+
+  const handleBackButtonClick = (event) => {
+    onPageChange(event, page - 1);
+  };
+
+  const handleNextButtonClick = (event) => {
+    onPageChange(event, page + 1);
+  };
+
+  const handleLastPageButtonClick = (event) => {
+    onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
+  };
+
+  return (
+    <Box sx={{ flexShrink: 0, ml: 2.5 }}>
+      <IconButton
+        onClick={handleFirstPageButtonClick}
+        disabled={page === 0}
+        aria-label="first page"
+      >
+        {theme.direction === 'rtl' ? <LastPageIcon /> : <FirstPageIcon />}
+      </IconButton>
+      <IconButton
+        onClick={handleBackButtonClick}
+        disabled={page === 0}
+        aria-label="previous page"
+      >
+        {theme.direction === 'rtl' ? <KeyboardArrowRight /> : <KeyboardArrowLeft />}
+      </IconButton>
+      <IconButton
+        onClick={handleNextButtonClick}
+        disabled={page >= Math.ceil(count / rowsPerPage) - 1}
+        aria-label="next page"
+      >
+        {theme.direction === 'rtl' ? <KeyboardArrowLeft /> : <KeyboardArrowRight />}
+      </IconButton>
+      <IconButton
+        onClick={handleLastPageButtonClick}
+        disabled={page >= Math.ceil(count / rowsPerPage) - 1}
+        aria-label="last page"
+      >
+        {theme.direction === 'rtl' ? <FirstPageIcon /> : <LastPageIcon />}
+      </IconButton>
+    </Box>
+  );
+}
+
+TablePaginationActions.propTypes = {
+  count: PropTypes.number.isRequired,
+  onPageChange: PropTypes.func.isRequired,
+  page: PropTypes.number.isRequired,
+  rowsPerPage: PropTypes.number.isRequired,
+};
 
 function Contest(props) {
     const { t, i18n } = useTranslation('Login');
@@ -100,11 +171,15 @@ function Contest(props) {
     setOpen(false);
   };
   const [newName, setNewName] = React.useState("");
-  const [newAge, setNewAge] = React.useState("adulte");
+    //  const [newAge, setNewAge] = React.useState("adulte");
   const [newDifficulty, setNewDifficulty] = React.useState("tranquille");
 
   const [blocs, setBlocs] = React.useState([])
   const [blocRes, setBlocRes] = React.useState([])
+
+  const [voies, setVoies] = React.useState([])
+  const [voieRes, setVoieRes] = React.useState([])
+
   const [zones, setZones] = React.useState([])
   const [selectedZone, setSelectedZone] = React.useState({name: ""})
 
@@ -113,7 +188,23 @@ function Contest(props) {
 
   const [tempsVitesse, setTempsVitesse] = React.useState("")
 
-    const contest_id = 2
+    const contest_id = 3
+  const [page, setPage] = React.useState(0);
+  const [pageVoie, setPageVoie] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangePageVoie = (event, newPage) => {
+    setPageVoie(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
     async function handleVitesseChange(e) {
         setTempsVitesse(e.target.value)
@@ -131,6 +222,7 @@ function Contest(props) {
         const zone = zones.find((p) => p.name == e.target.value)
         setSelectedZone(zone)
         refreshBlock(zone.id)
+        refreshVoie(zone.id)
     }
 
 
@@ -138,19 +230,20 @@ function Contest(props) {
       const payload = {
           contest_id: contest_id,
           name: newName,
-          age: newAge == "adulte" ? 0 : 1,
+          //          age: newAge == "adulte" ? 0 : 1,
           difficulty: newDifficulty == "tranquille" ? 0 : 1,
           score: 0
       }
       var response = await axios.post(API_BASE_URL+'/contest_user', payload)
       setOpen(false)
       setNewName("")
-      setNewAge("adulte")
+      //setNewAge("adulte")
       setNewDifficulty("tranquille")
       setUsers([...users, response.data])
       setSelectedUser(response.data)
         refreshSpeed(response.data.id)
         refresh_bloc_res(response.data.id)
+        refresh_voie_res(response.data.id)
         refreshUserClassement(response.data.id)
   }
 
@@ -164,9 +257,9 @@ function Contest(props) {
         setNewName(e.target.value)
     }
 
-    function handleNewAgeChange(e) {
-        setNewAge(e.target.value)
-    }
+    //function handleNewAgeChange(e) {
+        //setNewAge(e.target.value)
+    //}
 
     function handleNewDifficultyChange(e) {
         setNewDifficulty(e.target.value)
@@ -177,6 +270,7 @@ function Contest(props) {
         setSelectedUser(user)
         refreshSpeed(user.id)
         refresh_bloc_res(user.id)
+        refresh_voie_res(user.id)
         refreshUserClassement(user.id)
     }
 
@@ -189,6 +283,7 @@ function Contest(props) {
         }
         setSelectedUser(user)
         refresh_bloc_res(user.id)
+        refresh_voie_res(user.id)
         refreshUserClassement(user.id)
         refreshSpeed(user.id)
     }
@@ -211,6 +306,12 @@ function Contest(props) {
         setBlocs(response.data)
     }
 
+    async function refreshVoie(zone_id) {
+        var response = await axios.get(API_BASE_URL+'/contest_voies?contest_id=' + contest_id + "&zone_id=" + zone_id)
+        setVoies(response.data)
+    }
+
+
     async function refreshSpeed(user_id) {
         var response = await axios.get(API_BASE_URL+'/contest_speed?contest_id=' + contest_id + "&user_id=" + user_id)
         if (response.data != -1) {
@@ -224,6 +325,7 @@ function Contest(props) {
         var response = await axios.get(API_BASE_URL+'/contest_zones?contest_id=' + contest_id)
         setZones(response.data)
         refreshBlock(response.data[0].id)
+        refreshVoie(response.data[0].id)
         setSelectedZone(response.data[0])
     }
 
@@ -231,6 +333,12 @@ function Contest(props) {
         var response = await axios.get(API_BASE_URL+'/contest_bloc_res?contest_id=' + contest_id + "&user_id=" + user_id)
         setBlocRes(response.data)
     }
+
+    async function refresh_voie_res(user_id) {
+        var response = await axios.get(API_BASE_URL+'/contest_voie_res?contest_id=' + contest_id + "&user_id=" + user_id)
+        setVoieRes(response.data)
+    }
+
 
     async function handleRowClick(bloc_id) {
       const payload = {
@@ -243,13 +351,25 @@ function Contest(props) {
         refreshBlock(selectedZone.id)
     }
 
+    async function handleVoieRowClick(voie_id) {
+      const payload = {
+          contest_id: contest_id,
+          user_id: selectedUser.id,
+          voie_id: voie_id
+      }
+      var response = await axios.post(API_BASE_URL+'/contest_voie_res', payload)
+        refresh_voie_res(selectedUser.id)
+        refreshVoie(selectedZone.id)
+    }
+
+
     async function refreshUserClassement(user_id=-1) {
         if (user_id != -1 || selectedUser.name) {
             const tmp = user_id == -1 ? selectedUser.id : user_id
             var response = await axios.get(API_BASE_URL+'/contest_user_classement?contest_id=' + contest_id + "&user_id=" + tmp)
             setUserClassement(response.data)
-            response = await axios.get(API_BASE_URL+'/contest_user_speed_classement?contest_id=' + contest_id + "&user_id=" + tmp)
-            setUserClassementVitesse(response.data)
+            //response = await axios.get(API_BASE_URL+'/contest_user_speed_classement?contest_id=' + contest_id + "&user_id=" + tmp)
+            //setUserClassementVitesse(response.data)
         }
         //setTimeout(refreshUserClassement, 3000);
     }
@@ -259,7 +379,7 @@ function Contest(props) {
         if (interval.current) {
             clearInterval(interval.current);
         }
-        interval.current = setInterval(refreshUserClassement, 3000)
+        //interval.current = setInterval(refreshUserClassement, 3000)
     }, [selectedUser])
 
     useEffect(() => {
@@ -283,8 +403,9 @@ function Contest(props) {
                                 </div>
 
                     <Grid container spacing={2}>
-                        <Grid item xs={6}> 
+                        <Grid item xs={12}> 
                                 <div style={{paddingTop: '10px'}}>
+{/*
         <FormControl>
             <FormLabel id="demo-controlled-radio-buttons-group">Age</FormLabel>
             <RadioGroup
@@ -297,6 +418,7 @@ function Contest(props) {
                 <FormControlLabel value="enfant" control={<Radio />} label="Enfant" />
             </RadioGroup>
         </FormControl>
+         */}
     </div>
     </Grid>
                         <Grid item xs={6}> 
@@ -371,9 +493,9 @@ function Contest(props) {
 
             {selectedUser.name && 
                     <div>
-            <Grid container spacing={2} style={{paddingTop: '20px'}}>
-                <Grid item md={8} xs={12}>
-                    <FormControl fullWidth>
+            <Grid container spacing={8} style={{paddingTop: '20px'}}>
+                <Grid item md={6} xs={12}>
+                    {/*         <FormControl fullWidth>
                         <InputLabel id="demo-simple-select-label">Zones</InputLabel>
                         <Select
                         labelId="demo-simple-select-label"
@@ -386,19 +508,20 @@ function Contest(props) {
                         )}
                         </Select>
                     </FormControl>
+                        */}
 
 
                         <TableContainer sx={{}} component={Paper}>
                             <Table sx={{}} aria-label="simple table">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>{selectedZone.name}</TableCell>
-                                        <TableCell align="right">Valider</TableCell>
+                                        <TableCell>Blocs</TableCell>
+                                        <TableCell align="right">Top</TableCell>
                                         <TableCell align="right">Nombre de Top</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {blocRes && blocs.map((row) => (
+                                    {blocRes && blocs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
                                         <TableRow
                                         onClick={() => handleRowClick(row.id)}
                                         key={row.id}
@@ -409,11 +532,69 @@ function Contest(props) {
                                     </TableRow>
                                     ))}
                                 </TableBody>
+   <TableFooter>
+          <TableRow>
+            <TablePagination
+              rowsPerPageOptions={[]}
+              colSpan={3}
+              count={blocs.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              //onRowsPerPageChange={handleChangeRowsPerPage}
+              ActionsComponent={TablePaginationActions}
+            />
+          </TableRow>
+        </TableFooter>
+                            </Table>
+                        </TableContainer>
+                    </Grid>
+
+                <Grid item md={6} xs={12}>
+
+                        <TableContainer sx={{}} component={Paper}>
+                            <Table sx={{}} aria-label="simple table">
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>Voies</TableCell>
+                                        <TableCell align="right">Top</TableCell>
+                                        <TableCell align="right">Nombre de Top</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {voieRes && voies.slice(pageVoie * rowsPerPage, pageVoie * rowsPerPage + rowsPerPage).map((row) => (
+                                        <TableRow
+                                        onClick={() => handleVoieRowClick(row.id)}
+                                        key={row.id}
+                                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }} >
+                                        <TableCell component="th" scope="row"> {row.name} </TableCell>
+                                        <TableCell align="right">{voieRes.find((e) => e.voie_id == row.id) ? <CheckIcon /> : <CloseIcon />}</TableCell>
+                                        <TableCell align="right">{row.top}</TableCell>
+                                    </TableRow>
+                                    ))}
+                                </TableBody>
+   <TableFooter>
+          <TableRow>
+            <TablePagination
+              rowsPerPageOptions={[]}
+              colSpan={3}
+              count={voies.length}
+              rowsPerPage={rowsPerPage}
+              page={pageVoie}
+              onPageChange={handleChangePageVoie}
+              //onRowsPerPageChange={handleChangeRowsPerPage}
+              ActionsComponent={TablePaginationActions}
+            />
+          </TableRow>
+        </TableFooter>
+
                             </Table>
                         </TableContainer>
                     </Grid>
 
 
+
+                    {/*
                 <Grid item md={4} xs={12}>
 
                     <Box sx={{p: 2, border: '1px dashed grey'}}>
@@ -433,12 +614,13 @@ function Contest(props) {
                 </Box>
 
                 </Grid>
+                */}
 
 
 
 
-                <Grid item md={4} xs={12}>
-            <TextField fullWidth label="Temps Vitesse" value={tempsVitesse} onChange={handleVitesseChange}/>
+                <Grid item md={8} xs={12}>
+            <TextField fullWidth label="Temps Vitesse (secondes)" value={tempsVitesse} onChange={handleVitesseChange}/>
                 </Grid>
 
                 </Grid>
