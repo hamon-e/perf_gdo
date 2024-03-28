@@ -132,6 +132,17 @@ class BlocContest(Base):
     top = Column(Integer)
     difficulty = Column(Integer)
 
+class VoieContest(Base):
+    __tablename__ = "voiecontest"
+
+    id = Column(Integer, primary_key=True, index=True)
+    contest_id = Column(Integer, ForeignKey("contest.id"))
+    zone_id = Column(Integer, ForeignKey("zonecontest.id"))
+    name = Column(String)
+    top = Column(Integer)
+    difficulty = Column(Integer)
+
+
 class UserContest(Base):
     __tablename__ = "usercontest"
 
@@ -139,7 +150,7 @@ class UserContest(Base):
     contest_id = Column(Integer, ForeignKey("contest.id"))
     name = Column(String)
     score = Column(Integer)
-    age = Column(Integer)
+    #age = Column(Integer)
     difficulty = Column(Integer)
 
 class ResultContest(Base):
@@ -148,6 +159,14 @@ class ResultContest(Base):
     id = Column(Integer, primary_key=True, index=True)
     contest_id = Column(Integer, ForeignKey("contest.id"))
     bloc_id = Column(Integer, ForeignKey("bloccontest.id"))
+    user_id = Column(Integer, ForeignKey("usercontest.id"))
+
+class ResultContestVoie(Base):
+    __tablename__ = "resultcontestvoie"
+
+    id = Column(Integer, primary_key=True, index=True)
+    contest_id = Column(Integer, ForeignKey("contest.id"))
+    voie_id = Column(Integer, ForeignKey("voiecontest.id"))
     user_id = Column(Integer, ForeignKey("usercontest.id"))
 
 class ResultSpeedContest(Base):

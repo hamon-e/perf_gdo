@@ -135,12 +135,22 @@ class BlocContest(BaseModel):
     class Config:
         orm_mode = True
 
+class VoieContest(BaseModel):
+    id: Optional[int]
+    contest_id: int
+    zone_id: int
+    name: str
+    top: int
+    difficulty: int
+
+    class Config:
+        orm_mode = True
+
 class UserContest(BaseModel):
     id: Optional[int]
     contest_id: int
     name: str
     score: int
-    age: int
     difficulty: int
 
     class Config:
@@ -154,6 +164,16 @@ class ResultContest(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ResultContestVoie(BaseModel):
+    id: Optional[int]
+    contest_id: int
+    voie_id: int
+    user_id: int
+
+    class Config:
+        orm_mode = True
+
 
 class ResultSpeedContest(BaseModel):
     id: Optional[int]

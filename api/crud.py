@@ -299,6 +299,17 @@ def get_contest_blocs(db: Session, contest_id: int, zone_id: int):
     tmp = db.query(models.BlocContest).filter(models.BlocContest.contest_id == contest_id).filter(models.BlocContest.zone_id == zone_id).order_by(models.BlocContest.difficulty).all()
     return tmp
 
+def create_contest_voie(db: Session, voie: schemas.VoieContest):
+    tmp = voie.dict()
+    del tmp['id']
+    db.add(models.VoieContest(**tmp))
+    db.commit()
+    return True
+
+def get_contest_voies(db: Session, contest_id: int, zone_id: int):
+    tmp = db.query(models.VoieContest).filter(models.VoieContest.contest_id == contest_id).filter(models.VoieContest.zone_id == zone_id).order_by(models.VoieContest.difficulty).all()
+    return tmp
+
 def get_contest_zones(db: Session, contest_id: int):
     tmp = db.query(models.ZoneContest).filter(models.ZoneContest.contest_id == contest_id).order_by(models.ZoneContest.id).all()
     return tmp
@@ -317,6 +328,10 @@ def create_contest(db: Session, contest: schemas.Contest):
 
 def get_contest_bloc_res(db: Session, contest_id: int, user_id: int):
     tmp = db.query(models.ResultContest).filter(models.ResultContest.contest_id == contest_id).filter(models.ResultContest.user_id == user_id).all()
+    return tmp
+
+def get_contest_voie_res(db: Session, contest_id: int, user_id: int):
+    tmp = db.query(models.ResultContestVoie).filter(models.ResultContestVoie.contest_id == contest_id).filter(models.ResultContestVoie.user_id == user_id).all()
     return tmp
 
 def compute_score(db: Session, contest_id: int):
@@ -341,6 +356,19 @@ def post_contest_bloc_res(db: Session, contest_id: int, user_id: int, bloc_id: i
     db.commit()
     compute_score(db, contest_id)
     return True
+
+def post_contest_voie_res(db: Session, contest_id: int, user_id: int, voie_id: int):
+    tmp = db.query(models.ResultContestVoie).filter(models.ResultContestVoie.contest_id == contest_id).filter(models.ResultContestVoie.user_id == user_id).filter(models.ResultContestVoie.voie_id == voie_id).first()
+    if tmp:
+        db.query(models.ResultContestVoie).filter(models.ResultContestVoie.contest_id == contest_id).filter(models.ResultContestVoie.user_id == user_id).filter(models.ResultContestVoie.voie_id == voie_id).delete()
+        db.query(models.VoieContest).filter(models.VoieContest.id == voie_id).update({'top': models.VoieContest.top - 1})
+    else:
+        db.add(models.ResultContestVoie(contest_id=contest_id, voie_id=voie_id, user_id=user_id))
+        db.query(models.VoieContest).filter(models.VoieContest.id == voie_id).update({'top': models.VoieContest.top + 1})
+    db.commit()
+    compute_score(db, contest_id)
+    return True
+
 
 def post_contest_speed_res(db: Session, contest_id: int, user_id: int, time: float):
     tmp = db.query(models.ResultSpeedContest).filter(models.ResultSpeedContest.contest_id == contest_id).filter(models.ResultSpeedContest.user_id == user_id).first()
