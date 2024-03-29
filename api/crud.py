@@ -397,7 +397,11 @@ def get_contest_speed(db: Session, contest_id: int, user_id: int):
     return tmp.time if tmp else -1
 
 def get_contest_classement(db: Session, contest_id: int):
-    tmp = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).order_by(models.UserContest.score.desc()).all()
+    tmp = {'homme': {'venere': {}, 'tranquille': {}}, 'femme': {'venere': {}, 'tranquille': {}}}
+    tmp['homme']['venere'] = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).filter(models.UserContest.age == 0).filter(models.UserContest.difficulty == 1).order_by(models.UserContest.score.desc()).all()
+    tmp['homme']['tranquille'] = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).filter(models.UserContest.age == 0).filter(models.UserContest.difficulty == 0).order_by(models.UserContest.score.desc()).all()
+    tmp['femme']['venere'] = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).filter(models.UserContest.age == 1).filter(models.UserContest.difficulty == 1).order_by(models.UserContest.score.desc()).all()
+    tmp['femme']['tranquille'] = db.query(models.UserContest).filter(models.UserContest.contest_id == contest_id).filter(models.UserContest.age == 1).filter(models.UserContest.difficulty == 0).order_by(models.UserContest.score.desc()).all()
     return tmp
 
 def get_contest_speed_res(db: Session, contest_id: int):

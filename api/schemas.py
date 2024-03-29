@@ -153,6 +153,7 @@ class UserContest(BaseModel):
     score: int
     score_voie: int
     difficulty: int
+    age: int
 
     class Config:
         orm_mode = True

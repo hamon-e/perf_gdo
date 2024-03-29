@@ -151,7 +151,7 @@ class UserContest(Base):
     name = Column(String)
     score = Column(Integer)
     score_voie = Column(Integer)
-    #age = Column(Integer)
+    age = Column(Integer)
     difficulty = Column(Integer)
 
 class ResultContest(Base):
