@@ -171,7 +171,7 @@ function Contest(props) {
     setOpen(false);
   };
   const [newName, setNewName] = React.useState("");
-    //  const [newAge, setNewAge] = React.useState("adulte");
+      const [newAge, setNewAge] = React.useState("homme");
   const [newDifficulty, setNewDifficulty] = React.useState("tranquille");
 
   const [blocs, setBlocs] = React.useState([])
@@ -230,7 +230,7 @@ function Contest(props) {
       const payload = {
           contest_id: contest_id,
           name: newName,
-          //          age: newAge == "adulte" ? 0 : 1,
+                    age: newAge == "homme" ? 0 : 1,
           difficulty: newDifficulty == "tranquille" ? 0 : 1,
           score: 0,
           score_voie: 0
@@ -238,7 +238,7 @@ function Contest(props) {
       var response = await axios.post(API_BASE_URL+'/contest_user', payload)
       setOpen(false)
       setNewName("")
-      //setNewAge("adulte")
+      setNewAge("homme")
       setNewDifficulty("tranquille")
       setUsers([...users, response.data])
       setSelectedUser(response.data)
@@ -258,9 +258,9 @@ function Contest(props) {
         setNewName(e.target.value)
     }
 
-    //function handleNewAgeChange(e) {
-        //setNewAge(e.target.value)
-    //}
+    function handleNewAgeChange(e) {
+        setNewAge(e.target.value)
+    }
 
     function handleNewDifficultyChange(e) {
         setNewDifficulty(e.target.value)
@@ -406,20 +406,19 @@ function Contest(props) {
                     <Grid container spacing={2}>
                         <Grid item xs={12}> 
                                 <div style={{paddingTop: '10px'}}>
-{/*
+
         <FormControl>
-            <FormLabel id="demo-controlled-radio-buttons-group">Age</FormLabel>
+            <FormLabel id="demo-controlled-radio-buttons-group">Genre</FormLabel>
             <RadioGroup
             aria-labelledby="demo-controlled-radio-buttons-group"
             name="controlled-radio-buttons-group"
             value={newAge}
             onChange={handleNewAgeChange}
         >
-                <FormControlLabel value="adulte" control={<Radio />} label="Adulte" />
-                <FormControlLabel value="enfant" control={<Radio />} label="Enfant" />
+                <FormControlLabel value="homme" control={<Radio />} label="Homme" />
+                <FormControlLabel value="femme" control={<Radio />} label="Femme" />
             </RadioGroup>
         </FormControl>
-         */}
     </div>
     </Grid>
                         <Grid item xs={6}> 

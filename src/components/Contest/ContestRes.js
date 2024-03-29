@@ -173,10 +173,10 @@ function ContestRes(props) {
     setOpen(false);
   };
 
-  const [res, setRes] = React.useState([])
+  const [res, setRes] = React.useState({})
   const [resSpeed, setResSpeed] = React.useState([])
 
-  const contest_id = 3
+  const contest_id = 1
 
   const [page, setPage] = React.useState(0);
   const [pageVoie, setPageVoie] = React.useState(0);
@@ -209,6 +209,13 @@ const columns = [
   { field: 'score', headerName: 'Score Bloc', width: 140 },
   { field: 'score_voie', headerName: 'Score Voie', width: 140 },
   {
+    field: 'score_combine',
+    headerName: 'Score Combine',
+    width: 140,
+    valueGetter: (value, row) => `${value.row.score + value.row.score_voie}`,
+  },
+
+  {
     field: 'score_vitesse',
     headerName: 'Score Vitesse',
     width: 140,
@@ -222,18 +229,80 @@ const columns = [
     }, []) 
 
     return(
-        <div style={{paddingTop: '20px', width: '90%', height: 800}}>
-
+        <div style={{paddingTop: '20px', width: '90%'}}>
+            {res['homme'] && 
+                    <Grid container spacing={2}>
+                        <Grid item xs={6}>
+Homme Venere
+                <div style={{paddingTop: '20px', height: 400}}>
                      <DataGrid
-        rows={res}
+        rows={res['homme']['venere']}
         columns={columns}
         initialState={{
           pagination: {
             paginationModel: { page: 0, pageSize: 5 },
           },
         }}
-        pageSizeOptions={[5, 10]}
+        pageSizeOptions={[]}
       />
+                 </div>
+         </Grid>
+        <Grid item xs={6}>
+
+Homme Tranquille
+                <div style={{paddingTop: '20px', height: 400}}>
+                     <DataGrid
+        rows={res['homme']['tranquille']}
+        columns={columns}
+        initialState={{
+          pagination: {
+            paginationModel: { page: 0, pageSize: 5 },
+          },
+        }}
+        pageSizeOptions={[]}
+      />
+                 </div>
+         </Grid>
+        <Grid item xs={6}>
+
+Femme Venere
+
+                <div style={{paddingTop: '20px', height: 400}}>
+       <DataGrid
+        rows={res['femme']['venere']}
+        columns={columns}
+        initialState={{
+          pagination: {
+            paginationModel: { page: 0, pageSize: 5 },
+          },
+        }}
+        pageSizeOptions={[]}
+      />
+                 </div>
+         </Grid>
+        <Grid item xs={6}>
+
+Femme Tranquille
+                <div style={{paddingTop: '20px', height: 400}}>
+
+       <DataGrid
+        rows={res['femme']['tranquille']}
+        columns={columns}
+        initialState={{
+          pagination: {
+            paginationModel: { page: 0, pageSize: 5 },
+          },
+        }}
+        pageSizeOptions={[]}
+      />
+                 </div>
+         </Grid>
+
+
+           </Grid>  }
+
+
+
 
 
             </div>
