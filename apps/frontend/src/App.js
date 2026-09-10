@@ -88,19 +88,19 @@ const AppBar = styled(MuiAppBar, { shouldForwardProp: (prop) => prop !== 'drawer
 }));
 
 const memberItems = [
-  { label: 'Ma séance', path: '/home', icon: AddCircleOutlineIcon },
+  { label: "Vue d'ensemble", path: '/dashboard', icon: HomeOutlinedIcon },
+  { label: 'Ajouter une séance', path: '/home', icon: AddCircleOutlineIcon },
   { label: 'Historique', path: '/historique', icon: HistoryIcon },
   { label: 'Progression', path: '/maprogression', icon: TrendingUpIcon },
   { label: 'Palmarès', path: '/palmares', icon: EmojiEventsOutlinedIcon },
-  { label: "Vue d'ensemble", path: '/dashboard', icon: HomeOutlinedIcon },
 ];
 
 const adminItems = [
-  { label: 'Ma séance', path: '/home', icon: AddCircleOutlineIcon },
-  { label: 'Voies', path: '/listevoies', icon: FormatListNumberedIcon },
-  { label: 'Utilisateurs', path: '/users', icon: PeopleOutlineIcon },
-  { label: 'Historique', path: '/historique', icon: HistoryIcon },
   { label: "Vue d'ensemble", path: '/dashboard', icon: HomeOutlinedIcon },
+  { label: 'Ajouter une séance', path: '/home', icon: AddCircleOutlineIcon },
+  { label: 'Historique', path: '/historique', icon: HistoryIcon },
+  { label: 'Utilisateurs', path: '/users', icon: PeopleOutlineIcon },
+  { label: 'Voies', path: '/listevoies', icon: FormatListNumberedIcon },
 ];
 
 function AppShell() {
@@ -221,7 +221,7 @@ function AppShell() {
         <Header />
         <Box sx={{ width: '100%' }}>
           <Switch>
-            <Route exact path="/"><Redirect to="/accueil" /></Route>
+            <Route exact path="/"><Redirect to={localStorage.getItem(ACCESS_TOKEN_NAME) ? '/dashboard' : '/accueil'} /></Route>
             <Route path="/contest_classement"><ContestRes /></Route>
             <Route path="/contest"><Contest /></Route>
             <Route path="/createcontest"><CreateContest /></Route>
@@ -236,7 +236,7 @@ function AppShell() {
             <PrivateRoute path="/historique"><Products /></PrivateRoute>
             <PrivateRoute path="/palmares"><Palmares /></PrivateRoute>
             <PrivateRoute path="/users"><Users /></PrivateRoute>
-            <Route><Redirect to="/home" /></Route>
+            <Route><Redirect to="/dashboard" /></Route>
           </Switch>
         </Box>
         <AlertComponent errorMessage={errorMessage} hideError={updateErrorMessage} />
