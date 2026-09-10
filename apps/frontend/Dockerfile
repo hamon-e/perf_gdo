@@ -5,7 +5,8 @@ COPY yarn.lock package.json /app/
 RUN yarn install
 COPY . /app/
 
-ENV REACT_APP_API_BASE_URL=https://perf-api.lesgdo.org
+ARG REACT_APP_API_BASE_URL=http://localhost:8000
+ENV REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
 
 RUN yarn build
 FROM nginx:latest

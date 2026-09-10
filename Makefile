@@ -29,16 +29,17 @@ dev-frontend:
 		yarn --cwd $(FRONTEND) start
 
 build:
-	REACT_APP_API_BASE_URL="$${REACT_APP_API_BASE_URL:-http://localhost:8000}" \
+	NODE_OPTIONS="$${NODE_OPTIONS:---openssl-legacy-provider}" \
+		REACT_APP_API_BASE_URL="$${REACT_APP_API_BASE_URL:-http://localhost:8000}" \
 		yarn --cwd $(FRONTEND) build
 
 test:
-	$(PYTHON) -m compileall -q $(BACKEND)/api
-	CI=true yarn --cwd $(FRONTEND) test --watchAll=false
+	$(PYTHON) -c "import ast, pathlib; [ast.parse(path.read_text()) for path in pathlib.Path('$(BACKEND)/api').glob('*.py')]"
+	CI=true NODE_OPTIONS="$${NODE_OPTIONS:---openssl-legacy-provider}" \
+		yarn --cwd $(FRONTEND) test --watchAll=false
 
 up:
 	docker compose up --build
 
 down:
 	docker compose down
-
