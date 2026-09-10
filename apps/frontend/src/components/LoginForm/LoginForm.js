@@ -43,7 +43,7 @@ function LoginForm(props) {
       setConnected(true);
       setUser(currentUser.data);
       setIsAdmin(currentUser.data.role_id === 0);
-      props.history.push('/home');
+      props.history.push('/dashboard');
     } catch (error) {
       setErrorMessage(error.response?.status === 401
         ? 'Adresse e-mail ou mot de passe incorrect.'
@@ -53,7 +53,7 @@ function LoginForm(props) {
     }
   };
 
-  if (connected) return <Redirect to="/home" />;
+  if (connected) return <Redirect to="/dashboard" />;
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.05fr 1fr' }, backgroundColor: '#f6f7fb' }}>

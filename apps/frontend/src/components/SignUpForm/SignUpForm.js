@@ -46,7 +46,7 @@ function SignUpForm(props) {
     }
   };
 
-  if (connected) return <Redirect to="/home" />;
+  if (connected) return <Redirect to="/dashboard" />;
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.05fr 1fr' }, backgroundColor: '#f6f7fb' }}>
