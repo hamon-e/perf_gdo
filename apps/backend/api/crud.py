@@ -23,6 +23,9 @@ def get_users(db: Session):
 def get_user_groups(db: Session):
     return db.query(models.UserGroup).order_by(models.UserGroup.name).all()
 
+def get_user_by_id(db: Session, user_id: int):
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
 def new_user(db: Session, user: schemas.User):
     tmp = user.model_dump()
     del tmp['category']
@@ -306,6 +309,25 @@ def get_userseance_days(db: Session, current_user: schemas.User, date: date):
     end = datetime(year=date.year + 1, month=1, day=1) if date.month == 12 else datetime(year=date.year, month=date.month + 1, day=1)
     tmp = db.query(models.UserSeance.date).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.date >= start).filter(models.UserSeance.date < end).distinct().all()
     return [r.date for r in tmp]
+
+def get_userseance_for_user(db: Session, user_id: int, date: date):
+    start = datetime.combine(date, datetime.min.time())
+    end = start + timedelta(days=1)
+    return db.query(models.UserSeance).filter(
+        models.UserSeance.user_id == user_id,
+        models.UserSeance.date >= start,
+        models.UserSeance.date < end,
+    ).all()
+
+def get_userseance_days_for_user(db: Session, user_id: int, date: date):
+    start = datetime(year=date.year, month=date.month, day=1)
+    end = datetime(year=date.year + 1, month=1, day=1) if date.month == 12 else datetime(year=date.year, month=date.month + 1, day=1)
+    entries = db.query(models.UserSeance.date).filter(
+        models.UserSeance.user_id == user_id,
+        models.UserSeance.date >= start,
+        models.UserSeance.date < end,
+    ).distinct().all()
+    return [entry.date for entry in entries]
 
 def post_userseance(db: Session, current_user: schemas.User, userseance: schemas.UserSeance):
     tmp = userseance.model_dump()

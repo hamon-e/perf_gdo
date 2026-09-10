@@ -118,3 +118,32 @@ def test_signup_can_create_a_group(db):
     user = crud.get_user(db, "creator@example.com")
     assert user.group.name == "Les aigles"
     assert [group.name for group in crud.get_user_groups(db)] == ["Les aigles"]
+
+
+def test_admin_history_queries_only_return_the_selected_users_sessions(db):
+    selected_user = create_user(db, "selected@example.com")
+    another_user = create_user(db, "another-history@example.com")
+    version = models.VersionVoie(date=datetime.now())
+    route_type = models.CouloirType(name="Dalle")
+    db.add_all([version, route_type])
+    db.commit()
+    couloir = models.Couloir(type_id=route_type.id)
+    db.add(couloir)
+    db.commit()
+    voie = models.Voie(couloir_id=couloir.id, color="#0000ff", difficulty=6.0, active=True, versionvoie_id=version.id)
+    db.add(voie)
+    db.commit()
+
+    session_date = datetime(2026, 9, 8, 18, 0)
+    db.add_all([
+        models.UserSeance(date=session_date, user_id=selected_user.id, voie_id=voie.id, en_tete=True, top=100, pause=0),
+        models.UserSeance(date=session_date, user_id=another_user.id, voie_id=voie.id, en_tete=False, top=50, pause=1),
+    ])
+    db.commit()
+
+    sessions = crud.get_userseance_for_user(db, selected_user.id, session_date.date())
+    session_days = crud.get_userseance_days_for_user(db, selected_user.id, session_date.date())
+
+    assert len(sessions) == 1
+    assert sessions[0].user_id == selected_user.id
+    assert session_days == [session_date]

@@ -11,6 +11,9 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import InputAdornment from '@mui/material/InputAdornment';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
@@ -27,6 +30,13 @@ import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettin
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CloseIcon from '@mui/icons-material/Close';
+
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
 
 const authorization = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN_NAME)}` },
@@ -35,6 +45,22 @@ const authorization = () => ({
 function initials(user) {
   const value = `${user.name || ''} ${user.surname || ''}`.trim() || user.email;
   return value.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+}
+
+function formatDate(value) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+  const date = new Date(value);
+  const pad = (number) => String(number).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function formatDifficulty(value) {
+  if (!value) return '—';
+  const floor = Math.floor(value);
+  const decimal = value - floor;
+  const suffixes = [[0.25, 'a'], [0.35, 'a+'], [0.5, 'b'], [0.6, 'b+'], [0.75, 'c'], [0.85, 'c+']];
+  const closest = suffixes.reduce((best, item) => Math.abs(item[0] - decimal) < Math.abs(best[0] - decimal) ? item : best);
+  return `${floor}${closest[1]}`;
 }
 
 function StatCard({ icon, value, label }) {
@@ -57,6 +83,12 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [sessionDays, setSessionDays] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [attempts, setAttempts] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -86,12 +118,67 @@ export default function Users() {
 
   const adminCount = users.filter((user) => user.role_id === 0).length;
 
+  const loadSessionMonth = async (date) => {
+    if (!selectedUser) return;
+    setHistoryLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/users/${selectedUser.id}/userseance_days?date=${formatDate(date)}`,
+        authorization(),
+      );
+      setSessionDays(response.data.map((day) => ({
+        id: formatDate(day),
+        title: 'Séance enregistrée',
+        start: formatDate(day),
+        allDay: true,
+        backgroundColor: '#1f6b45',
+        borderColor: '#1f6b45',
+      })));
+    } catch (error) {
+      setErrorMessage(error.response?.data?.detail || "Impossible de charger l’historique de cet utilisateur.");
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const loadSessionDay = async (date) => {
+    if (!selectedUser) return;
+    const normalizedDate = formatDate(date);
+    setSelectedDate(normalizedDate);
+    setDetailLoading(true);
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/users/${selectedUser.id}/userseance?date=${normalizedDate}`,
+        authorization(),
+      );
+      setAttempts(response.data);
+    } catch (error) {
+      setErrorMessage(error.response?.data?.detail || "Impossible de charger le détail de cette séance.");
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const openHistory = (user) => {
+    setSelectedUser(user);
+    setSessionDays([]);
+    setSelectedDate(null);
+    setAttempts([]);
+  };
+
+  const closeHistory = () => {
+    setSelectedUser(null);
+    setSessionDays([]);
+    setSelectedDate(null);
+    setAttempts([]);
+  };
+
   return (
     <Box sx={{ width: '100%', maxWidth: 1180, mx: 'auto', p: { xs: 2, md: 4 } }}>
       <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h4" component="h2" sx={{ fontWeight: 850 }}>Utilisateurs</Typography>
-          <Typography color="text.secondary">Consultez les comptes et leurs niveaux d’accès.</Typography>
+          <Typography color="text.secondary">Cliquez sur un utilisateur pour consulter l’historique de ses séances.</Typography>
         </Box>
         <Button startIcon={<RefreshIcon />} variant="outlined" onClick={loadUsers} disabled={loading}>Actualiser</Button>
       </Stack>
@@ -134,7 +221,21 @@ export default function Users() {
               </TableHead>
               <TableBody>
                 {filteredUsers.map((user) => (
-                  <TableRow key={user.id} hover>
+                  <TableRow
+                    key={user.id}
+                    hover
+                    onClick={() => openHistory(user)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        openHistory(user);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Consulter l’historique des séances de ${`${user.name || ''} ${user.surname || ''}`.trim() || user.email}`}
+                    sx={{ cursor: 'pointer', '&:focus-visible': { outline: '3px solid #1f6b45', outlineOffset: -3 } }}
+                  >
                     <TableCell>
                       <Stack direction="row" spacing={1.5} alignItems="center">
                         <Avatar sx={{ width: 38, height: 38, bgcolor: user.role_id === 0 ? '#1f6b45' : '#dce9e1', color: user.role_id === 0 ? 'white' : '#1f6b45', fontSize: 14, fontWeight: 800 }}>
@@ -142,7 +243,7 @@ export default function Users() {
                         </Avatar>
                         <Box>
                           <Typography sx={{ fontWeight: 700 }}>{`${user.name || ''} ${user.surname || ''}`.trim() || 'Utilisateur'}</Typography>
-                          <Typography variant="caption" color="text.secondary">ID {user.id}</Typography>
+                          <Typography variant="caption" color="text.secondary">ID {user.id} · Voir les séances</Typography>
                         </Box>
                       </Stack>
                     </TableCell>
@@ -164,6 +265,77 @@ export default function Users() {
           </TableContainer>
         )}
       </Paper>
+
+      <Dialog open={Boolean(selectedUser)} onClose={closeHistory} fullWidth maxWidth="lg" aria-labelledby="user-history-title">
+        {selectedUser && (
+          <>
+            <DialogTitle id="user-history-title" sx={{ pr: 7, fontWeight: 800 }}>
+              Historique de {`${selectedUser.name || ''} ${selectedUser.surname || ''}`.trim() || selectedUser.email}
+              <Button aria-label="Fermer" onClick={closeHistory} sx={{ position: 'absolute', right: 12, top: 12, minWidth: 0, p: 1, color: 'text.secondary' }}>
+                <CloseIcon />
+              </Button>
+            </DialogTitle>
+            <DialogContent dividers>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.45fr) minmax(280px, .85fr)' }, gap: 2.5, alignItems: 'start' }}>
+                <Paper variant="outlined" sx={{ position: 'relative', p: { xs: 1, sm: 2 }, borderRadius: 2 }}>
+                  {historyLoading && <Box sx={{ position: 'absolute', inset: 0, zIndex: 2, display: 'grid', placeItems: 'center', backgroundColor: 'rgba(255,255,255,.72)' }}><CircularProgress /></Box>}
+                  <FullCalendar
+                    plugins={[dayGridPlugin, interactionPlugin]}
+                    initialView="dayGridMonth"
+                    events={sessionDays}
+                    datesSet={(info) => loadSessionMonth(info.view.currentStart)}
+                    eventClick={(info) => loadSessionDay(info.event.start)}
+                    dateClick={(info) => loadSessionDay(info.date)}
+                    firstDay={1}
+                    height="auto"
+                    buttonText={{ today: "Aujourd'hui" }}
+                  />
+                </Paper>
+
+                <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+                  <CardContent sx={{ p: 2.5 }}>
+                    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2 }}>
+                      <CalendarMonthIcon sx={{ color: '#1f6b45' }} />
+                      <Box>
+                        <Typography sx={{ fontWeight: 800 }}>
+                          {selectedDate ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date(`${selectedDate}T12:00:00`)) : 'Détail de la séance'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">Sélectionnez une journée du calendrier.</Typography>
+                      </Box>
+                    </Stack>
+
+                    {detailLoading ? (
+                      <Box sx={{ py: 6, display: 'grid', placeItems: 'center' }}><CircularProgress size={30} /></Box>
+                    ) : !selectedDate ? (
+                      <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>Aucune journée sélectionnée.</Typography>
+                    ) : attempts.length === 0 ? (
+                      <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>Aucune voie enregistrée ce jour-là.</Typography>
+                    ) : (
+                      <Stack spacing={1.25}>
+                        <Stack direction="row" spacing={1}>
+                          <Chip size="small" label={`${attempts.length} voie${attempts.length > 1 ? 's' : ''}`} />
+                          <Chip size="small" icon={<CheckCircleOutlineIcon />} label={`${attempts.filter((attempt) => attempt.top === 100).length} réussie${attempts.filter((attempt) => attempt.top === 100).length > 1 ? 's' : ''}`} sx={{ backgroundColor: '#dff4e8', color: '#155b39' }} />
+                        </Stack>
+                        {attempts.map((attempt) => (
+                          <Paper key={attempt.id} variant="outlined" sx={{ p: 1.25, borderRadius: 1.5 }}>
+                            <Stack direction="row" spacing={1.25} alignItems="center">
+                              <Box sx={{ width: 30, height: 30, flexShrink: 0, borderRadius: 1, backgroundColor: attempt.voie?.color || '#ddd', border: '2px solid white', boxShadow: '0 0 0 1px rgba(0,0,0,.15)' }} />
+                              <Box sx={{ minWidth: 0 }}>
+                                <Typography sx={{ fontWeight: 800 }}>{formatDifficulty(attempt.voie?.difficulty)} · couloir {attempt.voie?.couloir_id}</Typography>
+                                <Typography variant="body2" color="text.secondary">{attempt.en_tete ? 'En tête' : 'Moulinette'} · {attempt.top === 100 ? 'réussie' : `${attempt.top}% atteint`}{attempt.pause ? ` · ${attempt.pause} pause${attempt.pause > 1 ? 's' : ''}` : ''}</Typography>
+                              </Box>
+                            </Stack>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    )}
+                  </CardContent>
+                </Card>
+              </Box>
+            </DialogContent>
+          </>
+        )}
+      </Dialog>
     </Box>
   );
 }
