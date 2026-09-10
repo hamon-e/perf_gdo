@@ -1,0 +1,15 @@
+# This repository only contains the climbing application. Other files that
+# happen to live next to it locally must not be added accidentally.
+/*
+!/.dockerignore
+!/.env.example
+!/.gitignore
+!/Makefile
+!/README.md
+!/compose.yaml
+!/apps/
+!/apps/**
+
+/.env
+/.venv/
+
