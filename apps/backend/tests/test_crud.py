@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from api import crud, models
+from api import crud, models, schemas
 from api.db import Base
 
 
@@ -90,6 +90,34 @@ def test_user_cannot_delete_another_users_entry(db):
 
     crud.delete_userseance(db, owner, entry.id)
     assert db.query(models.UserSeance).filter(models.UserSeance.id == entry.id).first() is None
+
+
+def test_signup_can_join_an_existing_group(db):
+    group = models.UserGroup(name="Les lézards")
+    db.add(group)
+    db.commit()
+
+    crud.signup(db, schemas.UserSignUp(
+        email="member@example.com",
+        password="password123",
+        group_id=group.id,
+    ))
+
+    user = crud.get_user(db, "member@example.com")
+    assert user.group_id == group.id
+    assert crud.get_users(db)[0].group.name == "Les lézards"
+
+
+def test_signup_can_create_a_group(db):
+    crud.signup(db, schemas.UserSignUp(
+        email="creator@example.com",
+        password="password123",
+        new_group_name="  Les aigles  ",
+    ))
+
+    user = crud.get_user(db, "creator@example.com")
+    assert user.group.name == "Les aigles"
+    assert [group.name for group in crud.get_user_groups(db)] == ["Les aigles"]
 
 
 def test_admin_history_queries_only_return_the_selected_users_sessions(db):

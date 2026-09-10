@@ -4,13 +4,12 @@ from datetime import datetime, time
 import os
 
 from . import crud, models
-from .db import SessionLocal, engine
-
-
-models.Base.metadata.create_all(bind=engine)
+from .db import SessionLocal
+from .main import ensure_database_schema
 
 
 def populate():
+    ensure_database_schema()
     db = SessionLocal()
     try:
         roles = ((0, "admin"), (1, "basic"))

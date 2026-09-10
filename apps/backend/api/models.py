@@ -29,6 +29,15 @@ class User(Base):
     subscription_id = Column(Integer, ForeignKey("subscription.id"))
     status_id = Column(Integer, ForeignKey("userstatus.id"))
     role_id = Column(Integer, ForeignKey("userrole.id"))
+    group_id = Column(Integer, ForeignKey("usergroup.id"), nullable=True)
+    group = relationship("UserGroup")
+
+
+class UserGroup(Base):
+    __tablename__ = "usergroup"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False)
 
 class UserStatus(Base):
     __tablename__ = "userstatus"

@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class Schema(BaseModel):
@@ -11,6 +11,23 @@ class Schema(BaseModel):
 class UserSignUp(Schema):
     email: str
     password: str
+    group_id: Optional[int] = None
+    new_group_name: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_group_choice(self):
+        if self.group_id is not None and self.new_group_name:
+            raise ValueError("Choisissez un groupe existant ou créez-en un nouveau, pas les deux.")
+        if self.new_group_name is not None:
+            self.new_group_name = self.new_group_name.strip()
+            if not self.new_group_name:
+                raise ValueError("Le nom du nouveau groupe ne peut pas être vide.")
+        return self
+
+
+class UserGroup(Schema):
+    id: int
+    name: str
 
 
 class User(Schema):
@@ -19,6 +36,8 @@ class User(Schema):
     surname: str
     email: str
     role_id: int
+    group_id: Optional[int] = None
+    group: Optional[UserGroup] = None
 
 
 class Token(Schema):

@@ -4,6 +4,7 @@ from typing import List
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
@@ -12,7 +13,16 @@ from .db import SessionLocal, engine
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.security import OAuth2PasswordBearer
 
-models.Base.metadata.create_all(bind=engine)
+def ensure_database_schema():
+    """Create new tables and apply the small additive upgrade used by this app."""
+    models.Base.metadata.create_all(bind=engine)
+    inspector = inspect(engine)
+    if "user" in inspector.get_table_names() and "group_id" not in {column["name"] for column in inspector.get_columns("user")}:
+        with engine.begin() as connection:
+            connection.execute(text('ALTER TABLE "user" ADD COLUMN group_id INTEGER REFERENCES usergroup(id)'))
+
+
+ensure_database_schema()
 
 app = FastAPI()
 router = APIRouter()
@@ -62,6 +72,10 @@ async def root():
 async def signup(user_info: schemas.UserSignUp, db: Session = Depends(get_db)):
     crud.signup(db, user_info)
     return True
+
+@router.get("/user-groups", response_model=List[schemas.UserGroup])
+async def read_user_groups(db: Session = Depends(get_db)):
+    return crud.get_user_groups(db)
 
 @router.post("/token", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
