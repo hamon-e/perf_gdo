@@ -1,0 +1,7 @@
+.mycell {
+    cursor: pointer;
+}
+.mycell:hover {
+    -webkit-filter: grayscale(50%)
+}
+
