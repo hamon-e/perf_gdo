@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, date
 import os
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 import bcrypt
 
 from typing import Optional
@@ -18,7 +18,10 @@ def get_user(db: Session, email: str):
     return db.query(models.User).filter(models.User.email == email).first()
 
 def get_users(db: Session):
-    return db.query(models.User).all()
+    return db.query(models.User).options(joinedload(models.User.group)).all()
+
+def get_user_groups(db: Session):
+    return db.query(models.UserGroup).order_by(models.UserGroup.name).all()
 
 def new_user(db: Session, user: schemas.User):
     tmp = user.model_dump()
@@ -65,7 +68,29 @@ def signup(db: Session, user_info: schemas.UserSignUp):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Le mot de passe doit contenir entre 8 et 72 octets",
         )
-    db.add(models.User(name='User', surname='User', pwd_hash=get_password_hash(user_info.password), email=user_info.email, role_id=1))
+    group_id = user_info.group_id
+    if group_id is not None:
+        if not db.query(models.UserGroup).filter(models.UserGroup.id == group_id).first():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Le groupe sélectionné n'existe pas.",
+            )
+    elif user_info.new_group_name:
+        group = db.query(models.UserGroup).filter(models.UserGroup.name.ilike(user_info.new_group_name)).first()
+        if not group:
+            group = models.UserGroup(name=user_info.new_group_name)
+            db.add(group)
+            db.flush()
+        group_id = group.id
+
+    db.add(models.User(
+        name='User',
+        surname='User',
+        pwd_hash=get_password_hash(user_info.password),
+        email=user_info.email,
+        role_id=1,
+        group_id=group_id,
+    ))
     db.commit()
 
 def get_current_user(db: Session, token: str):

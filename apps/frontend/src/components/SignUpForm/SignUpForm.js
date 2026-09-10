@@ -8,6 +8,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Paper from '@mui/material/Paper';
+import MenuItem from '@mui/material/MenuItem';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -21,9 +22,18 @@ function SignUpForm(props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [groups, setGroups] = useState([]);
+  const [groupId, setGroupId] = useState('');
+  const [newGroupName, setNewGroupName] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => setShowBar(false), [setShowBar]);
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/user-groups`)
+      .then((response) => setGroups(response.data))
+      .catch(() => setErrorMessage('Impossible de charger les groupes.'));
+  }, [setErrorMessage]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -35,9 +45,18 @@ function SignUpForm(props) {
       setErrorMessage('Les mots de passe ne correspondent pas.');
       return;
     }
+    if (groupId === '__new__' && !newGroupName.trim()) {
+      setErrorMessage('Indiquez le nom du nouveau groupe.');
+      return;
+    }
     setLoading(true);
     try {
-      await axios.post(`${API_BASE_URL}/signup`, { email, password });
+      await axios.post(`${API_BASE_URL}/signup`, {
+        email,
+        password,
+        group_id: groupId && groupId !== '__new__' ? Number(groupId) : null,
+        new_group_name: groupId === '__new__' ? newGroupName.trim() : null,
+      });
       props.history.push('/login');
     } catch (error) {
       setErrorMessage(error.response?.data?.detail || 'Création du compte impossible.');
@@ -87,6 +106,31 @@ function SignUpForm(props) {
               required
               fullWidth
             />
+            <TextField
+              select
+              label="Groupe"
+              value={groupId}
+              onChange={(event) => {
+                setGroupId(event.target.value);
+                if (event.target.value !== '__new__') setNewGroupName('');
+              }}
+              helperText="Rejoignez un groupe existant ou créez le vôtre."
+              fullWidth
+            >
+              <MenuItem value="">Aucun groupe pour le moment</MenuItem>
+              {groups.map((group) => <MenuItem key={group.id} value={String(group.id)}>{group.name}</MenuItem>)}
+              <MenuItem value="__new__">Créer un nouveau groupe</MenuItem>
+            </TextField>
+            {groupId === '__new__' && (
+              <TextField
+                label="Nom du nouveau groupe"
+                value={newGroupName}
+                onChange={(event) => setNewGroupName(event.target.value)}
+                required
+                autoFocus
+                fullWidth
+              />
+            )}
             <TextField
               label="Mot de passe"
               type="password"

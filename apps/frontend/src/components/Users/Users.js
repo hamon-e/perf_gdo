@@ -81,7 +81,7 @@ export default function Users() {
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return users;
-    return users.filter((user) => `${user.name} ${user.surname} ${user.email}`.toLowerCase().includes(query));
+    return users.filter((user) => `${user.name} ${user.surname} ${user.email} ${user.group?.name || ''}`.toLowerCase().includes(query));
   }, [search, users]);
 
   const adminCount = users.filter((user) => user.role_id === 0).length;
@@ -128,6 +128,7 @@ export default function Users() {
                 <TableRow sx={{ backgroundColor: '#f8faf9' }}>
                   <TableCell>Utilisateur</TableCell>
                   <TableCell>E-mail</TableCell>
+                  <TableCell>Groupe</TableCell>
                   <TableCell align="right">Rôle</TableCell>
                 </TableRow>
               </TableHead>
@@ -146,6 +147,9 @@ export default function Users() {
                       </Stack>
                     </TableCell>
                     <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      {user.group ? <Chip size="small" label={user.group.name} variant="outlined" /> : <Typography variant="body2" color="text.secondary">Aucun</Typography>}
+                    </TableCell>
                     <TableCell align="right">
                       <Chip
                         size="small"
