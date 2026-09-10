@@ -1,25 +1,17 @@
 from datetime import datetime, timedelta, date
+import os
 
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
+import bcrypt
 
-import base64
+from typing import Optional
 
-from typing import List, Optional
-
-from fastapi import Depends, HTTPException, status, UploadFile
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import HTTPException, status
 from jose import JWTError, jwt
 
 from . import models, schemas
 
-import random
-import string
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
+SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-only-change-me")
 ALGORITHM = "HS256"
 
 def get_user(db: Session, email: str):
@@ -29,22 +21,24 @@ def get_users(db: Session):
     return db.query(models.User).all()
 
 def new_user(db: Session, user: schemas.User):
-    tmp = user.dict()
+    tmp = user.model_dump()
     del tmp['category']
     db.add(models.User(**tmp))
     db.commit()
 
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+    except (ValueError, TypeError):
+        return False
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 def authenticate_user(db, username: str, password: str):
     user = get_user(db, username)
     if not user:
         return False
-    print(user)
     if not verify_password(password, user.pwd_hash):
         return False
     return user
@@ -60,6 +54,17 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 def signup(db: Session, user_info: schemas.UserSignUp):
+    if get_user(db, user_info.email):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Un compte existe déjà pour cette adresse e-mail",
+        )
+    password_size = len(user_info.password.encode("utf-8"))
+    if password_size < 8 or password_size > 72:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Le mot de passe doit contenir entre 8 et 72 octets",
+        )
     db.add(models.User(name='User', surname='User', pwd_hash=get_password_hash(user_info.password), email=user_info.email, role_id=1))
     db.commit()
 
@@ -84,6 +89,16 @@ def get_current_user(db: Session, token: str):
 
 def compute_dashboard_coverage(db: Session, current_user: schemas.User):
     version = db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).first()
+    if not version:
+        return {
+            'coverage': 0,
+            'coverage_dalle': 0,
+            'coverage_devers': 0,
+            'coverage_diedre': 0,
+            'coverage_9m': 0,
+            'max_lvl': 0,
+            'tete_ratio': 0,
+        }
     all_user = db.query(models.UserSeance.voie_id).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.top == 100).filter(models.UserSeance.voie_id.in_(db.query(models.Voie.id).filter(models.Voie.versionvoie_id == version.id))).distinct().all()
     all_user_tete = db.query(models.UserSeance.en_tete).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.voie_id.in_(db.query(models.Voie.id).filter(models.Voie.versionvoie_id == version.id))).all()
     tmp = {
@@ -137,33 +152,26 @@ def compute_dashboard_coverage(db: Session, current_user: schemas.User):
     if nbr['nbr'] != 0:
         tmp['coverage'] = round(tmp['coverage'] / nbr['nbr'], 2)
     else:
-        tmp['coverage'] = 1
+        tmp['coverage'] = 0
     if nbr['nbr_diedre'] != 0:
         tmp['coverage_diedre'] = round(tmp['coverage_diedre'] / nbr['nbr_diedre'], 2)
     else:
-        tmp['coverage_diedre'] = 1
+        tmp['coverage_diedre'] = 0
     if nbr['nbr_dalle'] != 0:
         tmp['coverage_dalle'] = round(tmp['coverage_dalle'] / nbr['nbr_dalle'], 2)
     else:
-        tmp['coverage_dalle'] = 1
+        tmp['coverage_dalle'] = 0
     if nbr['nbr_9m'] != 0:
         tmp['coverage_9m'] = round(tmp['coverage_9m'] / nbr['nbr_9m'], 2)
     else:
-        tmp['coverage_9m'] = 1
+        tmp['coverage_9m'] = 0
     if nbr['nbr_devers'] != 0:
         tmp['coverage_devers'] = round(tmp['coverage_devers'] / nbr['nbr_devers'], 2)
     else:
-        tmp['coverage_devers'] = 1
-    if tmp['coverage_devers'] == 0:
-        tmp['coverage_devers'] = 0.01
-    if tmp['coverage_9m'] == 0:
-        tmp['coverage_9m'] = 0.01
-    if tmp['coverage_diedre'] == 0:
-        tmp['coverage_diedre'] = 0.01
-    if tmp['coverage_dalle'] == 0:
-        tmp['coverage_dalle'] = 0.01
+        tmp['coverage_devers'] = 0
 
-    tmp['tete_ratio'] = round(tmp['tete'] / (tmp['tete'] + tmp['moulinette']), 2)
+    attempts = tmp['tete'] + tmp['moulinette']
+    tmp['tete_ratio'] = round(tmp['tete'] / attempts, 2) if attempts else 0
     return tmp
 
 def compute_dashboard_nbr_of_seances(db: Session, current_user: schemas.User):
@@ -171,18 +179,43 @@ def compute_dashboard_nbr_of_seances(db: Session, current_user: schemas.User):
     next_month = datetime.today().replace(day=28).replace(hour=1) + timedelta(days=4)
     end = next_month - timedelta(days=next_month.day)
     nbr_of_seances = db.query(models.UserSeance.date).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.date >= start).filter(models.UserSeance.date <= end).distinct().count()
-    print(nbr_of_seances)
     return nbr_of_seances
 
 def get_dashboard(db: Session, current_user: schemas.User):
     tmp = compute_dashboard_coverage(db, current_user)
-    print(tmp)
     tmp['nbr_of_seances'] = compute_dashboard_nbr_of_seances(db, current_user)
     return tmp
 
-def get_seances(db: Session, current_user: schemas.User, start: date, end: date):
-    print(db.query(models.Seance).filter(models.Seance.start >= start).filter(models.Seance.start <= end).all())
-    return db.query(models.Seance).filter(models.Seance.start >= start).filter(models.Seance.start <= end).all()
+def get_progression(db: Session, current_user: schemas.User, months: int):
+    today = date.today()
+    periods = []
+    cursor = date(today.year, today.month, 1)
+    for _ in range(months):
+        periods.append(cursor)
+        cursor = date(cursor.year - 1, 12, 1) if cursor.month == 1 else date(cursor.year, cursor.month - 1, 1)
+    periods.reverse()
+
+    entries = db.query(models.UserSeance).join(models.Voie).filter(
+        models.UserSeance.user_id == current_user.id,
+        models.UserSeance.date >= periods[0],
+    ).all()
+
+    result = []
+    for period in periods:
+        next_period = date(period.year + 1, 1, 1) if period.month == 12 else date(period.year, period.month + 1, 1)
+        month_entries = [entry for entry in entries if period <= entry.date.date() < next_period]
+        session_days = {entry.date.date() for entry in month_entries}
+        tops = [entry for entry in month_entries if entry.top == 100]
+        lead_attempts = [entry for entry in month_entries if entry.en_tete]
+        result.append({
+            "period": period,
+            "sessions": len(session_days),
+            "attempts": len(month_entries),
+            "tops": len(tops),
+            "max_level": max((entry.voie.difficulty for entry in tops), default=0),
+            "lead_ratio": round(len(lead_attempts) / len(month_entries), 2) if month_entries else 0,
+        })
+    return result
 
 def get_versionvoie(db: Session):
     return db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).all()
@@ -193,11 +226,14 @@ def post_versionvoie(db: Session, date: datetime):
 
 def get_voies(db: Session, current_user: schemas.User, version_id: int):
     if version_id == -1:
-        version_id = db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).first().id
+        version = db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).first()
+        if not version:
+            return []
+        version_id = version.id
     return db.query(models.Voie).filter(models.Voie.versionvoie_id == version_id).order_by(models.Voie.difficulty).order_by(models.Voie.couloir_id).all()
 
 def post_voie(db: Session, current_user: schemas.User, voie: schemas.Voie):
-    tmp = voie.dict()
+    tmp = voie.model_dump()
     tmp['active'] = True
     del tmp['couloir']
     id = tmp['id']
@@ -206,7 +242,6 @@ def post_voie(db: Session, current_user: schemas.User, voie: schemas.Voie):
         db.add(models.Voie(**tmp))
         db.commit()
     else:
-        print(tmp)
         db.query(models.Voie).filter(models.Voie.id == id).update(tmp)
         db.commit()
 
@@ -218,7 +253,7 @@ def get_crenautype(db: Session, current_user: schemas.User):
     return db.query(models.CrenauType).all()
 
 def post_crenautype(db: Session, current_user: schemas.User, crenautype: schemas.CrenauType):
-    tmp = crenautype.dict()
+    tmp = crenautype.model_dump()
     del tmp['id']
     db.add(models.CrenauType(**tmp))
     db.commit()
@@ -227,31 +262,37 @@ def get_crenaux(db: Session, current_user: schemas.User):
     return db.query(models.Crenau).all()
 
 def post_crenau(db: Session, current_user: schemas.User, crenau: schemas.Crenau):
-    tmp = crenau.dict()
+    tmp = crenau.model_dump()
     del tmp['id']
     db.add(models.Crenau(**tmp))
     db.commit()
 
 def get_userseance(db: Session, current_user: schemas.User, date: date):
-    return db.query(models.UserSeance).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.date == date).all()
+    start = datetime.combine(date, datetime.min.time())
+    end = start + timedelta(days=1)
+    return db.query(models.UserSeance).filter(
+        models.UserSeance.user_id == current_user.id,
+        models.UserSeance.date >= start,
+        models.UserSeance.date < end,
+    ).all()
 
 def get_userseance_days(db: Session, current_user: schemas.User, date: date):
     start = datetime(year=date.year, month=date.month, day=1)
-    end = start + timedelta(days=31)
+    end = datetime(year=date.year + 1, month=1, day=1) if date.month == 12 else datetime(year=date.year, month=date.month + 1, day=1)
     tmp = db.query(models.UserSeance.date).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.date >= start).filter(models.UserSeance.date < end).distinct().all()
     return [r.date for r in tmp]
 
 def post_userseance(db: Session, current_user: schemas.User, userseance: schemas.UserSeance):
-    tmp = userseance.dict()
+    tmp = userseance.model_dump()
     del tmp['id']
     del tmp['voie']
     tmp['user_id'] = current_user.id
-    print(tmp)
+    tmp['date'] = datetime.combine(tmp['date'], datetime.min.time())
     db.add(models.UserSeance(**tmp))
     db.commit()
 
 def delete_userseance(db: Session, current_user: schemas.User, userseance_id: int):
-   db.query(models.UserSeance).filter(models.UserSeance.id == userseance_id).delete()
+   db.query(models.UserSeance).filter(models.UserSeance.id == userseance_id).filter(models.UserSeance.user_id == current_user.id).delete()
    db.commit()
 
 def get_palmares(db: Session, current_user: schemas.User):
@@ -271,7 +312,7 @@ def get_contest_user(db: Session, contest_id: int, user_id: int):
     return tmp
 
 def create_contest_user(db: Session, user: schemas.UserContest):
-    tmp = user.dict()
+    tmp = user.model_dump()
     del tmp['id']
     if not db.query(models.UserContest).filter(models.UserContest.contest_id == user.contest_id).filter(models.UserContest.name == tmp['name']).first():
         tmp['score'] = 0
@@ -281,15 +322,14 @@ def create_contest_user(db: Session, user: schemas.UserContest):
         return tmp2
 
 def create_contest_zone(db: Session, zone: schemas.ZoneContest):
-    tmp = zone.dict()
+    tmp = zone.model_dump()
     del tmp['id']
     db.add(models.ZoneContest(**tmp))
     db.commit()
     return True
 
 def create_contest_bloc(db: Session, bloc: schemas.BlocContest):
-    print(bloc)
-    tmp = bloc.dict()
+    tmp = bloc.model_dump()
     del tmp['id']
     db.add(models.BlocContest(**tmp))
     db.commit()
@@ -300,7 +340,7 @@ def get_contest_blocs(db: Session, contest_id: int, zone_id: int):
     return tmp
 
 def create_contest_voie(db: Session, voie: schemas.VoieContest):
-    tmp = voie.dict()
+    tmp = voie.model_dump()
     del tmp['id']
     db.add(models.VoieContest(**tmp))
     db.commit()
@@ -319,9 +359,8 @@ def get_contests(db: Session):
     return tmp
 
 def create_contest(db: Session, contest: schemas.Contest):
-    tmp = contest.dict()
+    tmp = contest.model_dump()
     del tmp['id']
-    print(tmp)
     db.add(models.Contest(**tmp))
     db.commit()
     return True

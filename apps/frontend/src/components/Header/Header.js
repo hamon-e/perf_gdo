@@ -1,57 +1,68 @@
-import React,{ useEffect, useState } from 'react';
-
+import React, { useEffect } from 'react';
 import { withRouter } from 'react-router-dom';
+import axios from 'axios';
 
 import { ACCESS_TOKEN_NAME, API_BASE_URL } from '../../constants/apiConstants';
+import { useContextObject } from '../Context/Context';
 
-import {useContextObject} from '../../components/Context/Context';
+const publicPaths = new Set([
+  '/',
+  '/accueil',
+  '/login',
+  '/signup',
+  '/contest',
+  '/contest_classement',
+]);
 
-import axios from 'axios'
+function Header({ history, location }) {
+  const {
+    connectedStateHook,
+    userHook,
+    isAdminHook,
+    showBarHook,
+  } = useContextObject();
+  const [, setConnected] = connectedStateHook;
+  const [, setUser] = userHook;
+  const [, setIsAdmin] = isAdminHook;
+  const [, setShowBar] = showBarHook;
 
-function Header(props) {
+  useEffect(() => {
+    const authenticate = async () => {
+      const token = localStorage.getItem(ACCESS_TOKEN_NAME);
 
-  const {showBarHook, connectedStateHook, userHook, errorMessageHook, languageStateHook, isAdminHook, headerTitleHook } = useContextObject();
-  const [connected, setConnected] = connectedStateHook;
-  const [user, setUser] = userHook;
-  const [isAdmin, setIsAdmin] = isAdminHook;
-  const [showBar, setShowBar] = showBarHook;
+      if (!token) {
+        setConnected(false);
+        setIsAdmin(false);
+        setShowBar(false);
+        if (!publicPaths.has(location.pathname)) history.replace('/login');
+        return;
+      }
 
-    useEffect(() => {
-        async function get_token() {
-            if (ACCESS_TOKEN_NAME !== null) {
-                try {
-                    const response = await axios.get(API_BASE_URL+'/me/', { headers: { 'Authorization': "Bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
-                    setConnected(true);
-                    setUser(response.data)
-                    setShowBar(true)
-                    if (response.data.role_id == 0) {
-                        setIsAdmin(true)
-                    }
-                    if (props.location.pathname === '/login' || props.location.pathname === '/' || props.location.pathname === '/accueil') {
-                        props.history.push('/home')
-                    }
-                } catch (error) {
-                    if (props.location.pathname !== '/login' && props.location.pathname !== '/signup' && props.location.pathname !== '/createcontest' && props.location.pathname !== '/contest' && props.location.pathname !== '/contest_classement') {
-                        setConnected(false);
-                        setShowBar(false)
-                        props.history.push('/login')
-                    }
-                } 
-            } else {
-                setShowBar(false)
-                if (props.location.pathname !== '/login') {
-                    props.history.push('/login')
-                }
-                setConnected(false);
-            }
+      try {
+        const response = await axios.get(`${API_BASE_URL}/me/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setConnected(true);
+        setUser(response.data);
+        setIsAdmin(response.data.role_id === 0);
+        setShowBar(true);
 
+        if (['/', '/accueil', '/login', '/signup'].includes(location.pathname)) {
+          history.replace('/home');
         }
-        get_token()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+      } catch (error) {
+        localStorage.removeItem(ACCESS_TOKEN_NAME);
+        setConnected(false);
+        setIsAdmin(false);
+        setShowBar(false);
+        if (!publicPaths.has(location.pathname)) history.replace('/login');
+      }
+    };
 
-    return null
+    authenticate();
+  }, [history, location.pathname, setConnected, setIsAdmin, setShowBar, setUser]);
 
+  return null;
 }
 
 export default withRouter(Header);

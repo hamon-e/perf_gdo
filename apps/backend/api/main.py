@@ -1,17 +1,9 @@
-from typing import List
 from datetime import datetime, timedelta, date
+import os
+from typing import List
 
-import traceback
-
-from starlette.datastructures import MutableHeaders
-from fastapi import Depends, FastAPI, HTTPException, status, UploadFile, File, Request, APIRouter, Response, Body, Form
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.routing import APIRoute
-from typing import Callable,  Tuple
-
-from fastapi.responses import PlainTextResponse
-
-
 from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
@@ -20,36 +12,25 @@ from .db import SessionLocal, engine
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.security import OAuth2PasswordBearer
 
-from typing import List, Optional
-
 models.Base.metadata.create_all(bind=engine)
 
-class ContextIncludedRoute(APIRoute):
-    def get_route_handler(self) -> Callable:
-        original_route_handler = super().get_route_handler()
-
-        async def custom_route_handler(request: Request) -> Response:
-            print(request.headers)
-            if request.headers.get('X-Trayvisor-Token'):
-                id_header = ("authorization".encode(), str("bearer " + request.headers['X-Trayvisor-Token']).encode())
-                request.headers.__dict__["_list"].append(id_header)
-            response = await original_route_handler(request)
-            return response
-        return custom_route_handler
-
 app = FastAPI()
-router = APIRouter(route_class=ContextIncludedRoute)
+router = APIRouter()
 
-origins = ['*']
+origins = [
+    origin.strip()
+    for origin in os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 60*24*30
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", 60*24*30))
 
 # Dependency
 def get_db():
@@ -64,6 +45,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
     user = crud.get_current_user(db, token)
     return user
+
+def get_current_admin(current_user: schemas.User = Depends(get_current_user)):
+    if current_user.role_id != 0:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Droits administrateur requis",
+        )
+    return current_user
 
 @router.get("/")
 async def root():
@@ -98,13 +87,17 @@ async def get_voies(current_user: schemas.User = Depends(get_current_user), db: 
     return crud.get_dashboard(db, current_user)
 
 @router.get("/users/", response_model=List[schemas.User])
-def read_users(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+def read_users(current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
     return crud.get_users(db)
 
-@router.get("/seances", response_model=List[schemas.Seance])
-async def get_seances(start: datetime, end: datetime, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    seances = crud.get_seances(db, current_user, start, end)
-    return seances
+@router.get("/progression", response_model=List[schemas.ProgressionPoint])
+async def get_progression(months: int = 12, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if months not in (1, 6, 12):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="La période doit être de 1, 6 ou 12 mois",
+        )
+    return crud.get_progression(db, current_user, months)
 
 @router.get("/versionvoie", response_model=List[schemas.VersionVoie])
 async def get_versionvoie(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -112,7 +105,7 @@ async def get_versionvoie(current_user: schemas.User = Depends(get_current_user)
     return versionvoie
 
 @router.post("/versionvoie", response_model=bool)
-async def post_versionvoie(date: schemas.VersionVoie, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def post_versionvoie(date: schemas.VersionVoie, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
     crud.post_versionvoie(db, date.date)
     return True
 
@@ -123,12 +116,12 @@ async def get_voies(version_id: int = -1, current_user: schemas.User = Depends(g
 
 
 @router.post("/voie", response_model=bool)
-async def post_voie(voie: schemas.Voie, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def post_voie(voie: schemas.Voie, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
     crud.post_voie(db, current_user, voie)
     return True
 
 @router.delete("/voie", response_model=bool)
-async def delete_voie(id: int, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def delete_voie(id: int, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
     crud.delete_voie(db, current_user, id)
     return True
 
@@ -138,7 +131,7 @@ async def get_crenautype(current_user: schemas.User = Depends(get_current_user),
     return crenautype
 
 @router.post("/crenautype", response_model=bool)
-async def post_crenautype(crenautype: schemas.CrenauType, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+async def post_crenautype(crenautype: schemas.CrenauType, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
     crud.post_crenautype(db, current_user, crenautype)
     return True
 
@@ -147,8 +140,8 @@ async def get_crenaux(current_user: schemas.User = Depends(get_current_user), db
     crenaux = crud.get_crenaux(db, current_user)
     return crenaux
 
-@router.post("/crenau", response_model=List[schemas.Crenau])
-async def post_crenau(crenau: schemas.Crenau, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+@router.post("/crenau", response_model=bool)
+async def post_crenau(crenau: schemas.Crenau, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
     crud.post_crenau(db, current_user, crenau)
     return True
 
@@ -163,7 +156,6 @@ async def get_palmares(current_user: schemas.User = Depends(get_current_user), d
 @router.get("/userseance_days", response_model=List[datetime])
 async def get_userseance_days(date: date, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     tmp = crud.get_userseance_days(db, current_user, date)
-    print(tmp)
     return tmp
 
 @router.post("/userseance", response_model=bool)
@@ -186,7 +178,6 @@ async def get_contests(db: Session = Depends(get_db)):
 
 @router.post("/contest", response_model=bool)
 async def create_contest(contest: schemas.Contest, db: Session = Depends(get_db)):
-    print(contest)
     return crud.create_contest(db, contest)
 
 @router.get("/contest_zones", response_model=List[schemas.ZoneContest])
@@ -242,7 +233,7 @@ async def get_contest_users(res: schemas.ResultContestVoie, db: Session = Depend
 async def get_contest_users(contest_id: int, user_id: int, db: Session = Depends(get_db)):
     return crud.get_contest_user_classement(db, contest_id, user_id)
 
-@router.post("/contest_speed", response_model=int)
+@router.post("/contest_speed", response_model=bool)
 async def post_contest_speed_res(res: schemas.ResultSpeedContest, db: Session = Depends(get_db)):
     return crud.post_contest_speed_res(db, res.contest_id, res.user_id, res.time)
 

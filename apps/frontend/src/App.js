@@ -1,5 +1,6 @@
-import React,{ useEffect, useState } from 'react';
+import React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -10,285 +11,266 @@ import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
 import MenuIcon from '@mui/icons-material/Menu';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import CloseIcon from '@mui/icons-material/Close';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import HistoryIcon from '@mui/icons-material/History';
+import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
+import LogoutIcon from '@mui/icons-material/Logout';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
+import BottomNavigation from '@mui/material/BottomNavigation';
+import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 
 import PrivateRoute from './utils/PrivateRoute';
-
 import Header from './components/Header/Header';
 import LoginForm from './components/LoginForm/LoginForm';
 import Products from './components/Products/Products';
-import ProductList from './components/ProductList/ProductList';
 import Menus from './components/Menus/Menus';
 import Users from './components/Users/Users';
 import Accueil from './components/Accueil/Accueil.js';
-import Restaurants from './components/Restaurants/Restaurants.js';
-import ResetPassword from './components/ResetPassword/ResetPassword';
 import Annotate from './components/Annotate/Annotate';
 import ListVoie from './components/ListVoie/ListVoie';
-import Crenaux from './components/Crenaux/Crenaux';
-import Tryout from './components/Tryout/Tryout';
 import SignUpForm from './components/SignUpForm/SignUpForm';
 import Home from './components/Home/Home';
-import History from './components/History/History';
 import Palmares from './components/Palmares/Palmares';
-import Palette from './components/Palette/Palette';
 import Contest from './components/Contest/Contest';
 import ContestRes from './components/Contest/ContestRes';
 import CreateContest from './components/CreateContest/CreateContest';
-
-import {useContextObject} from './components/Context/Context';
-
+import { useContextObject } from './components/Context/Context';
 import AlertComponent from './components/AlertComponent/AlertComponent';
-
-import { ACCESS_TOKEN_NAME, API_BASE_URL } from './constants/apiConstants';
-
-
+import { ACCESS_TOKEN_NAME } from './constants/apiConstants';
 
 import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
-} from "react-router-dom";
+  Redirect,
+  Link as RouterLink,
+  useHistory,
+  useLocation,
+} from 'react-router-dom';
 
-const drawerWidth = 240;
+const drawerWidth = 264;
 
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
-  ({ theme, open }) => ({
-    flexGrow: 1,
-    //transition: theme.transitions.create('margin', {
-      //easing: theme.transitions.easing.sharp,
-      //duration: theme.transitions.duration.leavingScreen,
-    //}),
-       marginLeft: `-${drawerWidth}px`,
-    ...(open && {
-      //transition: theme.transitions.create('margin', {
-        //easing: theme.transitions.easing.easeOut,
-        //duration: theme.transitions.duration.enteringScreen,
-      //}),
-        marginLeft: 0,
-    }),
-  }),
-);
+const Main = styled('main', { shouldForwardProp: (prop) => !['drawerOpen', 'desktop', 'navigationVisible'].includes(prop) })(({
+  theme,
+  drawerOpen,
+  desktop,
+  navigationVisible,
+}) => ({
+  flexGrow: 1,
+  minWidth: 0,
+  minHeight: '100vh',
+  paddingBottom: desktop ? 0 : 72,
+  backgroundColor: '#f6f7fb',
+  transition: theme.transitions.create('margin-left'),
+  marginLeft: desktop && navigationVisible ? (drawerOpen ? 0 : -drawerWidth) : 0,
+}));
 
-const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})(({ theme, open }) => ({
-  transition: theme.transitions.create(['margin', 'width'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  ...(open && {
-        width: `calc(100% - ${drawerWidth}px)`,
-      marginLeft: `${drawerWidth}px`,
-    transition: theme.transitions.create(['margin', 'width'], {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
+const AppBar = styled(MuiAppBar, { shouldForwardProp: (prop) => prop !== 'drawerOpen' && prop !== 'desktop' })(({
+  theme,
+  drawerOpen,
+  desktop,
+}) => ({
+  background: 'linear-gradient(120deg, #18251f 0%, #24543d 100%)',
+  boxShadow: '0 6px 24px rgba(24, 37, 31, 0.18)',
+  transition: theme.transitions.create(['margin-left', 'width']),
+  ...(desktop && drawerOpen && {
+    width: `calc(100% - ${drawerWidth}px)`,
+    marginLeft: drawerWidth,
   }),
 }));
 
-const DrawerHeader = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  padding: theme.spacing(0, 1),
-  // necessary for content to be below app bar
-  ...theme.mixins.toolbar,
-  justifyContent: 'flex-end',
-}));
+const memberItems = [
+  { label: 'Ma séance', path: '/home', icon: AddCircleOutlineIcon },
+  { label: 'Historique', path: '/historique', icon: HistoryIcon },
+  { label: 'Progression', path: '/maprogression', icon: TrendingUpIcon },
+  { label: 'Palmarès', path: '/palmares', icon: EmojiEventsOutlinedIcon },
+  { label: "Vue d'ensemble", path: '/dashboard', icon: HomeOutlinedIcon },
+];
 
-export default function PersistentDrawerLeft(props) {
+const adminItems = [
+  { label: 'Ma séance', path: '/home', icon: AddCircleOutlineIcon },
+  { label: 'Voies', path: '/listevoies', icon: FormatListNumberedIcon },
+  { label: 'Utilisateurs', path: '/users', icon: PeopleOutlineIcon },
+  { label: 'Historique', path: '/historique', icon: HistoryIcon },
+  { label: "Vue d'ensemble", path: '/dashboard', icon: HomeOutlinedIcon },
+];
+
+function AppShell() {
   const theme = useTheme();
-
-  const {showBarHook, openHook, errorMessageHook, languageStateHook, isAdminHook, headerTitleHook } = useContextObject();
+  const desktop = useMediaQuery(theme.breakpoints.up('md'));
+  const history = useHistory();
+  const location = useLocation();
+  const {
+    showBarHook,
+    openHook,
+    errorMessageHook,
+    isAdminHook,
+    headerTitleHook,
+  } = useContextObject();
   const [errorMessage, updateErrorMessage] = errorMessageHook;
-  const [isAdmin, setIsAdmin] = isAdminHook;
-  const [showBar, setShowBar] = showBarHook;
+  const [isAdmin] = isAdminHook;
+  const [showBar] = showBarHook;
   const [open, setOpen] = openHook;
+  const [headerTitle] = headerTitleHook;
+  const navigationItems = isAdmin ? adminItems : memberItems;
 
-  const [headerTitle, setHeaderTitle] = headerTitleHook;
-
-  const handleDrawerOpen = () => {
-    setOpen(true);
+  const closeDrawerOnMobile = () => {
+    if (!desktop) setOpen(false);
   };
 
-  const handleDrawerClose = () => {
+  const logout = () => {
+    localStorage.removeItem(ACCESS_TOKEN_NAME);
     setOpen(false);
+    history.replace('/login');
+    window.location.reload(false);
   };
 
-    function logout() {
-        localStorage.setItem(ACCESS_TOKEN_NAME, '')
-
-    window.location.reload(false);
-    }
+  const drawerContent = (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Toolbar sx={{ minHeight: 72, px: 2.5 }}>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="overline" sx={{ color: 'text.secondary', letterSpacing: 1.4 }}>
+            GDO
+          </Typography>
+          <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.1 }}>
+            Carnet de grimpe
+          </Typography>
+        </Box>
+        <IconButton aria-label="Fermer le menu" onClick={() => setOpen(false)}>
+          <CloseIcon />
+        </IconButton>
+      </Toolbar>
+      <Divider />
+      <List sx={{ px: 1.5, py: 2 }}>
+        {navigationItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                component={RouterLink}
+                to={item.path}
+                selected={location.pathname === item.path}
+                onClick={closeDrawerOnMobile}
+                sx={{ borderRadius: 2, '&.Mui-selected': { color: '#1f6b45', backgroundColor: '#e5f3eb' } }}
+              >
+                <ListItemIcon sx={{ minWidth: 42, color: 'inherit' }}><Icon /></ListItemIcon>
+                <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 600 }} />
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
+      </List>
+      <Box sx={{ mt: 'auto', p: 1.5 }}>
+        <ListItemButton onClick={logout} sx={{ borderRadius: 2 }}>
+          <ListItemIcon sx={{ minWidth: 42 }}><LogoutIcon /></ListItemIcon>
+          <ListItemText primary="Déconnexion" />
+        </ListItemButton>
+      </Box>
+    </Box>
+  );
 
   return (
-
-      <Router>
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <CssBaseline />
-      <AppBar position="fixed" open={open} sx={{ ...(!showBar && { display: 'none' }) }} >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            edge="start"
-            sx={{ mr: 2, ...(open && { display: 'none' }) }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-              {headerTitle}
+      {showBar && (
+        <AppBar position="fixed" drawerOpen={open} desktop={desktop}>
+          <Toolbar sx={{ minHeight: 64 }}>
+            <IconButton
+              color="inherit"
+              aria-label="Ouvrir le menu"
+              onClick={() => setOpen(true)}
+              edge="start"
+              sx={{ mr: 2, ...(desktop && open && { display: 'none' }) }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" noWrap component="h1" sx={{ fontWeight: 700 }}>
+              {headerTitle || 'Climbing'}
+            </Typography>
+          </Toolbar>
+        </AppBar>
+      )}
 
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Drawer
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
+      {showBar && (
+        <Drawer
+          variant={desktop ? 'persistent' : 'temporary'}
+          anchor="left"
+          open={open}
+          onClose={() => setOpen(false)}
+          ModalProps={{ keepMounted: true }}
+          sx={{
             width: drawerWidth,
-            boxSizing: 'border-box',
-          },
-        }}
-        variant="persistent"
-        anchor="left"
-        open={open}
-      >
-        <DrawerHeader>
-          <IconButton onClick={handleDrawerClose}>
-            {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-          </IconButton>
-        </DrawerHeader>
-        <Divider />
+            flexShrink: 0,
+            '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' },
+          }}
+        >
+          {drawerContent}
+        </Drawer>
+      )}
 
-        <List>
-          {['Home'].map((text, index) => (
-          <Link to={"/" + text.toLowerCase().replace(/ /g,'') }>
-            <ListItem key={text} disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-                </ListItemIcon>
-                <ListItemText primary={text} />
-              </ListItemButton>
-            </ListItem>
-          </Link>
-          ))}
-          {!isAdmin && ['Ma Seance', 'Historique', 'Palmares', 'Ma Progression'].map((text, index) => (
-          <Link to={"/" + text.toLowerCase().replace(/ /g,'') }>
-            <ListItem key={text} disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-                </ListItemIcon>
-                <ListItemText primary={text} />
-              </ListItemButton>
-            </ListItem>
-          </Link>
-          ))}
-
-          {isAdmin && ['Liste Voies', 'Statistiques', 'Users'].map((text, index) => (
-          <Link to={"/" + text.toLowerCase().replace(/ /g,'') }>
-            <ListItem key={text} disablePadding>
-              <ListItemButton>
-                <ListItemIcon>
-                  {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-                </ListItemIcon>
-                <ListItemText primary={text} />
-              </ListItemButton>
-            </ListItem>
-          </Link>
-          ))}
-
-            <ListItem key="Deconnection" disablePadding>
-              <ListItemButton onClick={logout}>
-                <ListItemIcon>
-                    <MailIcon />
-                </ListItemIcon>
-                <ListItemText primary="Deconnection" />
-              </ListItemButton>
-            </ListItem>
-
-        </List>
-      </Drawer>
-      <Main open={open}>
-          {showBar && <DrawerHeader /> }
+      <Main role="main" drawerOpen={showBar && open} desktop={desktop} navigationVisible={showBar}>
+        {showBar && <Toolbar />}
         <Header />
-
-          <div className="d-flex align-items-center flex-column">
-            <Switch>
-              <Route path="/contest">
-                <Contest/>
-              </Route>
-
-              <Route path="/contest_classement">
-                <ContestRes/>
-              </Route>
-
-              <Route path="/createcontest">
-                <CreateContest/>
-              </Route>
-
-
-              <Route path="/login">
-                <LoginForm/>
-              </Route>
-              <Route path="/signup">
-                <SignUpForm/>
-              </Route>
-              <Route path="/accueil">
-                <Accueil/>
-              </Route>
-
-              <PrivateRoute path="/home">
-                <Home/>
-              </PrivateRoute>
-              <PrivateRoute path="/inscriptions">
-                <Products />
-              </PrivateRoute>
-              <PrivateRoute path="/maprogression">
-                <Menus />
-              </PrivateRoute>
-              <PrivateRoute path="/maseance">
-                    <Annotate />
-              </PrivateRoute>
-              <PrivateRoute path="/listevoies">
-                    <ListVoie />
-              </PrivateRoute>
-              <PrivateRoute path="/historique">
-                    <History />
-              </PrivateRoute>
-              <PrivateRoute path="/palmares">
-                    <Palmares />
-              </PrivateRoute>
-
-
-
-              <PrivateRoute path="/users">
-                    <Users />
-              </PrivateRoute>
-
-              <PrivateRoute path="/crenaux">
-                    <Crenaux/>
-              </PrivateRoute>
-
-
-            </Switch>
-            <AlertComponent errorMessage={errorMessage} hideError={updateErrorMessage}/>
-          </div>
+        <Box sx={{ width: '100%' }}>
+          <Switch>
+            <Route exact path="/"><Redirect to="/accueil" /></Route>
+            <Route path="/contest_classement"><ContestRes /></Route>
+            <Route path="/contest"><Contest /></Route>
+            <Route path="/createcontest"><CreateContest /></Route>
+            <Route path="/login"><LoginForm /></Route>
+            <Route path="/signup"><SignUpForm /></Route>
+            <Route path="/accueil"><Accueil /></Route>
+            <PrivateRoute path="/home"><Annotate /></PrivateRoute>
+            <PrivateRoute path="/dashboard"><Home /></PrivateRoute>
+            <PrivateRoute path="/maprogression"><Menus /></PrivateRoute>
+            <PrivateRoute path="/maseance"><Redirect to="/home" /></PrivateRoute>
+            <PrivateRoute path="/listevoies"><ListVoie /></PrivateRoute>
+            <PrivateRoute path="/historique"><Products /></PrivateRoute>
+            <PrivateRoute path="/palmares"><Palmares /></PrivateRoute>
+            <PrivateRoute path="/users"><Users /></PrivateRoute>
+            <Route><Redirect to="/home" /></Route>
+          </Switch>
+        </Box>
+        <AlertComponent errorMessage={errorMessage} hideError={updateErrorMessage} />
       </Main>
-    </Box>
 
-        </Router>
+      {showBar && !desktop && (
+        <BottomNavigation
+          showLabels
+          value={navigationItems.some((item) => item.path === location.pathname) ? location.pathname : false}
+          onChange={(_, path) => history.push(path)}
+          sx={{
+            position: 'fixed',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: theme.zIndex.appBar,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          {navigationItems.slice(0, 4).map((item) => {
+            const Icon = item.icon;
+            return <BottomNavigationAction key={item.path} label={item.label} value={item.path} icon={<Icon />} />;
+          })}
+        </BottomNavigation>
+      )}
+    </Box>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <AppShell />
+    </Router>
   );
 }
