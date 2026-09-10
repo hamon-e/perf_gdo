@@ -18,6 +18,11 @@ services:
       context: ./apps/backend
     environment:
       API_DB: postgresql://postgres:${POSTGRES_PASSWORD:-password}@database:5432/postgres
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-only-change-me}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-43200}
+      DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-admin@gmail.com}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-change-me}
     depends_on:
       database:
         condition: service_healthy

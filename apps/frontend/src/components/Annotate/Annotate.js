@@ -630,7 +630,7 @@ function Products(props) {
             await getDays()
         }
         start()
-        setHeaderTitle("Ajouter une Seance")
+        setHeaderTitle("Ma séance")
         window.addEventListener("resize", handleResize);
         //window.addEventListener('scroll', onScroll, false);
         //window.addEventListener('touchstart', onScroll);
@@ -723,7 +723,7 @@ function Products(props) {
 
             <Dialog open={open} onClose={handleClose} >
                 {selectedColor && <div>
-                <DialogTitle id="alert-dialog-title"> {"Confirmer"} </DialogTitle>
+                <DialogTitle id="alert-dialog-title">Enregistrer la voie</DialogTitle>
                 <DialogContent>
                     <Box sx={{ flexGrow: 1 }}>
                         <Grid container spacing={2}>
@@ -765,7 +765,7 @@ function Products(props) {
                                     <Slider onChange={handleSelectedPauseChange} value={selectedPause} valueLabelDisplay="auto" step={1} marks={[{value:0, label:"0"}, {value:5, label:"5"}]} min={0} max={5} />
                                 </div>
                                 <div>
-                                    <FormControlLabel control={<Checkbox checked={selectedTete} onChange={handleSelectedTeteChange} />} label="En tete" />
+                                    <FormControlLabel control={<Checkbox checked={selectedTete} onChange={handleSelectedTeteChange} />} label="En tête" />
                                 </div>
 
 
@@ -776,8 +776,8 @@ function Products(props) {
                 </Box>
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose}>Cancel</Button>
-                <Button variant="contained" onClick={submitForm}>Valider</Button>
+                <Button onClick={handleClose}>Annuler</Button>
+                <Button variant="contained" onClick={submitForm}>Enregistrer</Button>
             </DialogActions>
     </div>
                 }
@@ -800,7 +800,7 @@ function Products(props) {
         </Dialog>
 
 
-        <Box sx={{ width: '90%' }}>
+        <Box sx={{ width: '100%', maxWidth: 1440, mx: 'auto', overflowX: 'hidden' }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', paddingTop: '5px', paddingLeft: '10px' }}>
 
                     <Grid container spacing={1}>
@@ -1066,7 +1066,7 @@ function Products(props) {
 
                             {mobile &&
 
-                            <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '' }}>
+                            <Box sx={{ width: '100%', mx: 'auto', overflowX: 'auto' }}>
                     <Grid container spacing={2}  onTouchStart={touchstart} onTouchEnd={touchend}>
 
                         {imageIndex == 0 && <ImageMapper src={URL_1} map={MAP_1} width={939/2.8} height={1596/2.8} onClick={areaClick}/> }
@@ -1080,7 +1080,7 @@ function Products(props) {
                             }
 
                             {!mobile &&
-                            <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '' }}>
+                            <Box sx={{ width: '100%', mx: 'auto', overflowX: 'auto' }}>
                                 <ImageMapper src={URL} map={MAP} width={2604/2.1} height={1596/2.1} onClick={areaClick}/>
                             </Box>
 

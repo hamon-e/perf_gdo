@@ -1,108 +1,119 @@
-import React, {useState, useEffect} from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import {API_BASE_URL, ACCESS_TOKEN_NAME, RESTAURANT_ID} from '../../constants/apiConstants';
-import { withRouter, Redirect } from "react-router-dom";
-import "./LoginForm.css";
-import logo_login from './trayvisor_logo_login.png';
-import { useTranslation } from 'react-i18next';
-import LanguageSelector from '../LanguageSelector/LanguageSelector';
-import {Context, useContextObject} from '../Context/Context';
+import { API_BASE_URL, ACCESS_TOKEN_NAME } from '../../constants/apiConstants';
+import { withRouter, Redirect } from 'react-router-dom';
+import { useContextObject } from '../Context/Context';
 
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
-import CardActions from '@mui/material/CardActions';
-import CardContent from '@mui/material/CardContent';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
-
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
-
+import CircularProgress from '@mui/material/CircularProgress';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
-const qs = require('qs');
+import Typography from '@mui/material/Typography';
+import TerrainIcon from '@mui/icons-material/Terrain';
+import qs from 'qs';
 
 function LoginForm(props) {
-    const { t, i18n } = useTranslation('Login');
-    const {connectedStateHook, errorMessageHook, showBarHook, isAdminHook, userHook} = useContextObject();
-    const [connected, setConnected] = connectedStateHook;
-    const [errorMessage, updateErrorMessage] = errorMessageHook;
-  const [showBar, setShowBar] = showBarHook;
-  const [isAdmin, setIsAdmin] = isAdminHook;
-
-  const [user, setUser] = userHook;
-
+  const { connectedStateHook, errorMessageHook, showBarHook, isAdminHook, userHook } = useContextObject();
+  const [connected, setConnected] = connectedStateHook;
+  const [, setErrorMessage] = errorMessageHook;
+  const [, setShowBar] = showBarHook;
+  const [, setIsAdmin] = isAdminHook;
+  const [, setUser] = userHook;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-    setShowBar(false)
+  useEffect(() => setShowBar(false), [setShowBar]);
 
-    function handleEmail(event) {
-        setEmail(event.target.value)
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!email || !password) {
+      setErrorMessage('Renseignez votre adresse e-mail et votre mot de passe.');
+      return;
     }
-
-    function handlePassword(event) {
-        setPassword(event.target.value)
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/token`, qs.stringify({ username: email, password }));
+      localStorage.setItem(ACCESS_TOKEN_NAME, response.data.access_token);
+      const currentUser = await axios.get(`${API_BASE_URL}/me/`, {
+        headers: { Authorization: `Bearer ${response.data.access_token}` },
+      });
+      setConnected(true);
+      setUser(currentUser.data);
+      setIsAdmin(currentUser.data.role_id === 0);
+      props.history.push('/home');
+    } catch (error) {
+      setErrorMessage(error.response?.status === 401
+        ? 'Adresse e-mail ou mot de passe incorrect.'
+        : error.response?.data?.detail || 'Connexion impossible. Réessayez.');
+    } finally {
+      setLoading(false);
     }
-    function handleSignup(event) {
-        props.history.push("/signup")
-    }
+  };
 
+  if (connected) return <Redirect to="/home" />;
 
-    async function handleSubmit() {
-        const payload={
-            username: email,
-            password: password,
-        }
+  return (
+    <Box sx={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.05fr 1fr' }, backgroundColor: '#f6f7fb' }}>
+      <Box
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+          p: 8,
+          color: 'white',
+          backgroundImage: 'linear-gradient(180deg, rgba(20,37,29,.18), rgba(20,37,29,.92)), url(/gdo.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <Typography variant="h2" sx={{ fontWeight: 900, maxWidth: 560, lineHeight: 1.05 }}>
+          Votre carnet de grimpe, voie après voie.
+        </Typography>
+        <Typography variant="h6" sx={{ mt: 2, maxWidth: 520, opacity: 0.84 }}>
+          Enregistrez vos séances, suivez votre progression et préparez votre prochain objectif.
+        </Typography>
+      </Box>
 
-        try {
-        const response = await axios.post(API_BASE_URL+'/token', qs.stringify(payload))
-            localStorage.setItem(ACCESS_TOKEN_NAME,response.data.access_token);
-             const tmp = await axios.get(API_BASE_URL+'/me/', { headers: { 'Authorization': "Bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
-                    setConnected(true);
-                    setUser(tmp.data)
-            if (tmp.data.role_id == 0) {
-                setIsAdmin(true)
-            }
-            props.history.push('/home')
-        } catch (e) {
-            console.log(e.message)
-            updateErrorMessage(e.message)
-        }
-    }
-
-    return(
-        <div>
-            {(connected) && <Redirect to='/home' />}
-            <Box display="grid"   display="flex" justifyContent="center" alignItems="center" minHeight="90vh">
-                <Card sx={{ minWidth: 275 }}>
-                    <CardContent>
-
-                        <Box display="grid" gridTemplateColumns="repeat(12, 1fr)" gap={4}>
-                            <Box gridColumn="span 12"   justifyContent="center" display="flex" alignItems="center" >
-                                <img src="https://gdo.axyomes.com/origine/logo.png" alt="Trayvisor"></img>
-                            </Box>
-
-                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" sx={{ }} noValidate autoComplete="off" >
-                                <TextField id="email" label="Email" value={email} onChange={handleEmail}/>
-                            </Box>
-                            <Box justifyContent="center" display="flex" alignItems="center" gridColumn="span 12" sx={{ }} noValidate autoComplete="off" >
-
-                                <TextField id="password" label="Password" value={password} onChange={handlePassword}/>
-                            </Box>
-                        </Box>
-                    </CardContent>
-
-                    <CardActions>
-                        <Button size="small" onClick={handleSignup}>Creer un compte</Button>
-                        <Button size="small" onClick={handleSubmit} style={{marginLeft: '40%'}}>Valider</Button>
-                    </CardActions>
-                </Card>
+      <Box sx={{ display: 'grid', placeItems: 'center', p: { xs: 2, sm: 5 } }}>
+        <Paper elevation={0} sx={{ width: '100%', maxWidth: 440, p: { xs: 3, sm: 5 }, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+          <Stack component="form" onSubmit={handleSubmit} spacing={3}>
+            <Box>
+              <TerrainIcon sx={{ color: '#1f6b45', fontSize: 38 }} />
+              <Typography variant="h4" component="h1" sx={{ mt: 1, fontWeight: 850 }}>Bon retour</Typography>
+              <Typography color="text.secondary" sx={{ mt: 0.5 }}>Connectez-vous à votre espace GDO.</Typography>
             </Box>
-        </div>
-    )
+            <TextField
+              label="Adresse e-mail"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete="email"
+              required
+              fullWidth
+            />
+            <TextField
+              label="Mot de passe"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+              required
+              fullWidth
+            />
+            <Button type="submit" variant="contained" size="large" disabled={loading} sx={{ minHeight: 48, backgroundColor: '#1f6b45' }}>
+              {loading ? <CircularProgress size={22} color="inherit" /> : 'Se connecter'}
+            </Button>
+            <Button onClick={() => props.history.push('/signup')} sx={{ color: '#1f6b45' }}>
+              Créer un compte
+            </Button>
+          </Stack>
+        </Paper>
+      </Box>
+    </Box>
+  );
 }
 
 export default withRouter(LoginForm);

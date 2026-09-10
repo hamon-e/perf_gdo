@@ -1,67 +1,73 @@
-from typing import List, Optional
-
-from pydantic import BaseModel
-from fastapi import UploadFile
 from datetime import date, datetime
+from typing import Optional
 
-class UserSignUp(BaseModel):
+from pydantic import BaseModel, ConfigDict
+
+
+class Schema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserSignUp(Schema):
     email: str
     password: str
 
-    class Config:
-        orm_mode = True
 
-class User(BaseModel):
-    id: Optional[int]
+class User(Schema):
+    id: Optional[int] = None
     name: str
     surname: str
     email: str
     role_id: int
 
-    class Config:
-        orm_mode = True
 
-class Token(BaseModel):
+class Token(Schema):
     access_token: str
     token_type: str
 
-class TokenData(BaseModel):
+
+class TokenData(Schema):
     email: Optional[str] = None
 
-class Status(BaseModel):
+
+class Status(Schema):
     status: bool
 
-class Password(BaseModel):
+
+class Password(Schema):
     password: str
 
-class Seance(BaseModel):
+
+class Seance(Schema):
+    id: Optional[int] = None
     start: datetime
     end: datetime
     max_people: int
 
-    class Config:
-        orm_mode = True
 
-class VersionVoie(BaseModel):
-    id: Optional[int]
+class ProgressionPoint(Schema):
+    period: date
+    sessions: int
+    attempts: int
+    tops: int
+    max_level: float
+    lead_ratio: float
+
+
+class VersionVoie(Schema):
+    id: Optional[int] = None
     date: datetime
 
-    class Config:
-        orm_mode = True
 
-class CouloirType(BaseModel):
+class CouloirType(Schema):
     name: str
 
-    class Config:
-        orm_mode = True
 
-class Couloir(BaseModel):
-    type = CouloirType
+class Couloir(Schema):
+    type: CouloirType
 
-    class Config:
-        orm_mode = True
 
-class Dashboard(BaseModel):
+class Dashboard(Schema):
     max_lvl: float
     tete_ratio: float
     coverage: float
@@ -71,83 +77,68 @@ class Dashboard(BaseModel):
     coverage_9m: float
     nbr_of_seances: int
 
-class Voie(BaseModel):
-    id: Optional[int]
-    couloir: Optional[Couloir]
+
+class Voie(Schema):
+    id: Optional[int] = None
+    couloir: Optional[Couloir] = None
     couloir_id: int
     color: str
     difficulty: float
     versionvoie_id: int
 
-    class Config:
-        orm_mode = True
 
-class CrenauType(BaseModel):
-    id: Optional[int]
+class CrenauType(Schema):
+    id: Optional[int] = None
     name: str
 
-    class Config:
-        orm_mode = True
 
-class Crenau(BaseModel):
-    id: Optional[int]
+class Crenau(Schema):
+    id: Optional[int] = None
     cron: str
     type_id: int
 
-    class Config:
-        orm_mode = True
 
-class UserSeance(BaseModel):
-    id: Optional[int]
+class UserSeance(Schema):
+    id: Optional[int] = None
     date: date
     voie_id: int
     en_tete: bool
     top: int
     pause: int
-    voie: Optional[Voie]
+    voie: Optional[Voie] = None
 
-    class Config:
-        orm_mode = True
 
-class Contest(BaseModel):
-    id: Optional[int]
+class Contest(Schema):
+    id: Optional[int] = None
     name: str
 
-    class Config:
-        orm_mode = True
 
-class ZoneContest(BaseModel):
-    id: Optional[int]
+class ZoneContest(Schema):
+    id: Optional[int] = None
     name: str
     contest_id: int
 
-    class Config:
-        orm_mode = True
 
-class BlocContest(BaseModel):
-    id: Optional[int]
+class BlocContest(Schema):
+    id: Optional[int] = None
     contest_id: int
     zone_id: int
     name: str
     top: int
     difficulty: int
 
-    class Config:
-        orm_mode = True
 
-class VoieContest(BaseModel):
-    id: Optional[int]
+class VoieContest(Schema):
+    id: Optional[int] = None
     contest_id: int
     zone_id: int
     name: str
     top: int
     difficulty: int
 
-    class Config:
-        orm_mode = True
 
-class UserContest(BaseModel):
-    id: Optional[int]
+class UserContest(Schema):
+    id: Optional[int] = None
     contest_id: int
     name: str
     score: int
@@ -155,33 +146,23 @@ class UserContest(BaseModel):
     difficulty: int
     age: int
 
-    class Config:
-        orm_mode = True
 
-class ResultContest(BaseModel):
-    id: Optional[int]
+class ResultContest(Schema):
+    id: Optional[int] = None
     contest_id: int
     bloc_id: int
     user_id: int
 
-    class Config:
-        orm_mode = True
 
-class ResultContestVoie(BaseModel):
-    id: Optional[int]
+class ResultContestVoie(Schema):
+    id: Optional[int] = None
     contest_id: int
     voie_id: int
     user_id: int
 
-    class Config:
-        orm_mode = True
 
-
-class ResultSpeedContest(BaseModel):
-    id: Optional[int]
+class ResultSpeedContest(Schema):
+    id: Optional[int] = None
     contest_id: int
     time: float
     user_id: int
-
-    class Config:
-        orm_mode = True

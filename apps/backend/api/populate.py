@@ -1,89 +1,76 @@
-import pandas as pd
+"""Create an idempotent set of local demonstration data."""
+
+from datetime import datetime, time
 import os
-import datetime
-import traceback
 
-from . import models, schemas, crud
-
-from typing import List
-from sqlalchemy.orm import Session
+from . import crud, models
 from .db import SessionLocal, engine
+
 
 models.Base.metadata.create_all(bind=engine)
 
-# Dependency
-def get_db():
+
+def populate():
     db = SessionLocal()
     try:
-        yield db
+        roles = ((0, "admin"), (1, "basic"))
+        for role_id, name in roles:
+            if not db.query(models.UserRole).filter(models.UserRole.id == role_id).first():
+                db.add(models.UserRole(id=role_id, name=name))
+        db.commit()
+
+        admin_email = os.environ.get("DEMO_ADMIN_EMAIL", "admin@gmail.com")
+        admin_password = os.environ.get("DEMO_ADMIN_PASSWORD", "change-me")
+        if not crud.get_user(db, admin_email):
+            db.add(models.User(
+                name="Admin",
+                surname="Admin",
+                pwd_hash=crud.get_password_hash(admin_password),
+                email=admin_email,
+                role_id=0,
+            ))
+            db.commit()
+
+        version = db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).first()
+        if not version:
+            version = models.VersionVoie(date=datetime.combine(datetime.now().date(), time.min))
+            db.add(version)
+            db.commit()
+
+        route_types = {
+            "Plexi + toit": range(1, 4),
+            "Vérin gauche": range(4, 9),
+            "Dévers": range(9, 20),
+            "Vérin droit": range(20, 23),
+            "Dalle": range(23, 28),
+            "9 m": range(28, 32),
+        }
+        for name, lanes in route_types.items():
+            route_type = db.query(models.CouloirType).filter(models.CouloirType.name == name).first()
+            if not route_type:
+                route_type = models.CouloirType(name=name)
+                db.add(route_type)
+                db.commit()
+            for lane_id in lanes:
+                if not db.query(models.Couloir).filter(models.Couloir.id == lane_id).first():
+                    db.add(models.Couloir(id=lane_id, type_id=route_type.id))
+        db.commit()
+
+        if db.query(models.Voie).filter(models.Voie.versionvoie_id == version.id).count() == 0:
+            colors = ("#E53935", "#FDD835", "#1E88E5", "#43A047", "#8E24AA", "#111111")
+            difficulties = (4.25, 4.5, 5.25, 5.5, 5.75, 6.25, 6.5, 6.75, 7.25, 7.5)
+            for lane_id in range(1, 32):
+                db.add(models.Voie(
+                    couloir_id=lane_id,
+                    color=colors[(lane_id - 1) % len(colors)],
+                    difficulty=difficulties[(lane_id - 1) % len(difficulties)],
+                    active=True,
+                    versionvoie_id=version.id,
+                ))
+            db.commit()
     finally:
         db.close()
-db = SessionLocal()
-
-role = models.UserRole(id=0, name='admin')
-db.add(role)
-db.commit()
-role = models.UserRole(id=1, name='basic')
-db.add(role)
-db.commit()
-
-user = models.User(name='Admin', surname='Admin', pwd_hash=crud.get_password_hash('qwerty'), email='admin@gmail.com', role_id=0)
-db.add(user)
-db.commit()
-
-seance = models.Seance(start='2022-10-09T13:00', end='2022-10-09T13:00', max_people=50)
-db.add(seance)
-db.commit()
-
-seance = models.Seance(start='2022-10-10T18:00', end='2022-10-10T20:00', max_people=50)
-db.add(seance)
-seance = models.Seance(start='2022-10-10T20:00', end='2022-10-10T22:00', max_people=50)
-db.add(seance)
-seance = models.Seance(start='2022-10-12T20:00', end='2022-10-12T22:00', max_people=50)
-db.add(seance)
-seance = models.Seance(start='2022-10-15T11:00', end='2022-10-15T13:00', max_people=50)
-db.add(seance)
-
-versionvoie = models.VersionVoie(id=0, date='2022-09-01T00:00')
-db.add(versionvoie)
-db.commit()
-
-couloir_type_plexi = models.CouloirType(name='Plexi+toit')
-db.add(couloir_type_plexi)
-couloir_type_verrin_gauche = models.CouloirType(name='Verrin Gauche')
-db.add(couloir_type_verrin_gauche)
-couloir_type_devers = models.CouloirType(name='Devers')
-db.add(couloir_type_devers)
-couloir_type_verrin_droite = models.CouloirType(name='Verrin Droite')
-db.add(couloir_type_verrin_droite)
-couloir_type_dalle = models.CouloirType(name='Dalle')
-db.add(couloir_type_dalle)
-couloir_type_9m = models.CouloirType(name='9m')
-db.add(couloir_type_9m)
-db.commit()
-
-for i in range(1, 4):
-    tmp = models.Couloir(id=i, type_id=couloir_type_plexi.id)
-    db.add(tmp)
-for i in range(4, 9):
-    tmp = models.Couloir(id=i, type_id=couloir_type_verrin_gauche.id)
-    db.add(tmp)
-for i in range(9, 20):
-    tmp = models.Couloir(id=i, type_id=couloir_type_devers.id)
-    db.add(tmp)
-for i in range(20, 23):
-    tmp = models.Couloir(id=i, type_id=couloir_type_verrin_droite.id)
-    db.add(tmp)
-for i in range(23, 28):
-    tmp = models.Couloir(id=i, type_id=couloir_type_dalle.id)
-    db.add(tmp)
-for i in range(28, 32):
-    tmp = models.Couloir(id=i, type_id=couloir_type_9m.id)
-    db.add(tmp)
-db.commit()
-
-# voie = models.Voie(versionvoie_id=versionvoie.id, couloir_id=1, difficulty=5.60, color='#386DFA')
-# voie = models.Voie(versionvoie_id=versionvoie.id, couloir_id=1, difficulty=5.85, color='#FEF154')
-# voie = models.Voie(versionvoie_id=versionvoie.id, couloir_id=1, difficulty=7.35, color='#000000')
 
 
+if __name__ == "__main__":
+    populate()

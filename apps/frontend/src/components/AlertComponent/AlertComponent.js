@@ -1,38 +1,22 @@
-import React, { useState, useEffect } from 'react';
-//import './AlertComponent.css';
-function AlertComponent(props) {
-    const [modalDisplay, toggleDisplay] = useState('none');
-    const openModal = () => {
-        toggleDisplay('block');     
-    }
-    const closeModal = () => {
-        toggleDisplay('none'); 
-        props.hideError(null);
-    }
-    useEffect(() => {
-        if(props.errorMessage !== null) {
-            openModal()
-        } else {
-            closeModal()
-        }
-    });
-    
-    return(
-        <div 
-            className={"alert alert-danger alert-dismissable mt-4"} 
-            role="alert" 
-            id="alertPopUp"
-            style={{ display: modalDisplay }}
-        >
-            <div className="d-flex alertMessage">
-                <span>{props.errorMessage}</span>
-                <button type="button" className="close" aria-label="Close" onClick={() => closeModal()}>
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            
-        </div>
-    )
-} 
+import React from 'react';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 
-export default AlertComponent
+export default function AlertComponent({ errorMessage, hideError }) {
+  const close = (_, reason) => {
+    if (reason !== 'clickaway') hideError(null);
+  };
+
+  return (
+    <Snackbar
+      open={Boolean(errorMessage)}
+      autoHideDuration={6000}
+      onClose={close}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+    >
+      <Alert onClose={close} severity="error" variant="filled" sx={{ width: '100%' }}>
+        {errorMessage}
+      </Alert>
+    </Snackbar>
+  );
+}

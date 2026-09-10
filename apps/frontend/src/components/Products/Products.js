@@ -1,153 +1,176 @@
-import React,{ useEffect, useState } from 'react';
-import { withRouter } from 'react-router-dom';
-import { ACCESS_TOKEN_NAME, API_BASE_URL, RESTAURANT_ID } from '../../constants/apiConstants';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useTranslation } from 'react-i18next';
+import { useHistory } from 'react-router-dom';
+
+import { ACCESS_TOKEN_NAME, API_BASE_URL } from '../../constants/apiConstants';
+import { useContextObject } from '../Context/Context';
 import './Products.css';
-import deleteProd from '../../delete.svg';
-import modifyProd from '../../edit.svg';
-import Popup from 'reactjs-popup';
-import 'reactjs-popup/dist/index.css';
-import CustomNoResultsOverlay from '../DataGrid/CustomNoResultsOverlay.js'
 
-import Checkbox from '@mui/material/Checkbox';
-import Select from '@mui/material/Select';
-import Dialog from '@mui/material/Dialog';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
-import DialogTitle from '@mui/material/DialogTitle';
-import MenuItem from '@mui/material/MenuItem';
-
-import Skeleton from '@mui/material/Skeleton';
-
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
-import Autocomplete from '@mui/material/Autocomplete';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import interactionPlugin from '@fullcalendar/interaction';
 
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
+const authorization = () => ({
+  headers: { Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN_NAME)}` },
+});
 
-import ImageList from '@mui/material/ImageList';
-import ImageListItem from '@mui/material/ImageListItem';
-
-import Fab from '@mui/material/Fab';
-import AddIcon from '@mui/icons-material/Add';
-import IconButton from '@mui/material/IconButton';
-
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
-
-import {
-  DataGrid,
-  GridToolbarDensitySelector,
-  GridToolbarFilterButton,
-} from '@mui/x-data-grid';
-import ClearIcon from '@mui/icons-material/Clear';
-import SearchIcon from '@mui/icons-material/Search';
-import PropTypes from 'prop-types';
-import {Context, useContextObject} from '../Context/Context';
-
-import { styled } from '@mui/material/styles';
-
-import FullCalendar from '@fullcalendar/react' // must go before plugins
-import dayGridPlugin from '@fullcalendar/daygrid' // a plugin!
-
-function Products(props) {
-    const {isAdminHook, userHook, restaurantHook, headerTitleHook, } = useContextObject();
-    const [headerTitle, setHeaderTitle] = headerTitleHook;
-
-  const {showBarHook, openHook} = useContextObject();
-  const [showBar, setShowBar] = showBarHook;
-  const [openNav, setOpenNav] = openHook;
-    setShowBar(true)
-
-  const [open, setOpen] = React.useState(false);
-  const [selectedEvent, setSelectedEvent] = React.useState({});
-
-  const [events, setEvents] = useState([
-      {
-        title: 'simple event',
-        start: '2022-10-22',
-        display: 'background'
-
-      }])
-
-  
- const handleClickOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-       
-    useEffect(() => {
-        async function start() {
-
-        }
-        start()
-        setHeaderTitle("Inscriptions")
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [openNav])
-
-    function eventClick(info) {
-      const eventObj = info.event;
-        console.log(info.event)
-        setSelectedEvent(eventObj)
-        setOpen(true)
-    }
-
-    async function dateSet(info) {
-        var response = await axios.get(API_BASE_URL+'/seances?start=' + info.startStr.split('+')[0] + '&end=' + info.endStr.split('+')[0], { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
-        console.log(events)
-        const new_events = response.data.map((e) => ({title: 'Seance Adulte', start: e.start}))
-        for (const event of response.data) {
-            if (!new_events.find((e) => e.start == event.start.split('T')[0]))
-                new_events.push({title: '', start: event.start.split('T')[0], display: 'background'})
-            console.log(event)
-        }
-        setEvents(new_events)
-        console.log(response.data.map((e) => ({title: 'lol', start: e.start, display: 'background'})))
-    }
-
-
-
-    return(
-        <div className="productpage" style={{padding: '20px', width: '90%'}}>
-             <FullCalendar
-              plugins={[ dayGridPlugin ]}
-              initialView="dayGridMonth"
-              eventClick={eventClick}
-              datesSet={dateSet}
-               events= {events}
-height={'80vh'}
-                />
-
-<Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {"Confirmation"}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-              S'inscrire a la seance {selectedEvent.title} {selectedEvent.startStr}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleClose} autoFocus> S'inscrire</Button>
-        </DialogActions>
-      </Dialog>
-        </div> 
-    )
+function formatDate(value) {
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return value.slice(0, 10);
+  }
+  const date = new Date(value);
+  const pad = (number) => String(number).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-export default withRouter(Products);
+function formatDifficulty(value) {
+  if (!value) return '—';
+  const floor = Math.floor(value);
+  const decimal = value - floor;
+  const suffixes = [[0.25, 'a'], [0.35, 'a+'], [0.5, 'b'], [0.6, 'b+'], [0.75, 'c'], [0.85, 'c+']];
+  const closest = suffixes.reduce((best, item) => Math.abs(item[0] - decimal) < Math.abs(best[0] - decimal) ? item : best);
+  return `${floor}${closest[1]}`;
+}
+
+export default function HistoryCalendar() {
+  const history = useHistory();
+  const { headerTitleHook, showBarHook, errorMessageHook } = useContextObject();
+  const [, setHeaderTitle] = headerTitleHook;
+  const [, setShowBar] = showBarHook;
+  const [, setErrorMessage] = errorMessageHook;
+  const [events, setEvents] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [attempts, setAttempts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  useEffect(() => {
+    setShowBar(true);
+    setHeaderTitle('Historique');
+  }, [setHeaderTitle, setShowBar]);
+
+  const errorText = (error) => error.response?.data?.detail || 'Impossible de charger votre historique.';
+
+  const loadMonth = async (date) => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/userseance_days?date=${formatDate(date)}`, authorization());
+      setEvents(response.data.map((day) => ({
+        id: formatDate(day),
+        title: 'Séance enregistrée',
+        start: formatDate(day),
+        allDay: true,
+        backgroundColor: '#1f6b45',
+        borderColor: '#1f6b45',
+      })));
+    } catch (error) {
+      setErrorMessage(errorText(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadDay = async (date) => {
+    const normalizedDate = formatDate(date);
+    setSelectedDate(normalizedDate);
+    setDetailLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/userseance?date=${normalizedDate}`, authorization());
+      setAttempts(response.data);
+    } catch (error) {
+      setErrorMessage(errorText(error));
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  return (
+    <Box sx={{ width: '100%', maxWidth: 1180, mx: 'auto', p: { xs: 2, md: 4 } }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
+        <Box>
+          <Typography variant="h4" component="h2" sx={{ fontWeight: 850 }}>Historique des séances</Typography>
+          <Typography color="text.secondary">Les jours en vert contiennent au moins une voie enregistrée.</Typography>
+        </Box>
+        <Button variant="contained" startIcon={<AddCircleOutlineIcon />} onClick={() => history.push('/home')} sx={{ backgroundColor: '#1f6b45' }}>
+          Enregistrer une séance
+        </Button>
+      </Stack>
+
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.55fr) minmax(320px, .8fr)' }, gap: 3, alignItems: 'start' }}>
+        <Paper elevation={0} sx={{ position: 'relative', p: { xs: 1, sm: 2.5 }, border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
+          {loading && <Box sx={{ position: 'absolute', inset: 0, zIndex: 2, display: 'grid', placeItems: 'center', backgroundColor: 'rgba(255,255,255,.72)' }}><CircularProgress /></Box>}
+          <FullCalendar
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            events={events}
+            datesSet={(info) => loadMonth(info.view.currentStart)}
+            eventClick={(info) => loadDay(info.event.start)}
+            dateClick={(info) => loadDay(info.date)}
+            firstDay={1}
+            height="auto"
+            buttonText={{ today: "Aujourd'hui" }}
+          />
+        </Paper>
+
+        <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, position: { lg: 'sticky' }, top: { lg: 88 } }}>
+          <CardContent sx={{ p: 3 }}>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2.5 }}>
+              <CalendarMonthIcon sx={{ color: '#1f6b45' }} />
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                  {selectedDate ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'long' }).format(new Date(`${selectedDate}T12:00:00`)) : 'Détail de la séance'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">Cliquez sur une journée du calendrier.</Typography>
+              </Box>
+            </Stack>
+
+            {detailLoading ? (
+              <Box sx={{ py: 7, display: 'grid', placeItems: 'center' }}><CircularProgress size={30} /></Box>
+            ) : !selectedDate ? (
+              <Alert severity="info">Sélectionnez une date pour consulter les voies réalisées.</Alert>
+            ) : attempts.length === 0 ? (
+              <Box sx={{ py: 5, textAlign: 'center' }}>
+                <Typography sx={{ fontWeight: 750 }}>Aucune voie ce jour-là</Typography>
+                <Button sx={{ mt: 1 }} onClick={() => history.push('/home')}>Ajouter une séance</Button>
+              </Box>
+            ) : (
+              <Stack spacing={1.5}>
+                <Stack direction="row" spacing={1} sx={{ mb: 0.5 }}>
+                  <Chip size="small" label={`${attempts.length} voie${attempts.length > 1 ? 's' : ''}`} />
+                  <Chip size="small" icon={<CheckCircleOutlineIcon />} label={`${attempts.filter((attempt) => attempt.top === 100).length} réussie${attempts.filter((attempt) => attempt.top === 100).length > 1 ? 's' : ''}`} sx={{ backgroundColor: '#dff4e8', color: '#155b39' }} />
+                </Stack>
+                {attempts.map((attempt) => (
+                  <Paper key={attempt.id} variant="outlined" sx={{ p: 1.75, borderRadius: 2 }}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Box sx={{ width: 34, height: 34, borderRadius: 1.5, flexShrink: 0, backgroundColor: attempt.voie?.color || '#ddd', border: '2px solid white', boxShadow: '0 0 0 1px rgba(0,0,0,.15)' }} />
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography sx={{ fontWeight: 800 }}>{formatDifficulty(attempt.voie?.difficulty)} · couloir {attempt.voie?.couloir_id}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {attempt.en_tete ? 'En tête' : 'Moulinette'} · {attempt.top === 100 ? 'réussie' : `${attempt.top}% atteint`}{attempt.pause ? ` · ${attempt.pause} pause${attempt.pause > 1 ? 's' : ''}` : ''}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+            )}
+          </CardContent>
+        </Card>
+      </Box>
+    </Box>
+  );
+}
