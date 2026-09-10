@@ -144,13 +144,18 @@ Les données PostgreSQL restent dans le volume Docker `postgres-data`.
 
 ## Développement local
 
-Prérequis : Python 3, Node.js, Yarn et Docker.
+Prérequis : Python 3, Node.js 16, pnpm 7 et Docker. Corepack peut installer la
+version déclarée par le projet : `corepack enable`.
 
 ```sh
 cp .env.example .env
 make install
 make db
 ```
+
+Le frontend utilise exclusivement `pnpm-lock.yaml`. Le Dockerfile conserve le
+store de pnpm dans un cache BuildKit : les reconstructions qui ne changent pas
+le lockfile réutilisent les paquets déjà téléchargés.
 
 Lancez ensuite l'API et le frontend dans deux terminaux :
 
