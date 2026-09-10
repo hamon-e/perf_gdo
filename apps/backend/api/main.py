@@ -90,6 +90,22 @@ async def get_voies(current_user: schemas.User = Depends(get_current_user), db: 
 def read_users(current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
     return crud.get_users(db)
 
+def get_user_or_404(db: Session, user_id: int):
+    user = crud.get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable")
+    return user
+
+@router.get("/users/{user_id}/userseance", response_model=List[schemas.UserSeance])
+def read_user_seance_for_admin(user_id: int, date: date, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    get_user_or_404(db, user_id)
+    return crud.get_userseance_for_user(db, user_id, date)
+
+@router.get("/users/{user_id}/userseance_days", response_model=List[datetime])
+def read_user_seance_days_for_admin(user_id: int, date: date, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    get_user_or_404(db, user_id)
+    return crud.get_userseance_days_for_user(db, user_id, date)
+
 @router.get("/progression", response_model=List[schemas.ProgressionPoint])
 async def get_progression(months: int = 12, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     if months not in (1, 6, 12):
