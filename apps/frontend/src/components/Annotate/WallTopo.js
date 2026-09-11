@@ -1,9 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import IconButton from '@mui/material/IconButton';
+import CenterFocusWeakIcon from '@mui/icons-material/CenterFocusWeak';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import ZoomOutIcon from '@mui/icons-material/ZoomOut';
 
 import './WallTopo.css';
 
 const WALL_WIDTH = 2604;
 const WALL_HEIGHT = 1596;
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 4;
+const ZOOM_STEP = 1.5;
 
 function average(points) {
   return points.reduce((result, point) => ({
@@ -126,49 +134,242 @@ export default function WallTopo({ areas, routes, coordinateScale, mobile, onLan
     return result;
   }, {}), [routes]);
 
+  const scrollRef = useRef(null);
+  const viewportRef = useRef(null);
+  const contentRef = useRef(null);
+  const gestureRef = useRef(null);
+  const zoomRef = useRef(MIN_ZOOM);
+  const offsetRef = useRef({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(MIN_ZOOM);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const zoomed = zoom > MIN_ZOOM;
+
+  const commitTransform = useCallback((nextZoom, nextOffset) => {
+    zoomRef.current = nextZoom;
+    offsetRef.current = nextOffset;
+    setZoom(nextZoom);
+    setOffset(nextOffset);
+  }, []);
+
+  const clampZoom = (value) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+
+  const clampOffset = useCallback((nextZoom, candidate) => {
+    const viewport = viewportRef.current;
+    const content = contentRef.current;
+    if (!viewport || !content) {
+      return { x: Math.min(0, candidate.x), y: Math.min(0, candidate.y) };
+    }
+    const maxX = Math.min(0, viewport.clientWidth - content.offsetWidth * nextZoom);
+    const maxY = Math.min(0, viewport.clientHeight - content.offsetHeight * nextZoom);
+    return {
+      x: Math.min(0, Math.max(maxX, candidate.x)),
+      y: Math.min(0, Math.max(maxY, candidate.y)),
+    };
+  }, []);
+
+  const viewportPoint = useCallback((clientX, clientY) => {
+    const viewport = viewportRef.current;
+    if (!viewport) return { x: 0, y: 0 };
+    const rect = viewport.getBoundingClientRect();
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }, []);
+
+  const applyZoomAt = useCallback((nextZoom, focus) => {
+    const targetZoom = clampZoom(nextZoom);
+    if (targetZoom === zoomRef.current) return;
+    if (targetZoom === MIN_ZOOM) {
+      commitTransform(MIN_ZOOM, { x: 0, y: 0 });
+      return;
+    }
+    const baseOffset = { ...offsetRef.current };
+    if (zoomRef.current === MIN_ZOOM) {
+      const scroll = scrollRef.current;
+      if (scroll && scroll.scrollLeft) {
+        baseOffset.x -= scroll.scrollLeft;
+        scroll.scrollLeft = 0;
+      }
+    }
+    const anchorX = (focus.x - baseOffset.x) / zoomRef.current;
+    const anchorY = (focus.y - baseOffset.y) / zoomRef.current;
+    commitTransform(targetZoom, clampOffset(targetZoom, {
+      x: focus.x - anchorX * targetZoom,
+      y: focus.y - anchorY * targetZoom,
+    }));
+  }, [clampOffset, commitTransform]);
+
+  const zoomBy = useCallback((factor) => {
+    const viewport = viewportRef.current;
+    applyZoomAt(zoomRef.current * factor, viewport
+      ? { x: viewport.clientWidth / 2, y: viewport.clientHeight / 2 }
+      : { x: 0, y: 0 });
+  }, [applyZoomAt]);
+
+  useEffect(() => {
+    if (!mobile) return undefined;
+    const viewport = viewportRef.current;
+    if (!viewport) return undefined;
+
+    const midpoint = (first, second) => ({
+      x: (first.clientX + second.clientX) / 2,
+      y: (first.clientY + second.clientY) / 2,
+    });
+
+    const pinchFromScroll = (gesture) => {
+      const scroll = scrollRef.current;
+      if (gesture.startZoom === MIN_ZOOM && scroll && scroll.scrollLeft) {
+        gesture.startOffset.x -= scroll.scrollLeft;
+        scroll.scrollLeft = 0;
+      }
+    };
+
+    const handleTouchStart = (event) => {
+      if (event.touches.length === 2) {
+        const [first, second] = event.touches;
+        const mid = midpoint(first, second);
+        const gesture = {
+          mode: 'pinch',
+          startDistance: Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY) || 1,
+          startZoom: zoomRef.current,
+          startOffset: { ...offsetRef.current },
+          startMid: viewportPoint(mid.x, mid.y),
+        };
+        pinchFromScroll(gesture);
+        gestureRef.current = gesture;
+      } else if (event.touches.length === 1 && zoomRef.current > MIN_ZOOM) {
+        const touch = event.touches[0];
+        gestureRef.current = {
+          mode: 'pan',
+          startClient: { x: touch.clientX, y: touch.clientY },
+          startOffset: { ...offsetRef.current },
+        };
+      } else {
+        gestureRef.current = null;
+      }
+    };
+
+    const handleTouchMove = (event) => {
+      const gesture = gestureRef.current;
+      if (!gesture) return;
+      if (gesture.mode === 'pinch' && event.touches.length === 2) {
+        event.preventDefault();
+        const [first, second] = event.touches;
+        const distance = Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY) || 1;
+        const mid = viewportPoint(midpoint(first, second).x, midpoint(first, second).y);
+        const nextZoom = clampZoom(gesture.startZoom * (distance / gesture.startDistance));
+        const anchorX = (gesture.startMid.x - gesture.startOffset.x) / gesture.startZoom;
+        const anchorY = (gesture.startMid.y - gesture.startOffset.y) / gesture.startZoom;
+        commitTransform(nextZoom, clampOffset(nextZoom, {
+          x: mid.x - anchorX * nextZoom,
+          y: mid.y - anchorY * nextZoom,
+        }));
+      } else if (gesture.mode === 'pan' && event.touches.length === 1) {
+        event.preventDefault();
+        const touch = event.touches[0];
+        commitTransform(zoomRef.current, clampOffset(zoomRef.current, {
+          x: gesture.startOffset.x + (touch.clientX - gesture.startClient.x),
+          y: gesture.startOffset.y + (touch.clientY - gesture.startClient.y),
+        }));
+      }
+    };
+
+    const handleTouchEnd = () => {
+      gestureRef.current = null;
+    };
+
+    viewport.addEventListener('touchstart', handleTouchStart, { passive: false });
+    viewport.addEventListener('touchmove', handleTouchMove, { passive: false });
+    viewport.addEventListener('touchend', handleTouchEnd);
+    viewport.addEventListener('touchcancel', handleTouchEnd);
+    return () => {
+      viewport.removeEventListener('touchstart', handleTouchStart);
+      viewport.removeEventListener('touchmove', handleTouchMove);
+      viewport.removeEventListener('touchend', handleTouchEnd);
+      viewport.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [clampOffset, commitTransform, mobile, viewportPoint]);
+
+  const transform = zoomed || offset.x !== 0 || offset.y !== 0
+    ? `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`
+    : undefined;
+
   return (
-    <div className="wall-topo-scroll">
-      <div className={mobile ? 'wall-topo wall-topo--mobile' : 'wall-topo'}>
-        <svg
-          className="wall-topo__svg"
-          viewBox={`0 0 ${WALL_WIDTH} ${WALL_HEIGHT}`}
-          role="img"
-          aria-label="Topo interactif du mur principal"
-        >
-          <image href="/gdo.png" x="0" y="0" width={WALL_WIDTH} height={WALL_HEIGHT} />
+    <div
+      className={zoomed ? 'wall-topo-scroll wall-topo-scroll--zoomed' : 'wall-topo-scroll'}
+      ref={scrollRef}
+    >
+      <div className={zoomed ? 'wall-topo-viewport wall-topo-viewport--zoomed' : 'wall-topo-viewport'} ref={viewportRef}>
+        <div className={mobile ? 'wall-topo wall-topo--mobile' : 'wall-topo'} ref={contentRef} style={{ transform }}>
+          <svg
+            className="wall-topo__svg"
+            viewBox={`0 0 ${WALL_WIDTH} ${WALL_HEIGHT}`}
+            role="img"
+            aria-label="Topo interactif du mur principal"
+          >
+            <image href="/gdo.png" x="0" y="0" width={WALL_WIDTH} height={WALL_HEIGHT} />
 
-          <g className="wall-topo__lanes">
-            {geometries.map((geometry) => (
-              <polygon
-                key={geometry.id}
-                points={geometry.polygon}
-                className="wall-topo__lane-hit"
-                onClick={() => onLaneClick({ id: String(geometry.id) })}
-              />
-            ))}
-          </g>
+            <g className="wall-topo__lanes">
+              {geometries.map((geometry) => (
+                <polygon
+                  key={geometry.id}
+                  points={geometry.polygon}
+                  className="wall-topo__lane-hit"
+                  onClick={() => onLaneClick({ id: String(geometry.id) })}
+                />
+              ))}
+            </g>
 
-          <g className="wall-topo__routes">
-            {geometries.flatMap((geometry) => {
-              const laneRoutes = routesByLane[geometry.id] || [];
-              const maxOffset = Math.min(geometry.width * 0.18, 26);
-              return laneRoutes.map((route, index) => {
-                const offset = laneRoutes.length === 1
-                  ? 0
-                  : -maxOffset + (2 * maxOffset * index) / (laneRoutes.length - 1);
-                const path = routePath(geometry, offset, route);
-                return (
-                  <g key={route.id} className="wall-topo__route">
-                    <path d={path.d} className="wall-topo__route-line" style={{ stroke: route.color }} />
-                    <circle cx={path.start.x} cy={path.start.y} r="4" className="wall-topo__endpoint" style={{ fill: route.color }} />
-                    <circle cx={path.end.x} cy={path.end.y} r="4" className="wall-topo__endpoint" style={{ fill: route.color }} />
-                  </g>
-                );
-              });
-            })}
-          </g>
-        </svg>
+            <g className="wall-topo__routes">
+              {geometries.flatMap((geometry) => {
+                const laneRoutes = routesByLane[geometry.id] || [];
+                const maxOffset = Math.min(geometry.width * 0.18, 26);
+                return laneRoutes.map((route, index) => {
+                  const offset = laneRoutes.length === 1
+                    ? 0
+                    : -maxOffset + (2 * maxOffset * index) / (laneRoutes.length - 1);
+                  const path = routePath(geometry, offset, route);
+                  return (
+                    <g key={route.id} className="wall-topo__route">
+                      <path d={path.d} className="wall-topo__route-line" style={{ stroke: route.color }} />
+                      <circle cx={path.start.x} cy={path.start.y} r="4" className="wall-topo__endpoint" style={{ fill: route.color }} />
+                      <circle cx={path.end.x} cy={path.end.y} r="4" className="wall-topo__endpoint" style={{ fill: route.color }} />
+                    </g>
+                  );
+                });
+              })}
+            </g>
+          </svg>
+        </div>
       </div>
+
+      {mobile && (
+        <div className="wall-topo__zoom" role="group" aria-label="Contrôles de zoom du mur">
+          <IconButton
+            size="small"
+            aria-label="Zoomer"
+            disabled={zoom >= MAX_ZOOM}
+            onClick={() => zoomBy(ZOOM_STEP)}
+          >
+            <ZoomInIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            aria-label="Dézoomer"
+            disabled={!zoomed}
+            onClick={() => zoomBy(1 / ZOOM_STEP)}
+          >
+            <ZoomOutIcon fontSize="small" />
+          </IconButton>
+          {zoomed && (
+            <IconButton
+              size="small"
+              aria-label="Réinitialiser le zoom"
+              onClick={() => applyZoomAt(MIN_ZOOM, { x: 0, y: 0 })}
+            >
+              <CenterFocusWeakIcon fontSize="small" />
+            </IconButton>
+          )}
+        </div>
+      )}
     </div>
   );
 }

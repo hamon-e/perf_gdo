@@ -1,7 +1,29 @@
 .wall-topo-scroll {
+  position: relative;
   width: 100%;
   overflow-x: auto;
   overscroll-behavior-x: contain;
+}
+
+.wall-topo-scroll--zoomed {
+  overflow: hidden;
+}
+
+.wall-topo-viewport {
+  touch-action: pan-x pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wall-topo-viewport--zoomed {
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+}
+
+.wall-topo-viewport--zoomed:active {
+  cursor: grabbing;
 }
 
 .wall-topo {
@@ -9,10 +31,33 @@
   min-width: 760px;
   padding: 10px;
   box-sizing: border-box;
+  transform-origin: 0 0;
 }
 
 .wall-topo--mobile {
   min-width: 820px;
+}
+
+.wall-topo__zoom {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 24px rgba(24, 37, 31, 0.18);
+  z-index: 2;
+}
+
+.wall-topo__zoom .MuiIconButton-root {
+  color: #1f6b45;
+}
+
+.wall-topo__zoom .MuiIconButton-root:disabled {
+  color: rgba(31, 107, 69, 0.35);
 }
 
 .wall-topo__svg {

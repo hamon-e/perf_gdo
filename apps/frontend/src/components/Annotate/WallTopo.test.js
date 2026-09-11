@@ -102,3 +102,77 @@ test('still opens the lane record on lane click', () => {
   fireEvent.click(lane);
   expect(onLaneClick).toHaveBeenCalledWith({ id: '1' });
 });
+
+test('mobile zoom controls scale the wall then reset', () => {
+  const { container } = render(
+    <WallTopo
+      areas={[laneOne]}
+      routes={routes}
+      coordinateScale={1}
+      mobile
+      onLaneClick={jest.fn()}
+    />,
+  );
+
+  expect(container.querySelector('.wall-topo-viewport--zoomed')).toBeNull();
+
+  fireEvent.click(screen.getByLabelText('Zoomer'));
+  expect(container.querySelector('.wall-topo-viewport--zoomed')).not.toBeNull();
+  const content = container.querySelector('.wall-topo');
+  expect(content.style.transform).toContain('scale(1.5)');
+
+  fireEvent.click(screen.getByLabelText('Dézoomer'));
+  expect(container.querySelector('.wall-topo-viewport--zoomed')).toBeNull();
+  expect(content.style.transform).toBe('');
+});
+
+test('pinch gesture zooms the wall on mobile', () => {
+  const { container } = render(
+    <WallTopo
+      areas={[laneOne]}
+      routes={routes}
+      coordinateScale={1}
+      mobile
+      onLaneClick={jest.fn()}
+    />,
+  );
+
+  const viewport = container.querySelector('.wall-topo-viewport');
+  const fireTouch = (type, points) => {
+    const event = new Event(type);
+    event.touches = points.map(([x, y]) => ({ clientX: x, clientY: y }));
+    fireEvent(viewport, event);
+  };
+
+  fireTouch('touchstart', [[0, 0], [100, 0]]);
+  fireTouch('touchmove', [[0, 0], [200, 0]]);
+  fireTouch('touchend', [[100, 0]]);
+
+  expect(container.querySelector('.wall-topo').style.transform).toContain('scale(2)');
+});
+
+test('single finger drag pans the wall while zoomed', () => {
+  const { container } = render(
+    <WallTopo
+      areas={[laneOne]}
+      routes={routes}
+      coordinateScale={1}
+      mobile
+      onLaneClick={jest.fn()}
+    />,
+  );
+
+  fireEvent.click(screen.getByLabelText('Zoomer'));
+  const viewport = container.querySelector('.wall-topo-viewport');
+  const fireTouch = (type, points) => {
+    const event = new Event(type);
+    event.touches = points.map(([x, y]) => ({ clientX: x, clientY: y }));
+    fireEvent(viewport, event);
+  };
+
+  fireTouch('touchstart', [[0, 0]]);
+  fireTouch('touchmove', [[0, 0]]);
+  fireTouch('touchend', []);
+
+  expect(container.querySelector('.wall-topo').style.transform).toBe('translate(0px, 0px) scale(1.5)');
+});
