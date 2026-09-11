@@ -41,6 +41,25 @@ const authorization = () => ({
 
 const emptyForm = { id: null, couloir_id: 1, difficulty: 5.25, color: '#e53935' };
 
+// Palette historically available while building a wall topo.  Keep the values
+// as hexadecimal colours so they can also be used by the native colour input.
+const TOPO_PRESET_COLORS = [
+  { label: 'Rouge', value: '#ff0000' },
+  { label: 'Bleu', value: '#0000ff' },
+  { label: 'Vert', value: '#00ff00' },
+  { label: 'Jaune', value: '#ffff00' },
+  { label: 'Cyan', value: '#00ffff' },
+  { label: 'Gris', value: '#808080' },
+  { label: 'Orange', value: '#ffa500' },
+  { label: 'Violet', value: '#800080' },
+  { label: 'Noir', value: '#000000' },
+  { label: 'Blanc', value: '#ffffff' },
+  { label: 'Rose', value: '#ffc0cb' },
+  { label: 'Bleu foncé', value: '#00008b' },
+];
+
+const isHexColor = (color) => /^#[0-9a-f]{6}$/i.test(color || '');
+
 function formatDifficulty(value) {
   if (!value) return '—';
   const floor = Math.floor(value);
@@ -76,6 +95,7 @@ export default function ListVoie() {
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [registeredColors, setRegisteredColors] = useState([]);
 
   const showError = (error, fallback) => setErrorMessage(error.response?.data?.detail || fallback);
 
@@ -110,10 +130,21 @@ export default function ListVoie() {
     }
   };
 
+  const loadRegisteredColors = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/colors`, authorization());
+      setRegisteredColors(response.data.filter(isHexColor));
+    } catch (_) {
+      // The palette remains usable offline or with an older API thanks to the
+      // built-in topo colours.
+    }
+  };
+
   useEffect(() => {
     setShowBar(true);
     setHeaderTitle('Gestion des voies');
     loadVersions();
+    loadRegisteredColors();
     // Initial loading only.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setHeaderTitle, setShowBar]);
@@ -129,6 +160,17 @@ export default function ListVoie() {
     ].join(' ').toLowerCase().includes(query));
   }, [routes, search]);
 
+  const colorOptions = useMemo(() => {
+    const seen = new Set();
+    return [...TOPO_PRESET_COLORS, ...registeredColors.map((value) => ({ label: 'Couleur enregistrée', value }))]
+      .filter(({ value }) => {
+        const normalized = value.toLowerCase();
+        if (seen.has(normalized)) return false;
+        seen.add(normalized);
+        return true;
+      });
+  }, [registeredColors]);
+
   const openCreate = () => {
     setForm(emptyForm);
     setDialogOpen(true);
@@ -140,8 +182,8 @@ export default function ListVoie() {
   };
 
   const saveRoute = async () => {
-    if (!selectedVersion || !form.couloir_id || !form.difficulty || !form.color) {
-      setErrorMessage('Renseignez le couloir, la cotation et la couleur.');
+    if (!selectedVersion || !form.couloir_id || !form.difficulty || !isHexColor(form.color)) {
+      setErrorMessage('Renseignez le couloir, la cotation et une couleur hexadécimale valide.');
       return;
     }
     setSaving(true);
@@ -153,6 +195,9 @@ export default function ListVoie() {
         difficulty: Number(form.difficulty),
         color: form.color,
       }, authorization());
+      setRegisteredColors((colors) => isHexColor(form.color) && !colors.some((color) => color.toLowerCase() === form.color.toLowerCase())
+        ? [...colors, form.color]
+        : colors);
       setDialogOpen(false);
       await loadRoutes(selectedVersion);
     } catch (error) {
@@ -283,8 +328,33 @@ export default function ListVoie() {
               {[...Array(31).keys()].map((lane) => <MenuItem key={lane + 1} value={lane + 1}>Couloir {lane + 1} · {sectorForLane(lane + 1)}</MenuItem>)}
             </TextField>
             <TextField label="Cotation numérique" type="number" value={form.difficulty} onChange={(event) => setForm({ ...form, difficulty: event.target.value })} inputProps={{ min: 3.25, max: 9, step: 0.05 }} helperText={`Aperçu : ${formatDifficulty(Number(form.difficulty))}`} fullWidth />
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>Couleurs enregistrées</Typography>
+              <Stack direction="row" flexWrap="wrap" gap={1}>
+                {colorOptions.map(({ label, value }) => {
+                  const selected = form.color.toLowerCase() === value.toLowerCase();
+                  return (
+                    <Tooltip key={value} title={label}>
+                      <IconButton
+                        aria-label={`${label} ${value}`}
+                        aria-pressed={selected}
+                        onClick={() => setForm({ ...form, color: value })}
+                        sx={{
+                          width: 34,
+                          height: 34,
+                          backgroundColor: value,
+                          border: selected ? '3px solid #1f6b45' : '1px solid rgba(0,0,0,.28)',
+                          boxShadow: selected ? '0 0 0 2px white, 0 0 0 3px #1f6b45' : 'none',
+                          '&:hover': { backgroundColor: value, opacity: 0.82 },
+                        }}
+                      />
+                    </Tooltip>
+                  );
+                })}
+              </Stack>
+            </Box>
             <Stack direction="row" spacing={2} alignItems="center">
-              <Box component="input" type="color" aria-label="Couleur de la voie" value={form.color} onChange={(event) => setForm({ ...form, color: event.target.value })} sx={{ width: 58, height: 52, p: 0.5, border: '1px solid', borderColor: 'divider', borderRadius: 1, backgroundColor: 'white', cursor: 'pointer' }} />
+              <Box component="input" type="color" aria-label="Couleur personnalisée de la voie" value={isHexColor(form.color) ? form.color : emptyForm.color} onChange={(event) => setForm({ ...form, color: event.target.value })} sx={{ width: 58, height: 52, p: 0.5, border: '1px solid', borderColor: 'divider', borderRadius: 1, backgroundColor: 'white', cursor: 'pointer' }} />
               <TextField label="Couleur" value={form.color} onChange={(event) => setForm({ ...form, color: event.target.value })} fullWidth />
             </Stack>
           </Stack>
