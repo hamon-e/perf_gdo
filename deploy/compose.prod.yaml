@@ -40,7 +40,9 @@ services:
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Chemin absolu requis : --project-directory=/opt/gdo est la base des
+      # chemins relatifs, pas le dossier de ce compose file.
+      - /opt/gdo/deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
     depends_on:
