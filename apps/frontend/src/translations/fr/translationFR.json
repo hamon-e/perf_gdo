@@ -1,109 +1,20 @@
 {
-    "Header": {
-        "Restaurant-Products":"Mes produits",
-        "Menus": "Menus",
-        "Tryout": "Tester l'API",
-        "Products-List": "Liste des produits",
-        "Annotations": "Annotations",
-        "Users": "Utilisateurs",
-        "Restaurants": "Restaurants",
-        "Reset-Password": "Réinitialisation du mot de passe"
-    },
-    "Menus": {
-        "Menus": "Menus",
-        "Industrial": "Industriel",
-        "Recurrent": "Récurrent",
-        "Product-Name": "Nom du produit",
-        "Product-Label": "Etiquette du produit",
-        "Product-Description": "Description du produit",
-        "Import-Menu": "Importer un menu",
-        "Add-To-Menu": "Ajouter au menu",
-        "View-Menu-Product": "Détails d'un produit du menu",
-        "Remove": "Supprimer",
-        "Cancel": "Annuler",
-        "Save": "Sauvegarder",
-        "Kind": "Catégorie",
-        "Products": "Produits"
-    },
-    "LanguageSelector":{
-        "Languages":"Langues",
-        "en":"Anglais",
-        "fr":"Français"
-    },
-    "DataGrid": {
-        "NoResults": "Aucun résultat"
-    },
-    "Tryout": {
-        "Tryout": "Tester l'API",
-        "Upload": "Joindre une image"
-    },
-    "List": {
-        "Restaurant-Products": "Mes produits",
-        "Id": "Id",
-        "Name": "Nom",
-        "Description": "Description",
-        "Label": "Etiquette",
-        "Kind": "Catégorie",
-        "Family": "Famille",
-        "Brand": "Marque",
-        "Obj_class": "obj_class",
-        "Calories": "Calories",
-        "Industrial": "Industriel",
-        "Content": "Contenu",
-        "Active": "Actif",
-        "Recurrent": "Récurrent",
-        "Cash-Sys-Code": "Code Encaissement",
-        "Edit-Product": "Modifier le produit",
-        "Remove": "Supprimer",
-        "Cancel": "Annuler",
-        "Save": "Sauvegarder",
-        "None": "Aucun",
-        "Add-Restaurant-Product": "Ajouter un produit au restaurant",
-        "Products": "Produits"
-    },
-    "Users": {
-        "Users": "Users",
-        "Id": "Id",
-        "Name": "Prénom",
-        "Surname": "Nom de famille",
-        "Email": "Email",
-        "Restaurant_id": "Id du restaurant",
-        "Category_name": "Catégorie",
-        "Add-User": "Ajouter un utilisateur",
-        "Category_id": "Id de la catégorie",
-        "Cancel": "Annuler",
-        "Save": "Sauvegarder"
-    },
-    "Restaurants": {
-        "Id": "Id",
-        "Name": "Nom",
-        "Address": "Adresse",
-        "Zip_Code": "Code Postal",
-        "City": "Ville",
-        "Group_Id": "Id du groupe",
-        "Country_Id": "Id du pays",
-        "Add-Restaurant": "Ajouter un restaurant",
-        "Cancel": "Annuler",
-        "Save": "Sauvegarder"
-    },
-    "ResetPassword": {
-        "Password-No-Match": "Les mots de passe ne sont pas identiques",
-        "Password-Too-Short": "La mot de passe doit faire au moins 8 caractères",
-        "Success": "Succès",
-        "Invalid-Token": "Token invalide",
-        "Reset-Password": "Réinitialisation du mot de passe",
-        "Password": "Mot de passe",
-        "Confirm-Password": "Confirmation du mot de passe",
-        "Confirm": "Confirmer"
-    },
-    "Login": {
-        "Invalid-Login": "Identifiant ou mot de passe incorrect.",
-        "Successful-Login": "Connexion réussie",
-        "Login-Instructions": "Entrer un indentifiant et un mot de passe valides.",
-        "Username": "Identifiant",
-        "Enter-Username": "Entrer l'identifiant",
-        "Password": "Mot de passe",
-        "Enter-Password": "Entrer le mot de passe",
-        "Connect": "Se connecter"
-    }
+  "LanguageSelector": {
+    "Languages": "Langues",
+    "en": "Anglais",
+    "fr": "Français"
+  },
+  "DataGrid": {
+    "NoResults": "Aucun résultat"
+  },
+  "Login": {
+    "Invalid-Login": "Identifiant ou mot de passe incorrect.",
+    "Successful-Login": "Connexion réussie",
+    "Login-Instructions": "Entrez un identifiant et un mot de passe valides.",
+    "Username": "Identifiant",
+    "Enter-Username": "Entrez l'identifiant",
+    "Password": "Mot de passe",
+    "Enter-Password": "Entrez le mot de passe",
+    "Connect": "Se connecter"
+  }
 }

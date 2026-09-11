@@ -8,7 +8,6 @@ const ContextProvider = props => {
   const [language, setLanguage] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState({})
-  const [restaurant, setRestaurant] = useState(-1);
   const [headerTitle, setHeaderTitle] = useState(null)
   const [headerTitleLocalization, setHeaderTitleLocalization] = useState(null)
   const [errorMessage, updateErrorMessage] = useState(null);
@@ -27,7 +26,6 @@ const ContextProvider = props => {
         connectedStateHook: [connected, setConnected],
         isAdminHook: [isAdmin, setIsAdmin],
         userHook: [user, setUser],
-        restaurantHook: [restaurant, setRestaurant],
         headerTitleHook: [headerTitle, setHeaderTitle],
         headerLocalizationHook: [headerTitleLocalization, setHeaderTitleLocalization],
         errorMessageHook: [errorMessage, updateErrorMessage],

@@ -1,110 +1,20 @@
 {
-    "Header": {
-        "Restaurant-Products":"Restaurant Products",
-        "Menus": "Menus",
-        "Tryout": "Tryout",
-        "Products-List": "Products List",
-        "Annotations": "Annotations",
-        "Users": "Users",
-        "Restaurants": "Restaurants",
-        "Reset-Password": "Reset Password"
-    },
-    "Menus": {
-        "Menus": "Menus",
-        "Industrial": "Industrial",
-        "Recurrent": "Recurrent",
-        "Product-Name": "Product Name",
-        "Product-Label": "Product Label",
-        "Product-Description": "Product-Description",
-        "Import-Menu": "Import Menu",
-        "Add-To-Menu": "Add to menu",
-        "View-Menu-Product": "View menu product",
-        "Remove": "Remove",
-        "Cancel": "Cancel",
-        "Save": "Save",
-        "Kind": "Kind",
-        "Products": "Products"
-    },
-    "LanguageSelector":{
-        "Languages":"Languages",
-        "en":"English",
-        "fr":"French"
-    },
-    "DataGrid": {
-        "NoResults": "No results found"
-    },
-    "Tryout": {
-        "Tryout": "Tryout",
-        "Upload": "Upload"
-    },
-    "List": {
-        "Restaurant-Products": "Restaurant Products",
-        "Id": "Id",
-        "Name": "Name",
-        "Description": "Description",
-        "Label": "Label",
-        "Kind": "Kind",
-        "Family": "Family",
-        "Brand": "Brand",
-        "Obj_class": "obj_class",
-        "Calories": "Calories",
-        "Industrial": "Industrial",
-        "Content": "Content",
-        "Active": "Active",
-        "Recurrent": "Recurrent",
-        "Cash-Sys-Code": "Cash-Sys-Code",
-        "Edit-Product": "Edit Product",
-        "Remove": "Remove",
-        "Cancel": "Cancel",
-        "Save": "Save",
-        "None": "None",
-        "Add-Restaurant-Product": "Add Restaurant Product",
-        "Products": "Products"
-    },
-    "Users": {
-        "Users": "Users",
-        "Id": "Id",
-        "Name": "Name",
-        "Surname": "Surname",
-        "Email": "Email",
-        "Restaurant_id": "Restaurant id",
-        "Category_name": "Category name",
-        "Add-User": "Add user",
-        "Category_id": "Category id",
-        "Cancel": "Cancel",
-        "Save": "Save"
-    },
-    "Restaurants": {
-        "Restaurants": "Restaurants",
-        "Id": "Id",
-        "Name": "Name",
-        "Address": "Address",
-        "Zip_Code": "Zip Code",
-        "City": "City",
-        "Group_Id": "Group Id",
-        "Country_Id": "Country Id",
-        "Add-Restaurant": "Add restaurant",
-        "Cancel": "Cancel",
-        "Save": "Save"
-    },
-    "ResetPassword": {
-        "Password-No-Match": "Password didn't match",
-        "Password-Too-Short": "Must be at least 8 characters long",
-        "Success": "Success",
-        "Invalid-Token": "Invalid token",
-        "Reset-Password": "Reset password",
-        "Password": "Password",
-        "Confirm-Password": "Confirm password",
-        "Confirm": "Confirm"
-    },
-    "Login": {
-        "Invalid-Login": "Invalid username or password.",
-        "Successful-Login": "Successful login",
-        "Login-Instructions": "Enter a valid username and password.",
-        "Username": "Username",
-        "Enter-Username": "Enter username",
-        "Password": "Password",
-        "Enter-Password": "Enter password",
-        "Connect": "Connect"
-    }
+  "LanguageSelector": {
+    "Languages": "Languages",
+    "en": "English",
+    "fr": "French"
+  },
+  "DataGrid": {
+    "NoResults": "No results found"
+  },
+  "Login": {
+    "Invalid-Login": "Invalid username or password.",
+    "Successful-Login": "Successful login",
+    "Login-Instructions": "Enter a valid username and password.",
+    "Username": "Username",
+    "Enter-Username": "Enter username",
+    "Password": "Password",
+    "Enter-Password": "Enter password",
+    "Connect": "Connect"
+  }
 }

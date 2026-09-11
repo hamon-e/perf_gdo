@@ -31,7 +31,7 @@ import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import PrivateRoute from './utils/PrivateRoute';
 import Header from './components/Header/Header';
 import LoginForm from './components/LoginForm/LoginForm';
-import Products from './components/Products/Products';
+import SessionHistory from './components/SessionHistory/SessionHistory';
 import Menus from './components/Menus/Menus';
 import Users from './components/Users/Users';
 import UserGroups from './components/UserGroups/UserGroups';
@@ -249,7 +249,7 @@ function AppShell() {
             <PrivateRoute path="/maseance"><Redirect to="/home" /></PrivateRoute>
             <PrivateRoute path="/listevoies"><ListVoie /></PrivateRoute>
             <PrivateRoute path="/analyse-mur"><WallAnalysis /></PrivateRoute>
-            <PrivateRoute path="/historique"><Products /></PrivateRoute>
+            <PrivateRoute path="/historique"><SessionHistory /></PrivateRoute>
             <PrivateRoute path="/palmares"><Palmares /></PrivateRoute>
             <PrivateRoute path="/users"><Users /></PrivateRoute>
             <PrivateRoute path="/user-groups"><UserGroups /></PrivateRoute>
