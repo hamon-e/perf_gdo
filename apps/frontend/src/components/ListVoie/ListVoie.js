@@ -107,6 +107,8 @@ function sectorForLane(lane) {
   return 'Mur de 9 m';
 }
 
+const SECTORS = ['Plexi + toit', 'Vérin gauche', 'Dévers', 'Vérin droit', 'Dalle', 'Mur de 9 m'];
+
 function versionLabel(version) {
   const date = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(version.date));
   return `${date} · v1${version.subversion ? `.${version.subversion}` : ''}`;
@@ -122,6 +124,8 @@ export default function ListVoie() {
   const [selectedVersion, setSelectedVersion] = useState('');
   const [routes, setRoutes] = useState([]);
   const [search, setSearch] = useState('');
+  const [sectorFilter, setSectorFilter] = useState('');
+  const [laneOrder, setLaneOrder] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -183,14 +187,21 @@ export default function ListVoie() {
 
   const filteredRoutes = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return routes;
-    return routes.filter((route) => [
-      route.couloir_id,
-      formatDifficulty(route.difficulty),
-      route.color,
-      sectorForLane(route.couloir_id),
-    ].join(' ').toLowerCase().includes(query));
-  }, [routes, search]);
+    let result = routes;
+    if (query) {
+      result = result.filter((route) => [
+        route.couloir_id,
+        formatDifficulty(route.difficulty),
+        route.color,
+        sectorForLane(route.couloir_id),
+      ].join(' ').toLowerCase().includes(query));
+    }
+    if (sectorFilter) result = result.filter((route) => sectorForLane(route.couloir_id) === sectorFilter);
+    if (laneOrder) {
+      result = [...result].sort((a, b) => (laneOrder === 'asc' ? a.couloir_id - b.couloir_id : b.couloir_id - a.couloir_id));
+    }
+    return result;
+  }, [routes, search, sectorFilter, laneOrder]);
 
   const colorOptions = useMemo(() => {
     const seen = new Set();
@@ -376,6 +387,29 @@ export default function ListVoie() {
             fullWidth
             InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
           />
+          <TextField
+            select
+            label="Secteur"
+            size="small"
+            value={sectorFilter}
+            onChange={(event) => setSectorFilter(event.target.value)}
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Tous les secteurs</MenuItem>
+            {SECTORS.map((sector) => <MenuItem key={sector} value={sector}>{sector}</MenuItem>)}
+          </TextField>
+          <TextField
+            select
+            label="Ordre par couloir"
+            size="small"
+            value={laneOrder}
+            onChange={(event) => setLaneOrder(event.target.value)}
+            sx={{ minWidth: 180 }}
+          >
+            <MenuItem value="">Défaut</MenuItem>
+            <MenuItem value="asc">Couloir croissant</MenuItem>
+            <MenuItem value="desc">Couloir décroissant</MenuItem>
+          </TextField>
         </Stack>
 
         {loading ? (
