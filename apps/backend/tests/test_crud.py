@@ -99,6 +99,8 @@ def test_wall_version_is_active_over_its_configured_period(db):
     assert january.active is False
     assert march.active is True
     assert [route.id for route in crud.get_voies(db, None, -1)] == [march_route.id]
+    assert [route.id for route in crud.get_voies(db, None, -1, at=datetime(2026, 2, 15))] == [january_route.id]
+    assert [route.id for route in crud.get_voies(db, None, -1, at=datetime(2026, 3, 1))] == [march_route.id]
 
     with pytest.raises(HTTPException) as error:
         crud.update_versionvoie_dates(db, march.id, datetime(2026, 3, 1), datetime(2026, 1, 1))

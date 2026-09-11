@@ -518,8 +518,11 @@ function SessionLogger(props) {
         await setInsertedRoutes(response.data)
     }
 
-    async function refreshVoie() {
-        var response = await axios.get(API_BASE_URL+'/voies', { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
+    async function refreshVoie(date = selectedDate) {
+        var response = await axios.get(
+            API_BASE_URL+'/voies?at=' + formatDate(date),
+            { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }}
+        )
         await setVoies(response.data)
         g_voies = response.data
     }
@@ -851,6 +854,7 @@ function SessionLogger(props) {
                                 value={selectedDate}
                                 onChange={(newValue) => {
                                     setSelectedDate(newValue);
+                                    refreshVoie(newValue)
                                     refreshInsertedRoutes(newValue)
                                     getDays(newValue)
                                 }}

@@ -503,9 +503,10 @@ def update_versionvoie_dates(db: Session, version_id: int, date: datetime, end_d
     db.refresh(version)
     return version
 
-def get_voies(db: Session, current_user: schemas.User, version_id: int):
+def get_voies(db: Session, current_user: schemas.User, version_id: int, at: Optional[datetime] = None):
+    """Return routes for an explicit version, or the version active at ``at``."""
     if version_id == -1:
-        version = get_active_versionvoie(db)
+        version = get_active_versionvoie(db, at=at)
         if not version:
             return []
         version_id = version.id

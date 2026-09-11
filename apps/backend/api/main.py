@@ -165,8 +165,11 @@ async def update_versionvoie(version_id: int, period: schemas.VersionVoiePeriod,
     return version
 
 @router.get("/voies", response_model=List[schemas.Voie])
-async def get_voies(version_id: int = -1, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    versionvoie = crud.get_voies(db, current_user, version_id)
+async def get_voies(version_id: int = -1, at: date | None = None, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # A session is selected by calendar day, so resolve the topo at midnight
+    # of that day. An explicit version always takes precedence.
+    at_datetime = datetime.combine(at, datetime.min.time()) if at else None
+    versionvoie = crud.get_voies(db, current_user, version_id, at=at_datetime)
     return versionvoie
 
 
