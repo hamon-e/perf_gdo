@@ -1,0 +1,58 @@
+.wall-topo-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.wall-topo {
+  width: 100%;
+  min-width: 760px;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.wall-topo--mobile {
+  min-width: 820px;
+}
+
+.wall-topo__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  background: #d1d3cf;
+  box-shadow: 0 12px 32px rgba(24, 37, 31, 0.12);
+}
+
+.wall-topo__lane-hit {
+  fill: transparent;
+  cursor: pointer;
+  transition: fill 120ms ease;
+}
+
+.wall-topo__lane-hit:hover {
+  fill: rgba(31, 107, 69, 0.08);
+}
+
+.wall-topo__route-line,
+.wall-topo__endpoint {
+  pointer-events: none;
+}
+
+.wall-topo__route-line {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.55;
+}
+
+.wall-topo__endpoint {
+  opacity: 0.55;
+}
+
+@media (max-width: 899px) {
+  .wall-topo {
+    padding: 6px;
+  }
+}
