@@ -268,3 +268,42 @@ def test_admin_history_queries_only_return_the_selected_users_sessions(db):
     assert len(sessions) == 1
     assert sessions[0].user_id == selected_user.id
     assert session_days == [session_date]
+
+
+def test_voie_history_counts_attempts_across_lineage_and_users(db):
+    climber = create_user(db, "climber@example.com")
+    other = create_user(db, "other@example.com")
+    route_type = models.CouloirType(name="Dalle")
+    db.add(route_type)
+    db.commit()
+    couloir = models.Couloir(type_id=route_type.id)
+    db.add(couloir)
+    db.commit()
+    source_version = crud.post_versionvoie(db, datetime(2026, 1, 1))
+    source_route = models.Voie(couloir_id=couloir.id, color="#ff0000", difficulty=6.0, active=True, versionvoie_id=source_version.id)
+    db.add(source_route)
+    db.commit()
+    db.add_all([
+        models.UserSeance(date=datetime(2026, 1, 10), user_id=climber.id, voie_id=source_route.id, en_tete=False, top=50, pause=1),
+        models.UserSeance(date=datetime(2026, 1, 20), user_id=climber.id, voie_id=source_route.id, en_tete=True, top=100, pause=0),
+        models.UserSeance(date=datetime(2026, 1, 20), user_id=other.id, voie_id=source_route.id, en_tete=True, top=100, pause=0),
+    ])
+    db.commit()
+
+    revision = crud.post_subversionvoie(db, source_version.id)
+    copied_route = crud.get_voies(db, None, revision.id)[0]
+    db.add(models.UserSeance(date=datetime(2026, 2, 5), user_id=climber.id, voie_id=copied_route.id, en_tete=True, top=100, pause=0))
+    db.commit()
+
+    history = crud.get_voie_history(db, climber, copied_route.id)
+    assert history["total_attempts"] == 3
+    assert history["total_tops"] == 2
+    assert history["voie"].id == copied_route.id
+    assert [session.date for session in history["sessions"]] == [
+        datetime(2026, 2, 5),
+        datetime(2026, 1, 20),
+        datetime(2026, 1, 10),
+    ]
+    assert {session.voie_id for session in history["sessions"]} == {source_route.id, copied_route.id}
+
+    assert crud.get_voie_history(db, climber, 9999) is None
