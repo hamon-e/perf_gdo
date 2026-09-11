@@ -529,6 +529,7 @@ function Products(props) {
     async function deleteRoute(routeId) {
         var response = await axios.delete(API_BASE_URL+'/userseance?userseance_id=' + routeId, { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
         await refreshInsertedRoutes()
+        await getDays()
     }
 
     async function submitForm() {
@@ -555,6 +556,7 @@ function Products(props) {
 
         var response = await axios.post(API_BASE_URL+'/userseance', payload, config)
         await refreshInsertedRoutes()
+        await getDays()
 
         setSelectedTete(true)
         setSelectedTop(100)
@@ -917,6 +919,7 @@ function Products(props) {
                                 onChange={(newValue) => {
                                     setSelectedDate(newValue);
                                     refreshInsertedRoutes(newValue)
+                                    getDays(newValue)
                                 }}
                                 onMonthChange={getDays}
                                 renderDay={(day, _value, DayComponentProps) => {
