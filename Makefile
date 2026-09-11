@@ -42,18 +42,16 @@ dev-backend: install-backend
 		$(VENV)/bin/uvicorn api.main:app --app-dir $(BACKEND) --reload --port 8000
 
 dev-frontend:
-	REACT_APP_API_BASE_URL="$${REACT_APP_API_BASE_URL:-http://localhost:8000}" \
+	VITE_API_BASE_URL="$${VITE_API_BASE_URL:-http://localhost:8000}" \
 		pnpm --dir $(FRONTEND) start
 
 build:
-	NODE_OPTIONS="$${NODE_OPTIONS:---openssl-legacy-provider}" \
-		REACT_APP_API_BASE_URL="$${REACT_APP_API_BASE_URL:-http://localhost:8000}" \
+	VITE_API_BASE_URL="$${VITE_API_BASE_URL:-http://localhost:8000}" \
 		pnpm --dir $(FRONTEND) build
 
 test: install-backend-dev
 	API_DB="sqlite:///:memory:" PYTHONPATH=$(BACKEND) $(VENV)/bin/pytest -q $(BACKEND)/tests
-	CI=true NODE_OPTIONS="$${NODE_OPTIONS:---openssl-legacy-provider}" \
-		pnpm --dir $(FRONTEND) test --watchAll=false
+	pnpm --dir $(FRONTEND) test
 
 up:
 	docker compose up --build

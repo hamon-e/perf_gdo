@@ -34,17 +34,17 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 7
+          version: 12.4.1
 
       - name: Tests frontend
         run: |
           pnpm --dir apps/frontend install --frozen-lockfile
-          CI=true NODE_OPTIONS=--openssl-legacy-provider \
-            pnpm --dir apps/frontend test
+          pnpm --dir apps/frontend typecheck
+          pnpm --dir apps/frontend test
 
   build-push:
     needs: test
@@ -78,7 +78,7 @@ jobs:
           context: apps/frontend
           push: true
           build-args: |
-            REACT_APP_API_BASE_URL=/api
+            VITE_API_BASE_URL=/api
             APP_VERSION=${{ github.ref_name }}
           tags: |
             ${{ env.IMAGE_FRONTEND }}:latest
