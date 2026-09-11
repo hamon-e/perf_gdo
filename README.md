@@ -142,7 +142,7 @@ Les données PostgreSQL restent dans le volume Docker `postgres-data`.
 
 ## Développement local
 
-Prérequis : Python 3, Node.js 16, pnpm 7 et Docker. Corepack peut installer la
+Prérequis : Python 3, Node.js 22, pnpm 12 et Docker. Corepack peut installer la
 version déclarée par le projet : `corepack enable`.
 
 ```sh
@@ -201,7 +201,7 @@ make migrate
 | Variable | Valeur locale par défaut | Description |
 | --- | --- | --- |
 | `POSTGRES_PASSWORD` | `password` | mot de passe PostgreSQL utilisé par Compose |
-| `REACT_APP_API_BASE_URL` | `http://localhost:8000` | URL de l'API injectée lors du build du frontend |
+| `VITE_API_BASE_URL` | `http://localhost:8000` | URL de l'API injectée lors du build du frontend |
 | `API_DB` | définie par Compose | URL SQLAlchemy de connexion à PostgreSQL |
 | `JWT_SECRET_KEY` | valeur locale non sûre | clé de signature des jetons JWT |
 | `CORS_ORIGINS` | `http://localhost:3000` | origines autorisées, séparées par des virgules |
