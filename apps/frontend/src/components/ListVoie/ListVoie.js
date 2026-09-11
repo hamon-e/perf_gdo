@@ -33,6 +33,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
+import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
 
 const authorization = () => ({
@@ -185,6 +186,34 @@ export default function ListVoie() {
     }
   };
 
+  const downloadTopo = async () => {
+    if (!selectedVersion) return;
+    setSaving(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/topo.pdf?version_id=${selectedVersion}`, {
+        ...authorization(),
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      const version = versions.find((item) => String(item.id) === String(selectedVersion));
+      const versionDate = new Date(version?.date);
+      const dateForFilename = Number.isNaN(versionDate.getTime())
+        ? selectedVersion
+        : versionDate.toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `topo-voies-${dateForFilename}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      showError(error, "Impossible d'exporter le topo.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const laneCount = new Set(routes.map((route) => route.couloir_id)).size;
 
   return (
@@ -195,6 +224,7 @@ export default function ListVoie() {
           <Typography color="text.secondary">Créez et mettez à jour les voies disponibles par couloir.</Typography>
         </Box>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+          <Button variant="outlined" startIcon={<PictureAsPdfOutlinedIcon />} onClick={downloadTopo} disabled={!selectedVersion || saving}>Exporter le topo PDF</Button>
           <Button variant="outlined" startIcon={<AccountTreeOutlinedIcon />} onClick={createVersion} disabled={saving}>Nouvelle version</Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} disabled={!selectedVersion} sx={{ backgroundColor: '#1f6b45' }}>Ajouter une voie</Button>
         </Stack>

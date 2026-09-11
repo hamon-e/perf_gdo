@@ -4,11 +4,14 @@ from typing import List
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
 from .db import SessionLocal, engine
+from .topo_pdf import build_topo_pdf
+from io import BytesIO
 
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.security import OAuth2PasswordBearer
@@ -143,6 +146,22 @@ async def post_versionvoie(date: schemas.VersionVoie, current_user: schemas.User
 async def get_voies(version_id: int = -1, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     versionvoie = crud.get_voies(db, current_user, version_id)
     return versionvoie
+
+
+@router.get("/topo.pdf")
+async def export_topo_pdf(version_id: int, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    """Download the selected wall version as a printable A4 landscape topo."""
+    version = db.query(models.VersionVoie).filter(models.VersionVoie.id == version_id).first()
+    if not version:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Version du mur introuvable")
+    routes = crud.get_voies(db, current_user, version_id)
+    document = build_topo_pdf(routes, version.date)
+    filename = f"topo-voies-{version.date.strftime('%Y-%m-%d') if version.date else version_id}.pdf"
+    return StreamingResponse(
+        BytesIO(document),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.post("/voie", response_model=bool)
