@@ -20,6 +20,14 @@ def ensure_database_schema():
     if "user" in inspector.get_table_names() and "group_id" not in {column["name"] for column in inspector.get_columns("user")}:
         with engine.begin() as connection:
             connection.execute(text('ALTER TABLE "user" ADD COLUMN group_id INTEGER REFERENCES usergroup(id)'))
+    if "versionvoie" in inspector.get_table_names() and "active" not in {column["name"] for column in inspector.get_columns("versionvoie")}:
+        with engine.begin() as connection:
+            connection.execute(text('ALTER TABLE versionvoie ADD COLUMN active BOOLEAN NOT NULL DEFAULT FALSE'))
+    if "versionvoie" in inspector.get_table_names():
+        with engine.begin() as connection:
+            has_active_version = connection.execute(text('SELECT 1 FROM versionvoie WHERE active = TRUE LIMIT 1')).first()
+            if not has_active_version:
+                connection.execute(text('UPDATE versionvoie SET active = TRUE WHERE id = (SELECT id FROM versionvoie ORDER BY date DESC, id DESC LIMIT 1)'))
 
 
 ensure_database_schema()
@@ -134,9 +142,14 @@ async def get_versionvoie(current_user: schemas.User = Depends(get_current_user)
     versionvoie = crud.get_versionvoie(db)
     return versionvoie
 
-@router.post("/versionvoie", response_model=bool)
+@router.post("/versionvoie", response_model=schemas.VersionVoie)
 async def post_versionvoie(date: schemas.VersionVoie, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
-    crud.post_versionvoie(db, date.date)
+    return crud.post_versionvoie(db, date.date)
+
+@router.patch("/versionvoie/{version_id}/active", response_model=bool)
+async def activate_versionvoie(version_id: int, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    if not crud.activate_versionvoie(db, version_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Version du mur introuvable")
     return True
 
 @router.get("/voies", response_model=List[schemas.Voie])

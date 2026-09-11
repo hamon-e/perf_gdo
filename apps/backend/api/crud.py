@@ -116,7 +116,7 @@ def get_current_user(db: Session, token: str):
     return user
 
 def compute_dashboard_coverage(db: Session, current_user: schemas.User):
-    version = db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).first()
+    version = get_active_versionvoie(db)
     if not version:
         return {
             'coverage': 0,
@@ -246,15 +246,38 @@ def get_progression(db: Session, current_user: schemas.User, months: int):
     return result
 
 def get_versionvoie(db: Session):
-    return db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).all()
+    return db.query(models.VersionVoie).order_by(models.VersionVoie.active.desc(), models.VersionVoie.date.desc(), models.VersionVoie.id.desc()).all()
 
 def post_versionvoie(db: Session, date: datetime):
-    db.add(models.VersionVoie(date=date))
+    version = models.VersionVoie(
+        date=date,
+        active=not db.query(models.VersionVoie).filter(models.VersionVoie.active.is_(True)).first(),
+    )
+    db.add(version)
     db.commit()
+    db.refresh(version)
+    return version
+
+def get_active_versionvoie(db: Session):
+    """Return the explicitly active wall version, with a legacy-data fallback."""
+    return (
+        db.query(models.VersionVoie)
+        .order_by(models.VersionVoie.active.desc(), models.VersionVoie.date.desc(), models.VersionVoie.id.desc())
+        .first()
+    )
+
+def activate_versionvoie(db: Session, version_id: int):
+    version = db.query(models.VersionVoie).filter(models.VersionVoie.id == version_id).first()
+    if not version:
+        return False
+    db.query(models.VersionVoie).update({models.VersionVoie.active: False}, synchronize_session=False)
+    version.active = True
+    db.commit()
+    return True
 
 def get_voies(db: Session, current_user: schemas.User, version_id: int):
     if version_id == -1:
-        version = db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).first()
+        version = get_active_versionvoie(db)
         if not version:
             return []
         version_id = version.id
