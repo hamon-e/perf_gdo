@@ -169,6 +169,14 @@ async def get_voies(version_id: int = -1, current_user: schemas.User = Depends(g
     return versionvoie
 
 
+@router.get("/wall-analysis", response_model=schemas.WallAnalysis)
+async def get_wall_analysis(version_id: int, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    version = db.query(models.VersionVoie).filter(models.VersionVoie.id == version_id).first()
+    if not version:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Version du mur introuvable")
+    return crud.get_wall_analysis(db, version_id)
+
+
 @router.get("/topo.pdf")
 async def export_topo_pdf(version_id: int, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
     """Download the selected wall version as a printable A4 landscape topo."""

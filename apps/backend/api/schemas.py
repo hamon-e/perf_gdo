@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -109,6 +109,41 @@ class Voie(Schema):
     color: str
     difficulty: float
     versionvoie_id: int
+
+
+class WallGradeStat(Schema):
+    difficulty: float
+    count: int
+
+
+class WallLaneStat(Schema):
+    lane: int
+    count: int
+
+
+class WallTopRoute(Schema):
+    route_id: int
+    couloir_id: int
+    color: str
+    difficulty: float
+    climbs: int
+    tops: int
+    success_rate: int
+
+
+class WallAnalysis(Schema):
+    version_id: int
+    total_routes: int
+    equipped_lanes: int
+    average_difficulty: float
+    lowest_difficulty: float
+    highest_difficulty: float
+    climbs: int
+    tops: int
+    unique_climbed_routes: int
+    grade_distribution: List[WallGradeStat]
+    lane_distribution: List[WallLaneStat]
+    top_routes: List[WallTopRoute]
 
 
 class CrenauType(Schema):

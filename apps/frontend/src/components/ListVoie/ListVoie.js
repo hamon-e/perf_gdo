@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import { useHistory } from 'react-router-dom';
 
 import { ACCESS_TOKEN_NAME, API_BASE_URL } from '../../constants/apiConstants';
 import { useContextObject } from '../Context/Context';
@@ -35,6 +36,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
+import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
 
 const authorization = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN_NAME)}` },
@@ -110,6 +112,7 @@ function versionLabel(version) {
 }
 
 export default function ListVoie() {
+  const history = useHistory();
   const { headerTitleHook, showBarHook, errorMessageHook } = useContextObject();
   const [, setHeaderTitle] = headerTitleHook;
   const [, setShowBar] = showBarHook;
@@ -316,6 +319,7 @@ export default function ListVoie() {
           <Typography color="text.secondary">Créez et mettez à jour les voies disponibles par couloir.</Typography>
         </Box>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+          <Button variant="contained" startIcon={<InsightsOutlinedIcon />} onClick={() => history.push(`/analyse-mur?version=${selectedVersion}`)} disabled={!selectedVersion} sx={{ backgroundColor: '#1f6b45', '&:hover': { backgroundColor: '#185538' } }}>Analyse du mur</Button>
           <Button variant="outlined" startIcon={<PictureAsPdfOutlinedIcon />} onClick={downloadTopo} disabled={!selectedVersion || saving}>Exporter le topo PDF</Button>
           <Button variant="outlined" startIcon={<AccountTreeOutlinedIcon />} onClick={createVersion} disabled={saving}>Nouvelle version</Button>
           <Button variant="outlined" color="success" onClick={activateSelectedVersion} disabled={!selectedVersion || selectedVersionIsActive || saving}>Activer cette version</Button>
