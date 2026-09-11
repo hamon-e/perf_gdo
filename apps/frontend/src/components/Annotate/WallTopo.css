@@ -78,8 +78,9 @@
 }
 
 .wall-topo__lane-hit:hover {
-  fill: rgba(31, 107, 69, 0.28);
-  stroke: #1f6b45;
+  fill: rgba(31, 107, 69, 0.48);
+  stroke: #0d4b2d;
+  stroke-width: 8;
 }
 
 .wall-topo__route-line,
@@ -92,11 +93,14 @@
   stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
-  opacity: 0.55;
+  /* Atténue les couleurs très vives tout en gardant le jaune contrasté. */
+  filter: brightness(0.72) saturate(0.82);
+  opacity: 0.8;
 }
 
 .wall-topo__endpoint {
-  opacity: 0.55;
+  filter: brightness(0.72) saturate(0.82);
+  opacity: 0.8;
 }
 
 @media (max-width: 899px) {

@@ -90,6 +90,7 @@ var g_value = 0;
 var g_imageIndex = 0;
 var lastMove = 0;
 var g_voies = [];
+const ROUTE_GRADE_RANGE_STORAGE_KEY = 'gdo.route-grade-range';
 
 
 
@@ -110,6 +111,7 @@ function SessionLogger(props) {
     const [selectedDate, setSelectedDate] = React.useState(new Date())
 
     const [voies, setVoies] = React.useState([]);
+    const [routeGradeRange, setRouteGradeRange] = React.useState([0, 0]);
 
     const [openMenu, setOpenMenu] = openHook;
     const [open, setOpen] = React.useState(false);
@@ -524,6 +526,21 @@ function SessionLogger(props) {
             { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }}
         )
         await setVoies(response.data)
+        const difficulties = response.data.map((route) => route.difficulty)
+        if (difficulties.length) {
+            const uniqueDifficulties = [...new Set(difficulties)].sort((first, second) => first - second)
+            let savedRange = null
+            try {
+                savedRange = JSON.parse(localStorage.getItem(ROUTE_GRADE_RANGE_STORAGE_KEY))
+            } catch (_error) {
+                // Une ancienne valeur mal formée ne doit pas bloquer le topo.
+            }
+            const savedStart = Array.isArray(savedRange) ? uniqueDifficulties.indexOf(savedRange[0]) : -1
+            const savedEnd = Array.isArray(savedRange) ? uniqueDifficulties.indexOf(savedRange[1]) : -1
+            setRouteGradeRange(savedStart >= 0 && savedEnd >= savedStart
+                ? [savedStart, savedEnd]
+                : [0, uniqueDifficulties.length - 1])
+        }
         g_voies = response.data
     }
 
@@ -667,6 +684,27 @@ function SessionLogger(props) {
         console.log(difficulty)
         return String(difficulty)
 
+    }
+
+    const gradeOptions = [...new Set(voies.map((route) => route.difficulty))]
+        .sort((first, second) => first - second);
+    const minimumDifficulty = gradeOptions[routeGradeRange[0]];
+    const maximumDifficulty = gradeOptions[routeGradeRange[1]];
+    const displayedRoutes = voies.filter((route) => (
+        route.difficulty >= minimumDifficulty && route.difficulty <= maximumDifficulty
+    ));
+    const gradeMarks = gradeOptions
+        .map((difficulty, index) => ({ difficulty, index }))
+        .filter(({ difficulty }) => Number.isInteger(difficulty))
+        .map(({ difficulty, index }) => ({ value: index, label: String(difficulty) }));
+
+    function handleRouteGradeRangeChange(_event, value) {
+        if (!Array.isArray(value)) return
+        setRouteGradeRange(value)
+        localStorage.setItem(ROUTE_GRADE_RANGE_STORAGE_KEY, JSON.stringify([
+            gradeOptions[value[0]],
+            gradeOptions[value[1]],
+        ]))
     }
 
 
@@ -846,7 +884,7 @@ function SessionLogger(props) {
             <Box sx={{ borderBottom: 1, borderColor: 'divider', paddingTop: '20px', paddingBottom: '8px', paddingLeft: '10px' }}>
 
                     <Grid container spacing={1}>
-                        <Grid item xs={6}>
+                        <Grid item xs={12} sm={6}>
  
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
@@ -877,6 +915,26 @@ function SessionLogger(props) {
 
                         </Grid>
 
+                        <Grid item xs={12} sm={6}>
+                            <Box sx={{ px: 1, pt: .5 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                                    Cotations affichées : {difficultyFormat(minimumDifficulty || 0)} à {difficultyFormat(maximumDifficulty || 0)}
+                                </Typography>
+                                <Slider
+                                    aria-label="Plage de cotations affichées"
+                                    value={routeGradeRange}
+                                    onChange={handleRouteGradeRangeChange}
+                                    min={0}
+                                    max={Math.max(gradeOptions.length - 1, 0)}
+                                    step={1}
+                                    marks={gradeMarks}
+                                    valueLabelDisplay="auto"
+                                    valueLabelFormat={(index) => difficultyFormat(gradeOptions[index] || 0)}
+                                    disableSwap
+                                />
+                            </Box>
+                        </Grid>
+
                         </Grid>
 
             </Box>
@@ -885,7 +943,7 @@ function SessionLogger(props) {
 
                             <WallTopo
                                 areas={MAP.areas}
-                                routes={voies}
+                                routes={displayedRoutes}
                                 coordinateScale={2.1}
                                 mobile={mobile}
                                 onLaneClick={areaClick}
