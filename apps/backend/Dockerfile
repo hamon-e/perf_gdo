@@ -8,6 +8,9 @@ RUN pip install -r /data/api/requirements.txt
 
 ADD api /data/api
 
+ARG APP_VERSION=dev
+ENV APP_VERSION=${APP_VERSION}
+
 ENV API_DB=postgresql://postgres:password@postgres/postgres
 
 EXPOSE 8000

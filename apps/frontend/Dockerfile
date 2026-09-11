@@ -22,3 +22,5 @@ RUN pnpm run build
 FROM nginx:latest
 COPY --from=build /app/build /usr/share/nginx/html
 COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+ARG APP_VERSION=dev
+RUN printf '{"frontend": "%s"}\n' "$APP_VERSION" > /usr/share/nginx/html/version.json

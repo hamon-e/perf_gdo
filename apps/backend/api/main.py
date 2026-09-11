@@ -89,6 +89,12 @@ def get_current_admin(current_user: schemas.User = Depends(get_current_user)):
 async def root():
     return {"message": "Hello World"}
 
+APP_VERSION = os.environ.get("APP_VERSION", "dev")
+
+@router.get("/version")
+async def version():
+    return {"backend": APP_VERSION}
+
 @router.post("/signup", response_model=bool)
 async def signup(user_info: schemas.UserSignUp, db: Session = Depends(get_db)):
     crud.signup(db, user_info)
