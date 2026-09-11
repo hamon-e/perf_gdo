@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String, DateTime, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects import postgresql
@@ -67,9 +69,17 @@ class VersionVoie(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     date = Column(DateTime)
-    active = Column(Boolean, nullable=False, default=False)
+    end_date = Column(DateTime, nullable=True)
     parent_version_id = Column(Integer, ForeignKey("versionvoie.id"), nullable=True)
     subversion = Column(Integer, nullable=False, default=0)
+
+    @property
+    def active(self) -> bool:
+        """True while the validity period covers right now."""
+        now = datetime.now()
+        started = self.date is None or self.date <= now
+        not_expired = self.end_date is None or self.end_date > now
+        return started and not_expired
 
 class CouloirType(Base):
     __tablename__ = "couloirtype"

@@ -147,8 +147,8 @@ async def get_versionvoie(current_user: schemas.User = Depends(get_current_user)
     return versionvoie
 
 @router.post("/versionvoie", response_model=schemas.VersionVoie)
-async def post_versionvoie(date: schemas.VersionVoie, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
-    return crud.post_versionvoie(db, date.date)
+async def post_versionvoie(period: schemas.VersionVoiePeriod, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    return crud.post_versionvoie(db, period.date, period.end_date)
 
 @router.post("/versionvoie/{version_id}/subversion", response_model=schemas.VersionVoie)
 async def post_subversionvoie(version_id: int, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
@@ -157,11 +157,12 @@ async def post_subversionvoie(version_id: int, current_user: schemas.User = Depe
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Version du mur introuvable")
     return version
 
-@router.patch("/versionvoie/{version_id}/active", response_model=bool)
-async def activate_versionvoie(version_id: int, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
-    if not crud.activate_versionvoie(db, version_id):
+@router.put("/versionvoie/{version_id}", response_model=schemas.VersionVoie)
+async def update_versionvoie(version_id: int, period: schemas.VersionVoiePeriod, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    version = crud.update_versionvoie_dates(db, version_id, period.date, period.end_date)
+    if not version:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Version du mur introuvable")
-    return True
+    return version
 
 @router.get("/voies", response_model=List[schemas.Voie])
 async def get_voies(version_id: int = -1, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
