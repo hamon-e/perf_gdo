@@ -12,6 +12,9 @@ const WALL_HEIGHT = 1596;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 4;
 const ZOOM_STEP = 1.5;
+// Sur un mur zoomé, le déplacement doit couvrir plus de contenu qu'un geste
+// équivalent afin de ne pas obliger à multiplier les balayages sur mobile.
+const PAN_SPEED = 1.75;
 
 function average(points) {
   return points.reduce((result, point) => ({
@@ -266,8 +269,8 @@ export default function WallTopo({ areas, routes, coordinateScale, mobile, onLan
         event.preventDefault();
         const touch = event.touches[0];
         commitTransform(zoomRef.current, clampOffset(zoomRef.current, {
-          x: gesture.startOffset.x + (touch.clientX - gesture.startClient.x),
-          y: gesture.startOffset.y + (touch.clientY - gesture.startClient.y),
+          x: gesture.startOffset.x + (touch.clientX - gesture.startClient.x) * PAN_SPEED,
+          y: gesture.startOffset.y + (touch.clientY - gesture.startClient.y) * PAN_SPEED,
         }));
       }
     };
