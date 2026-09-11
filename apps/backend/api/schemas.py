@@ -30,6 +30,10 @@ class UserGroup(Schema):
     name: str
 
 
+class UserGroupName(Schema):
+    name: str
+
+
 class User(Schema):
     id: Optional[int] = None
     name: str
@@ -76,6 +80,7 @@ class ProgressionPoint(Schema):
 class VersionVoie(Schema):
     id: Optional[int] = None
     date: datetime
+    active: bool = False
 
 
 class CouloirType(Schema):

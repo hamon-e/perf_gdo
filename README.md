@@ -23,7 +23,7 @@ compétitions est également présent.
 
 - consultation des utilisateurs ;
 - création, modification et suppression de voies ;
-- versionnement du plan de voies ;
+- versionnement du plan de voies et choix explicite de la version active ;
 - consultation des utilisateurs.
 
 ### Compétitions

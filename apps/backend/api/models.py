@@ -67,6 +67,7 @@ class VersionVoie(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     date = Column(DateTime)
+    active = Column(Boolean, nullable=False, default=False)
 
 class CouloirType(Base):
     __tablename__ = "couloirtype"

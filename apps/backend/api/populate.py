@@ -30,9 +30,9 @@ def populate():
             ))
             db.commit()
 
-        version = db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc()).first()
+        version = db.query(models.VersionVoie).order_by(models.VersionVoie.active.desc(), models.VersionVoie.date.desc()).first()
         if not version:
-            version = models.VersionVoie(date=datetime.combine(datetime.now().date(), time.min))
+            version = models.VersionVoie(date=datetime.combine(datetime.now().date(), time.min), active=True)
             db.add(version)
             db.commit()
 

@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pytest
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -68,6 +69,29 @@ def test_progression_uses_real_session_data(db):
     assert current_month["lead_ratio"] == 0.5
 
 
+def test_active_wall_version_controls_default_routes(db):
+    first_version = crud.post_versionvoie(db, datetime(2026, 1, 1))
+    second_version = crud.post_versionvoie(db, datetime(2026, 2, 1))
+    route_type = models.CouloirType(name="Dalle")
+    db.add(route_type)
+    db.commit()
+    couloir = models.Couloir(type_id=route_type.id)
+    db.add(couloir)
+    db.commit()
+    first_route = models.Voie(couloir_id=couloir.id, color="#ff0000", difficulty=5.0, active=True, versionvoie_id=first_version.id)
+    second_route = models.Voie(couloir_id=couloir.id, color="#00ff00", difficulty=6.0, active=True, versionvoie_id=second_version.id)
+    db.add_all([first_route, second_route])
+    db.commit()
+
+    assert first_version.active is True
+    assert second_version.active is False
+    assert [route.id for route in crud.get_voies(db, None, -1)] == [first_route.id]
+
+    assert crud.activate_versionvoie(db, second_version.id) is True
+    assert [route.id for route in crud.get_voies(db, None, -1)] == [second_route.id]
+    assert db.query(models.VersionVoie).filter(models.VersionVoie.active.is_(True)).count() == 1
+
+
 def test_user_cannot_delete_another_users_entry(db):
     owner = create_user(db, "owner@example.com")
     another_user = create_user(db, "another@example.com")
@@ -118,6 +142,23 @@ def test_signup_can_create_a_group(db):
     user = crud.get_user(db, "creator@example.com")
     assert user.group.name == "Les aigles"
     assert [group.name for group in crud.get_user_groups(db)] == ["Les aigles"]
+
+
+def test_admin_can_create_and_rename_a_group(db):
+    group = crud.create_user_group(db, "  Les panthères ")
+
+    assert group.name == "Les panthères"
+    renamed_group = crud.rename_user_group(db, group.id, "Les lynx")
+    assert renamed_group.name == "Les lynx"
+
+
+def test_group_name_must_be_unique_case_insensitively(db):
+    crud.create_user_group(db, "Les aigles")
+
+    with pytest.raises(HTTPException) as error:
+        crud.create_user_group(db, "les AIGLES")
+
+    assert error.value.status_code == 409
 
 
 def test_admin_history_queries_only_return_the_selected_users_sessions(db):

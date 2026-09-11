@@ -25,6 +25,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import MenuItem from '@mui/material/MenuItem';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
@@ -33,6 +34,8 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CloseIcon from '@mui/icons-material/Close';
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
+import { Link as RouterLink } from 'react-router-dom';
 
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -81,7 +84,9 @@ export default function Users() {
   const [, setShowBar] = showBarHook;
   const [, setErrorMessage] = errorMessageHook;
   const [users, setUsers] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [search, setSearch] = useState('');
+  const [groupFilter, setGroupFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
   const [sessionDays, setSessionDays] = useState([]);
@@ -93,8 +98,12 @@ export default function Users() {
   const loadUsers = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/users/`, authorization());
-      setUsers(response.data);
+      const [usersResponse, groupsResponse] = await Promise.all([
+        axios.get(`${API_BASE_URL}/users/`, authorization()),
+        axios.get(`${API_BASE_URL}/user-groups`),
+      ]);
+      setUsers(usersResponse.data);
+      setGroups(groupsResponse.data);
     } catch (error) {
       setErrorMessage(error.response?.data?.detail || 'Impossible de charger les utilisateurs.');
     } finally {
@@ -112,9 +121,13 @@ export default function Users() {
 
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return users;
-    return users.filter((user) => `${user.name} ${user.surname} ${user.email} ${user.group?.name || ''}`.toLowerCase().includes(query));
-  }, [search, users]);
+    return users.filter((user) => {
+      const matchesSearch = !query || `${user.name} ${user.surname} ${user.email} ${user.group?.name || ''}`.toLowerCase().includes(query);
+      const matchesGroup = !groupFilter
+        || (groupFilter === '__none__' ? !user.group_id : user.group_id === Number(groupFilter));
+      return matchesSearch && matchesGroup;
+    });
+  }, [groupFilter, search, users]);
 
   const adminCount = users.filter((user) => user.role_id === 0).length;
 
@@ -180,7 +193,10 @@ export default function Users() {
           <Typography variant="h4" component="h2" sx={{ fontWeight: 850 }}>Utilisateurs</Typography>
           <Typography color="text.secondary">Cliquez sur un utilisateur pour consulter l’historique de ses séances.</Typography>
         </Box>
-        <Button startIcon={<RefreshIcon />} variant="outlined" onClick={loadUsers} disabled={loading}>Actualiser</Button>
+        <Stack direction="row" spacing={1}>
+          <Button component={RouterLink} to="/user-groups" startIcon={<GroupsOutlinedIcon />} variant="outlined">Gérer les groupes</Button>
+          <Button startIcon={<RefreshIcon />} variant="outlined" onClick={loadUsers} disabled={loading}>Actualiser</Button>
+        </Stack>
       </Stack>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2, mb: 3 }}>
@@ -190,15 +206,27 @@ export default function Users() {
       </Box>
 
       <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
-        <Box sx={{ p: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Box sx={{ p: 2.5, borderBottom: '1px solid', borderColor: 'divider', display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) 240px' }, gap: 1.5 }}>
           <TextField
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Rechercher un nom ou un e-mail"
+            placeholder="Rechercher un nom, e-mail ou groupe"
             size="small"
             fullWidth
             InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
           />
+          <TextField
+            select
+            label="Filtrer par groupe"
+            value={groupFilter}
+            onChange={(event) => setGroupFilter(event.target.value)}
+            size="small"
+            fullWidth
+          >
+            <MenuItem value="">Tous les groupes</MenuItem>
+            <MenuItem value="__none__">Sans groupe</MenuItem>
+            {groups.map((group) => <MenuItem key={group.id} value={String(group.id)}>{group.name}</MenuItem>)}
+          </TextField>
         </Box>
 
         {loading ? (
