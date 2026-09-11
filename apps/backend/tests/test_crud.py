@@ -241,6 +241,35 @@ def test_group_name_must_be_unique_case_insensitively(db):
     assert error.value.status_code == 409
 
 
+def test_admin_can_attach_a_user_to_a_group(db):
+    user = create_user(db, "rattache@example.com")
+    group = crud.create_user_group(db, "Les lynx")
+    other_group = crud.create_user_group(db, "Les panthères")
+
+    assigned = crud.assign_user_group(db, user.id, group.id)
+    assert assigned.group_id == group.id
+    assert crud.get_users(db)[0].group.name == "Les lynx"
+
+    reassigned = crud.assign_user_group(db, user.id, other_group.id)
+    assert reassigned.group_id == other_group.id
+
+
+def test_attach_user_rejects_unknown_user_or_group(db):
+    user = create_user(db, "orphan@example.com")
+    group = crud.create_user_group(db, "Les lynx")
+
+    with pytest.raises(HTTPException) as error:
+        crud.assign_user_group(db, 9999, group.id)
+    assert error.value.status_code == 404
+
+    with pytest.raises(HTTPException) as error:
+        crud.assign_user_group(db, user.id, 9999)
+    assert error.value.status_code == 404
+
+    detached = crud.assign_user_group(db, user.id, None)
+    assert detached.group_id is None
+
+
 def test_admin_history_queries_only_return_the_selected_users_sessions(db):
     selected_user = create_user(db, "selected@example.com")
     another_user = create_user(db, "another-history@example.com")

@@ -139,6 +139,10 @@ def get_user_or_404(db: Session, user_id: int):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable")
     return user
 
+@router.put("/users/{user_id}/group", response_model=schemas.User)
+async def assign_user_group(user_id: int, payload: schemas.UserGroupAssign, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    return crud.assign_user_group(db, user_id, payload.group_id)
+
 @router.get("/users/{user_id}/userseance", response_model=List[schemas.UserSeance])
 def read_user_seance_for_admin(user_id: int, date: date, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
     get_user_or_404(db, user_id)
