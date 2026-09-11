@@ -13,6 +13,11 @@ const laneTwo = {
   coords: [500, 1354, 652, 1250, 602, 65, 423, 23],
 };
 
+const slopedLaneEleven = {
+  id: '11',
+  coords: [975, 1378, 1025, 1371, 1027, 1104, 1025, 1010, 1030, 535, 1039, 292, 1048, 94, 975, 92, 963, 292, 952, 536, 947, 1016, 956, 1114],
+};
+
 const routes = [
   { id: 42, couloir_id: 1, color: '#e53935', difficulty: 6.25 },
   { id: 43, couloir_id: 1, color: '#43a047', difficulty: 5.5 },
@@ -84,6 +89,21 @@ test('draws winding lines instead of straight chords', () => {
 
   expect(d.match(/ C /g)).toHaveLength(10);
   expect(maxDeviation).toBeGreaterThan(5);
+});
+
+test('takes the actual top edge for steep lanes', () => {
+  const { container } = render(
+    <WallTopo
+      areas={[slopedLaneEleven]}
+      routes={[{ id: 45, couloir_id: 11, color: '#ffff00', difficulty: 8 }]}
+      coordinateScale={1}
+      onLaneClick={jest.fn()}
+    />,
+  );
+
+  const end = container.querySelectorAll('.wall-topo__endpoint')[1];
+  // The lane's exit is around y=93; it must not stop at the y=292 bend.
+  expect(Number(end.getAttribute('cy'))).toBeLessThan(110);
 });
 
 test('still opens the lane record on lane click', () => {

@@ -44,7 +44,11 @@ function laneGeometry(area, coordinateScale) {
   const minX = Math.min(...points.map((point) => point.x));
   const maxX = Math.max(...points.map((point) => point.x));
   const height = maxY - minY;
-  const topPoints = points.filter((point) => point.y <= minY + height * 0.18);
+  // Certains couloirs très inclinés ont des sommets intermédiaires nettement
+  // plus bas que leur vraie sortie. Une bande fine permet de ne conserver que
+  // le bord supérieur réel et donc de prolonger chaque voie jusqu'en haut.
+  const topEdgeBand = Math.min(24 * coordinateScale, height * 0.03);
+  const topPoints = points.filter((point) => point.y <= minY + topEdgeBand);
   const bottomPoints = points.filter((point) => point.y >= maxY - height * 0.18);
   const top = average(topPoints.length ? topPoints : points);
   const rawBottom = average(bottomPoints.length ? bottomPoints : points);
