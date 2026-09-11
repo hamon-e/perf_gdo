@@ -104,7 +104,7 @@ const adminItems = [
   { label: 'Historique', path: '/historique', icon: HistoryIcon },
   { label: 'Utilisateurs', path: '/users', icon: PeopleOutlineIcon },
   { label: 'Groupes', path: '/user-groups', icon: GroupsOutlinedIcon },
-  { label: 'Voies', path: '/listevoies', icon: FormatListNumberedIcon },
+  { label: 'Topo', path: '/listevoies', icon: FormatListNumberedIcon },
 ];
 
 function AppShell() {

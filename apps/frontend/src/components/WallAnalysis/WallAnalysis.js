@@ -13,7 +13,7 @@ import {
 
 import { ACCESS_TOKEN_NAME, API_BASE_URL } from '../../constants/apiConstants';
 import { useContextObject } from '../Context/Context';
-import { formatDifficulty } from '../ListVoie/ListVoie';
+import { formatDifficulty, versionLabel } from '../ListVoie/ListVoie';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -26,10 +26,14 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import Grid from '@mui/material/Grid';
 import LinearProgress from '@mui/material/LinearProgress';
+import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Switch from '@mui/material/Switch';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 ChartJS.register(BarElement, CategoryScale, Legend, LinearScale, Tooltip);
@@ -68,6 +72,8 @@ export default function WallAnalysis() {
   const [, setShowBar] = showBarHook;
   const [, setErrorMessage] = errorMessageHook;
   const [analysis, setAnalysis] = useState(null);
+  const [versions, setVersions] = useState([]);
+  const [groupLevels, setGroupLevels] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const versionId = useMemo(() => new URLSearchParams(location.search).get('version'), [location.search]);
@@ -93,17 +99,50 @@ export default function WallAnalysis() {
     return () => { live = false; };
   }, [history, setErrorMessage, versionId]);
 
-  const gradeData = useMemo(() => ({
-    labels: analysis?.grade_distribution.map((item) => formatDifficulty(item.difficulty)) || [],
-    datasets: [{
-      label: 'Voies',
-      data: analysis?.grade_distribution.map((item) => item.count) || [],
-      backgroundColor: '#1f6b45',
-      hoverBackgroundColor: '#f2a65a',
-      borderRadius: 7,
-      maxBarThickness: 42,
-    }],
-  }), [analysis]);
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/versionvoie`, authorization())
+      .then((response) => setVersions(response.data))
+      .catch(() => { /* The analysis stays usable without the version list. */ });
+  }, []);
+
+  const changeVersion = (event) => {
+    const nextVersion = event.target.value;
+    if (nextVersion && nextVersion !== versionId) history.push(`/analyse-mur?version=${nextVersion}`);
+  };
+
+  const gradeData = useMemo(() => {
+    const distribution = analysis?.grade_distribution || [];
+    if (groupLevels) {
+      const groups = distribution.reduce((result, item) => {
+        const level = Math.floor(Number(item.difficulty));
+        result.set(level, (result.get(level) || 0) + item.count);
+        return result;
+      }, new Map());
+      const levels = [...groups.keys()].sort((a, b) => a - b);
+      return {
+        labels: levels.map((level) => String(level)),
+        datasets: [{
+          label: 'Voies',
+          data: levels.map((level) => groups.get(level)),
+          backgroundColor: '#1f6b45',
+          hoverBackgroundColor: '#f2a65a',
+          borderRadius: 7,
+          maxBarThickness: 42,
+        }],
+      };
+    }
+    return {
+      labels: distribution.map((item) => formatDifficulty(item.difficulty)),
+      datasets: [{
+        label: 'Voies',
+        data: distribution.map((item) => item.count),
+        backgroundColor: '#1f6b45',
+        hoverBackgroundColor: '#f2a65a',
+        borderRadius: 7,
+        maxBarThickness: 42,
+      }],
+    };
+  }, [analysis, groupLevels]);
 
   const sectorData = useMemo(() => {
     const groups = (analysis?.lane_distribution || []).reduce((result, item) => {
@@ -142,10 +181,20 @@ export default function WallAnalysis() {
           <Typography variant="h4" component="h2" sx={{ fontWeight: 850 }}>Analyse du mur</Typography>
           <Typography color="text.secondary">Vue d'ensemble de l'équipement et de l'activité sur cette version du mur.</Typography>
         </Box>
-        {analysis && <Paper variant="outlined" sx={{ px: 2.25, py: 1.25, alignSelf: { sm: 'flex-end' }, borderRadius: 2.5, backgroundColor: '#f7fbf8' }}>
-          <Typography variant="caption" color="text.secondary">VERSION ANALYSÉE</Typography>
-          <Typography sx={{ fontWeight: 800 }}>Mur #{analysis.version_id}</Typography>
-        </Paper>}
+        {versions.length > 0 && <TextField
+          select
+          label="Version analysée"
+          size="small"
+          value={versionId || ''}
+          onChange={changeVersion}
+          sx={{ alignSelf: { sm: 'flex-end' }, minWidth: 240 }}
+        >
+          {versions.map((version) => (
+            <MenuItem key={version.id} value={String(version.id)}>
+              {versionLabel(version)}{version.active ? ' · Active' : ''}
+            </MenuItem>
+          ))}
+        </TextField>}
       </Stack>
 
       {loading ? (
@@ -163,8 +212,18 @@ export default function WallAnalysis() {
             <Grid item xs={12} md={8}>
               <Card elevation={0} sx={{ height: '100%', border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
                 <CardContent sx={{ p: { xs: 2.25, sm: 3 } }}>
-                  <Typography variant="h6" sx={{ fontWeight: 800 }}>Répartition par niveau</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>Nombre de voies pour chaque cotation.</Typography>
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1}>
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 800 }}>Répartition par niveau</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>Nombre de voies pour chaque cotation.</Typography>
+                    </Box>
+                    <FormControlLabel
+                      control={<Switch size="small" checked={groupLevels} onChange={(event) => setGroupLevels(event.target.checked)} />}
+                      label="Grouper par niveau"
+                      labelPlacement="start"
+                      sx={{ ml: 0, mr: -.5, '& .MuiFormControlLabel-label': { fontSize: '.8rem', color: 'text.secondary' } }}
+                    />
+                  </Stack>
                   <Box sx={{ height: 320 }}><Bar data={gradeData} options={chartOptions} /></Box>
                 </CardContent>
               </Card>
