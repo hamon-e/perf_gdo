@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import pytest
+from fastapi import HTTPException
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -118,6 +119,23 @@ def test_signup_can_create_a_group(db):
     user = crud.get_user(db, "creator@example.com")
     assert user.group.name == "Les aigles"
     assert [group.name for group in crud.get_user_groups(db)] == ["Les aigles"]
+
+
+def test_admin_can_create_and_rename_a_group(db):
+    group = crud.create_user_group(db, "  Les panthères ")
+
+    assert group.name == "Les panthères"
+    renamed_group = crud.rename_user_group(db, group.id, "Les lynx")
+    assert renamed_group.name == "Les lynx"
+
+
+def test_group_name_must_be_unique_case_insensitively(db):
+    crud.create_user_group(db, "Les aigles")
+
+    with pytest.raises(HTTPException) as error:
+        crud.create_user_group(db, "les AIGLES")
+
+    assert error.value.status_code == 409
 
 
 def test_admin_history_queries_only_return_the_selected_users_sessions(db):
