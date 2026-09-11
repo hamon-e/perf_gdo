@@ -48,6 +48,7 @@ import Autocomplete from '@mui/material/Autocomplete';
 
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
 
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
@@ -110,6 +111,7 @@ function Products(props) {
     const [selectedDate, setSelectedDate] = React.useState(new Date())
 
     const [voies, setVoies] = React.useState([]);
+    const [routeGradeFilter, setRouteGradeFilter] = React.useState('');
 
     const [openMenu, setOpenMenu] = openHook;
     const [open, setOpen] = React.useState(false);
@@ -666,6 +668,12 @@ function Products(props) {
 
     }
 
+    const gradeOptions = [...new Set(voies.map((route) => route.difficulty))]
+        .sort((first, second) => first - second);
+    const displayedRoutes = routeGradeFilter === ''
+        ? voies
+        : voies.filter((route) => route.difficulty === Number(routeGradeFilter));
+
 
     //<img src="https://lesgdo.org/photo/hdv/M6c6df169982e9963e49c.png" style={{ 'max-width': '100%', height: 'auto'}}/>
     return(
@@ -843,7 +851,7 @@ function Products(props) {
             <Box sx={{ borderBottom: 1, borderColor: 'divider', paddingTop: '20px', paddingBottom: '8px', paddingLeft: '10px' }}>
 
                     <Grid container spacing={1}>
-                        <Grid item xs={6}>
+                        <Grid item xs={12} sm={6}>
  
                             <LocalizationProvider dateAdapter={AdapterDayjs}>
                                 <DatePicker
@@ -873,6 +881,24 @@ function Products(props) {
 
                         </Grid>
 
+                        <Grid item xs={12} sm={6}>
+                            <TextField
+                                select
+                                fullWidth
+                                label="Cotation affichée"
+                                value={routeGradeFilter}
+                                onChange={(event) => setRouteGradeFilter(event.target.value)}
+                                helperText={routeGradeFilter === '' ? 'Toutes les voies sont visibles' : 'Seules les voies de cette cotation sont visibles'}
+                            >
+                                <MenuItem value="">Toutes les cotations</MenuItem>
+                                {gradeOptions.map((difficulty) => (
+                                    <MenuItem key={difficulty} value={String(difficulty)}>
+                                        {difficultyFormat(difficulty)}
+                                    </MenuItem>
+                                ))}
+                            </TextField>
+                        </Grid>
+
                         </Grid>
 
             </Box>
@@ -881,7 +907,7 @@ function Products(props) {
 
                             <WallTopo
                                 areas={MAP.areas}
-                                routes={voies}
+                                routes={displayedRoutes}
                                 coordinateScale={2.1}
                                 mobile={mobile}
                                 onLaneClick={areaClick}
