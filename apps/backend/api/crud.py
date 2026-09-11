@@ -325,6 +325,61 @@ def get_voies(db: Session, current_user: schemas.User, version_id: int):
         version_id = version.id
     return db.query(models.Voie).filter(models.Voie.versionvoie_id == version_id).order_by(models.Voie.difficulty).order_by(models.Voie.couloir_id).all()
 
+
+def get_wall_analysis(db: Session, version_id: int):
+    """Aggregate the selected wall version for the admin analysis view."""
+    routes = db.query(models.Voie).filter(models.Voie.versionvoie_id == version_id).all()
+    route_ids = {route.id for route in routes}
+    attempts = db.query(models.UserSeance).filter(models.UserSeance.voie_id.in_(route_ids)).all() if route_ids else []
+
+    grade_distribution = {}
+    lane_distribution = {}
+    for route in routes:
+        grade_distribution[route.difficulty] = grade_distribution.get(route.difficulty, 0) + 1
+        lane_distribution[route.couloir_id] = lane_distribution.get(route.couloir_id, 0) + 1
+
+    route_attempts = {route.id: [] for route in routes}
+    for attempt in attempts:
+        route_attempts.setdefault(attempt.voie_id, []).append(attempt)
+
+    top_routes = []
+    for route in routes:
+        route_climbs = route_attempts[route.id]
+        climbs = len(route_climbs)
+        tops = sum(1 for attempt in route_climbs if attempt.top == 100)
+        top_routes.append({
+            'route_id': route.id,
+            'couloir_id': route.couloir_id,
+            'color': route.color,
+            'difficulty': route.difficulty,
+            'climbs': climbs,
+            'tops': tops,
+            'success_rate': round((tops / climbs) * 100) if climbs else 0,
+        })
+
+    difficulties = [route.difficulty for route in routes]
+    tops = sum(1 for attempt in attempts if attempt.top == 100)
+    return {
+        'version_id': version_id,
+        'total_routes': len(routes),
+        'equipped_lanes': len(lane_distribution),
+        'average_difficulty': round(sum(difficulties) / len(difficulties), 2) if difficulties else 0,
+        'lowest_difficulty': min(difficulties, default=0),
+        'highest_difficulty': max(difficulties, default=0),
+        'climbs': len(attempts),
+        'tops': tops,
+        'unique_climbed_routes': sum(1 for values in route_attempts.values() if values),
+        'grade_distribution': [
+            {'difficulty': difficulty, 'count': count}
+            for difficulty, count in sorted(grade_distribution.items())
+        ],
+        'lane_distribution': [
+            {'lane': lane, 'count': count}
+            for lane, count in sorted(lane_distribution.items())
+        ],
+        'top_routes': sorted(top_routes, key=lambda item: (-item['climbs'], -item['tops'], item['route_id']))[:5],
+    }
+
 def post_voie(db: Session, current_user: schemas.User, voie: schemas.Voie):
     tmp = voie.model_dump()
     tmp['active'] = True

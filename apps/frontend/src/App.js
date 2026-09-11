@@ -38,6 +38,7 @@ import UserGroups from './components/UserGroups/UserGroups';
 import Accueil from './components/Accueil/Accueil.js';
 import Annotate from './components/Annotate/Annotate';
 import ListVoie from './components/ListVoie/ListVoie';
+import WallAnalysis from './components/WallAnalysis/WallAnalysis';
 import SignUpForm from './components/SignUpForm/SignUpForm';
 import Home from './components/Home/Home';
 import Palmares from './components/Palmares/Palmares';
@@ -236,6 +237,7 @@ function AppShell() {
             <PrivateRoute path="/maprogression"><Menus /></PrivateRoute>
             <PrivateRoute path="/maseance"><Redirect to="/home" /></PrivateRoute>
             <PrivateRoute path="/listevoies"><ListVoie /></PrivateRoute>
+            <PrivateRoute path="/analyse-mur"><WallAnalysis /></PrivateRoute>
             <PrivateRoute path="/historique"><Products /></PrivateRoute>
             <PrivateRoute path="/palmares"><Palmares /></PrivateRoute>
             <PrivateRoute path="/users"><Users /></PrivateRoute>
