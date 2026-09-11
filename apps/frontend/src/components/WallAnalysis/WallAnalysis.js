@@ -13,7 +13,7 @@ import {
 
 import { ACCESS_TOKEN_NAME, API_BASE_URL } from '../../constants/apiConstants';
 import { useContextObject } from '../Context/Context';
-import { formatDifficulty, versionLabel } from '../ListVoie/ListVoie';
+import { findVersionAt, formatDifficulty, versionLabel } from '../ListVoie/ListVoie';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -75,6 +75,7 @@ export default function WallAnalysis() {
   const [versions, setVersions] = useState([]);
   const [groupLevels, setGroupLevels] = useState(false);
   const [loading, setLoading] = useState(true);
+  const currentActiveId = useMemo(() => findVersionAt(versions, new Date())?.id ?? null, [versions]);
 
   const versionId = useMemo(() => new URLSearchParams(location.search).get('version'), [location.search]);
 
@@ -191,7 +192,7 @@ export default function WallAnalysis() {
         >
           {versions.map((version) => (
             <MenuItem key={version.id} value={String(version.id)}>
-              {versionLabel(version)}{version.active ? ' · Active' : ''}
+              {versionLabel(version)}{version.id === currentActiveId ? ' · Active' : ''}
             </MenuItem>
           ))}
         </TextField>}

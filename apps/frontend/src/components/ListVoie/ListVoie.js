@@ -24,6 +24,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import TableSortLabel from '@mui/material/TableSortLabel';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -35,6 +36,7 @@ import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
 
 const authorization = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN_NAME)}` },
@@ -112,6 +114,35 @@ export function versionLabel(version) {
   return `${date} · v1${version.subversion ? `.${version.subversion}` : ''}`;
 }
 
+const frDate = (value) => new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(value));
+
+function periodLabel(version) {
+  const start = version.date ? frDate(version.date) : '';
+  const end = version.end_date ? frDate(version.end_date) : '';
+  if (version.end_date && new Date(version.end_date) <= new Date(version.date)) return 'Période non configurée';
+  if (!end) return start ? `À partir du ${start}` : 'Période non configurée';
+  return `Du ${start} au ${end}`;
+}
+
+function coversDate(version, date) {
+  const start = version.date ? new Date(version.date) : null;
+  const end = version.end_date ? new Date(version.end_date) : null;
+  return (!start || start <= date) && (!end || end > date);
+}
+
+export function findVersionAt(versions, date) {
+  return versions
+    .filter((version) => coversDate(version, date))
+    .sort((a, b) => new Date(b.date) - new Date(a.date) || a.id - b.id)[0] || null;
+}
+
+function toDateInput(value) {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+}
+
 export default function ListVoie() {
   const history = useHistory();
   const { headerTitleHook, showBarHook, errorMessageHook } = useContextObject();
@@ -123,12 +154,16 @@ export default function ListVoie() {
   const [routes, setRoutes] = useState([]);
   const [search, setSearch] = useState('');
   const [sectorFilter, setSectorFilter] = useState('');
-  const [laneOrder, setLaneOrder] = useState('');
+  const [sortField, setSortField] = useState('couloir_id');
+  const [sortDirection, setSortDirection] = useState('asc');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [registeredColors, setRegisteredColors] = useState([]);
+  const [calendarDate, setCalendarDate] = useState('');
+  const [periodOpen, setPeriodOpen] = useState(false);
+  const [periodForm, setPeriodForm] = useState({ date: '', end_date: '' });
 
   const showError = (error, fallback) => setErrorMessage(error.response?.data?.detail || fallback);
 
@@ -195,11 +230,23 @@ export default function ListVoie() {
       ].join(' ').toLowerCase().includes(query));
     }
     if (sectorFilter) result = result.filter((route) => sectorForLane(route.couloir_id) === sectorFilter);
-    if (laneOrder) {
-      result = [...result].sort((a, b) => (laneOrder === 'asc' ? a.couloir_id - b.couloir_id : b.couloir_id - a.couloir_id));
-    }
+    const direction = sortDirection === 'asc' ? 1 : -1;
+    result = [...result].sort((a, b) => {
+      if (sortField === 'difficulty') return direction * (a.difficulty - b.difficulty || a.couloir_id - b.couloir_id);
+      if (sortField === 'sector') return direction * (sectorForLane(a.couloir_id).localeCompare(sectorForLane(b.couloir_id), 'fr') || a.couloir_id - b.couloir_id);
+      return direction * (a.couloir_id - b.couloir_id);
+    });
     return result;
-  }, [routes, search, sectorFilter, laneOrder]);
+  }, [routes, search, sectorFilter, sortField, sortDirection]);
+
+  const toggleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection((direction) => (direction === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   const colorOptions = useMemo(() => {
     const seen = new Set();
@@ -264,7 +311,7 @@ export default function ListVoie() {
   };
 
   const createTopo = async () => {
-    if (!window.confirm('Créer un nouveau topo vide ? Vous pourrez l’activer une fois prêt.')) return;
+    if (!window.confirm('Créer un nouveau topo vide ? Configurez ensuite ses dates de validité pour le rendre actif.')) return;
     setSaving(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/versionvoie`, { date: new Date().toISOString() }, authorization());
@@ -318,21 +365,51 @@ export default function ListVoie() {
     }
   };
 
-  const activateSelectedVersion = async () => {
-    if (!selectedVersion || selectedVersionIsActive) return;
-    if (!window.confirm('Activer cette version du mur pour tous les adhérents ?')) return;
+  const viewWallAt = (value) => {
+    setCalendarDate(value);
+    if (!value) return;
+    const target = findVersionAt(versions, new Date(`${value}T12:00:00`));
+    if (!target) {
+      setSelectedVersion('');
+      setRoutes([]);
+      setErrorMessage(`Aucune version du mur n'était active au ${frDate(`${value}T12:00:00`)}.`);
+      return;
+    }
+    setSelectedVersion(target.id);
+    loadRoutes(target.id);
+  };
+
+  const openPeriodDialog = () => {
+    const version = versions.find((item) => String(item.id) === String(selectedVersion));
+    setPeriodForm({
+      date: toDateInput(version?.date) || toDateInput(new Date().toISOString()),
+      end_date: toDateInput(version?.end_date),
+    });
+    setPeriodOpen(true);
+  };
+
+  const savePeriod = async () => {
+    if (!selectedVersion || !periodForm.date) {
+      setErrorMessage('Renseignez une date de début de validité.');
+      return;
+    }
     setSaving(true);
     try {
-      await axios.patch(`${API_BASE_URL}/versionvoie/${selectedVersion}/active`, {}, authorization());
-      await loadVersions();
+      await axios.put(`${API_BASE_URL}/versionvoie/${selectedVersion}`, {
+        date: new Date(`${periodForm.date}T00:00:00`).toISOString(),
+        end_date: periodForm.end_date ? new Date(`${periodForm.end_date}T23:59:59`).toISOString() : null,
+      }, authorization());
+      setPeriodOpen(false);
+      await loadVersions(selectedVersion);
     } catch (error) {
-      showError(error, "Impossible d'activer cette version.");
+      showError(error, "Impossible d'enregistrer la période de validité.");
     } finally {
       setSaving(false);
     }
   };
 
-  const selectedVersionIsActive = versions.some((version) => Number(version.id) === Number(selectedVersion) && version.active);
+  const selectedVersionData = versions.find((version) => String(version.id) === String(selectedVersion)) || null;
+  const currentActiveId = findVersionAt(versions, new Date())?.id ?? null;
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1240, mx: 'auto', p: { xs: 2, md: 4 } }}>
@@ -346,7 +423,7 @@ export default function ListVoie() {
           <Button variant="outlined" startIcon={<PictureAsPdfOutlinedIcon />} onClick={downloadTopo} disabled={!selectedVersion || saving}>Exporter le topo PDF</Button>
           <Button variant="outlined" startIcon={<AccountTreeOutlinedIcon />} onClick={createTopo} disabled={saving}>Nouveau topo</Button>
           <Button variant="outlined" startIcon={<AccountTreeOutlinedIcon />} onClick={createRevision} disabled={!selectedVersion || saving}>Nouvelle révision</Button>
-          <Button variant="outlined" color="success" onClick={activateSelectedVersion} disabled={!selectedVersion || selectedVersionIsActive || saving}>Activer cette version</Button>
+          <Button variant="outlined" startIcon={<EventOutlinedIcon />} onClick={openPeriodDialog} disabled={!selectedVersion || saving}>Configurer les dates</Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} disabled={!selectedVersion} sx={{ backgroundColor: '#1f6b45' }}>Ajouter une voie</Button>
         </Stack>
       </Stack>
@@ -358,15 +435,27 @@ export default function ListVoie() {
             label="Version du mur"
             size="small"
             value={selectedVersion}
-            onChange={(event) => { setSelectedVersion(event.target.value); loadRoutes(event.target.value); }}
+            onChange={(event) => { setSelectedVersion(event.target.value); setCalendarDate(''); loadRoutes(event.target.value); }}
             sx={{ minWidth: 220 }}
           >
             {versions.map((version) => (
               <MenuItem key={version.id} value={version.id}>
-                {versionLabel(version)}{version.active ? ' · Active' : ''}
+                <Stack>
+                  <Typography variant="body2">{versionLabel(version)}{version.id === currentActiveId ? ' · Active' : ''}</Typography>
+                  <Typography variant="caption" color="text.secondary">{periodLabel(version)}</Typography>
+                </Stack>
               </MenuItem>
             ))}
           </TextField>
+          <TextField
+            label="Voir le mur au"
+            type="date"
+            size="small"
+            value={calendarDate}
+            onChange={(event) => viewWallAt(event.target.value)}
+            InputLabelProps={{ shrink: true }}
+            sx={{ minWidth: 180 }}
+          />
           <TextField
             placeholder="Couloir, secteur, cotation ou couleur"
             size="small"
@@ -386,19 +475,18 @@ export default function ListVoie() {
             <MenuItem value="">Tous les secteurs</MenuItem>
             {SECTORS.map((sector) => <MenuItem key={sector} value={sector}>{sector}</MenuItem>)}
           </TextField>
-          <TextField
-            select
-            label="Ordre par couloir"
-            size="small"
-            value={laneOrder}
-            onChange={(event) => setLaneOrder(event.target.value)}
-            sx={{ minWidth: 180 }}
-          >
-            <MenuItem value="">Défaut</MenuItem>
-            <MenuItem value="asc">Couloir croissant</MenuItem>
-            <MenuItem value="desc">Couloir décroissant</MenuItem>
-          </TextField>
         </Stack>
+
+        {selectedVersionData && (
+          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" sx={{ px: 2.5, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Typography variant="body2" color="text.secondary">Période de validité :</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>{periodLabel(selectedVersionData)}</Typography>
+            {selectedVersionData.id === currentActiveId && <Chip size="small" color="success" label="Version active" />}
+            {Boolean(calendarDate) && (
+              <Typography variant="caption" color="text.secondary">(version consultée au {frDate(`${calendarDate}T12:00:00`)})</Typography>
+            )}
+          </Stack>
+        )}
 
         {loading ? (
           <Box sx={{ minHeight: 320, display: 'grid', placeItems: 'center' }}><CircularProgress /></Box>
@@ -413,10 +501,16 @@ export default function ListVoie() {
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#f8faf9' }}>
-                  <TableCell>Voie</TableCell>
-                  <TableCell>Couloir</TableCell>
-                  <TableCell>Secteur</TableCell>
-                  <TableCell>Cotation</TableCell>
+                  <TableCell>Couleur</TableCell>
+                  <TableCell sortDirection={sortField === 'couloir_id' ? sortDirection : false}>
+                    <TableSortLabel active={sortField === 'couloir_id'} direction={sortField === 'couloir_id' ? sortDirection : 'asc'} onClick={() => toggleSort('couloir_id')}>Couloir</TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortField === 'sector' ? sortDirection : false}>
+                    <TableSortLabel active={sortField === 'sector'} direction={sortField === 'sector' ? sortDirection : 'asc'} onClick={() => toggleSort('sector')}>Secteur</TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortField === 'difficulty' ? sortDirection : false}>
+                    <TableSortLabel active={sortField === 'difficulty'} direction={sortField === 'difficulty' ? sortDirection : 'asc'} onClick={() => toggleSort('difficulty')}>Cotation</TableSortLabel>
+                  </TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -424,12 +518,9 @@ export default function ListVoie() {
                 {filteredRoutes.map((route) => (
                   <TableRow key={route.id} hover>
                     <TableCell>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Box sx={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: route.color, border: '2px solid white', boxShadow: '0 0 0 1px rgba(0,0,0,.2)' }} />
-                        <Typography sx={{ fontWeight: 700 }}>#{route.id}</Typography>
-                      </Stack>
+                      <Box sx={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: route.color, border: '2px solid white', boxShadow: '0 0 0 1px rgba(0,0,0,.2)' }} />
                     </TableCell>
-                    <TableCell><Chip size="small" label={`N° ${route.couloir_id}`} /></TableCell>
+                    <TableCell><Chip size="small" label={route.couloir_id} /></TableCell>
                     <TableCell>{sectorForLane(route.couloir_id)}</TableCell>
                     <TableCell><Typography sx={{ fontWeight: 800, color: '#1f6b45' }}>{formatDifficulty(route.difficulty)}</Typography></TableCell>
                     <TableCell align="right">
@@ -494,6 +585,38 @@ export default function ListVoie() {
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
           <Button onClick={() => setDialogOpen(false)}>Annuler</Button>
           <Button variant="contained" onClick={saveRoute} disabled={saving} sx={{ backgroundColor: '#1f6b45' }}>{saving ? 'Enregistrement…' : 'Enregistrer'}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={periodOpen} onClose={() => setPeriodOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>Période de validité de la version</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ pt: 1 }}>
+            <TextField
+              label="Début de validité"
+              type="date"
+              value={periodForm.date}
+              onChange={(event) => setPeriodForm({ ...periodForm, date: event.target.value })}
+              InputLabelProps={{ shrink: true }}
+              fullWidth
+            />
+            <TextField
+              label="Fin de validité"
+              type="date"
+              value={periodForm.end_date}
+              onChange={(event) => setPeriodForm({ ...periodForm, end_date: event.target.value })}
+              InputLabelProps={{ shrink: true }}
+              helperText="Laissez vide pour une version encore en cours."
+              fullWidth
+            />
+            <Typography variant="body2" color="text.secondary">
+              Les adhérents verront automatiquement la version dont la période contient la date du jour.
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setPeriodOpen(false)}>Annuler</Button>
+          <Button variant="contained" onClick={savePeriod} disabled={saving || !periodForm.date} sx={{ backgroundColor: '#1f6b45' }}>{saving ? 'Enregistrement…' : 'Enregistrer'}</Button>
         </DialogActions>
       </Dialog>
     </Box>

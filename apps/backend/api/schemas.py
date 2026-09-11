@@ -84,9 +84,21 @@ class ProgressionPoint(Schema):
 class VersionVoie(Schema):
     id: Optional[int] = None
     date: datetime
+    end_date: Optional[datetime] = None
     active: bool = False
     parent_version_id: Optional[int] = None
     subversion: int = 0
+
+
+class VersionVoiePeriod(Schema):
+    date: datetime
+    end_date: Optional[datetime] = None
+
+    @model_validator(mode="after")
+    def validate_period(self):
+        if self.end_date is not None and self.end_date <= self.date:
+            raise ValueError("La date de fin doit être postérieure à la date de début.")
+        return self
 
 
 class CouloirType(Schema):

@@ -74,7 +74,6 @@ import {
 } from '@mui/x-data-grid';
 import ClearIcon from '@mui/icons-material/Clear';
 import SearchIcon from '@mui/icons-material/Search';
-import PropTypes from 'prop-types';
 import {Context, useContextObject} from '../Context/Context';
 
 import { styled } from '@mui/material/styles';
@@ -82,48 +81,9 @@ import { styled } from '@mui/material/styles';
 import FullCalendar from '@fullcalendar/react' // must go before plugins
 import dayGridPlugin from '@fullcalendar/daygrid' // a plugin!
 
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
 
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          <Typography>{children}</Typography>
-        </Box>
-      )}
-    </div>
-  );
-}
-TabPanel.propTypes = {
-  children: PropTypes.node,
-  index: PropTypes.number.isRequired,
-  value: PropTypes.number.isRequired,
-};
-
-function a11yProps(index) {
-  return {
-    id: `simple-tab-${index}`,
-    'aria-controls': `simple-tabpanel-${index}`,
-  };
-}
 
     var touchstartY = 0;
     var touchendY = 0;
@@ -133,8 +93,6 @@ var lastMove = 0;
 var g_voies = [];
 
 
-
-const fixedWidth = window.innerWidth;
 
 function Products(props) {
     const {isAdminHook, userHook, restaurantHook, headerTitleHook, openHook} = useContextObject();
@@ -157,7 +115,6 @@ function Products(props) {
     const [openMenu, setOpenMenu] = openHook;
     const [open, setOpen] = React.useState(false);
 
-    const [value, setValue] = React.useState(0);
     const [mobile, setMobile] = React.useState(false);
     const [widthSize, setWidthSize] = React.useState(window.innerWidth);
 
@@ -173,10 +130,6 @@ function Products(props) {
         : 'Séance sélectionnée';
     const completedRoutes = insertedRoutes.filter((route) => route.top === 100).length;
 
-    const handleChange = (event, newValue) => {
-        setValue(newValue);
-        g_value = newValue
-    };
 
     const URL = 'gdo.png';
     const MAP = {
@@ -905,7 +858,7 @@ function Products(props) {
 
 
         <Box sx={{ width: '100%', maxWidth: 1440, mx: 'auto', overflowX: 'hidden' }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', paddingTop: '5px', paddingLeft: '10px' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', paddingTop: '20px', paddingBottom: '8px', paddingLeft: '10px' }}>
 
                     <Grid container spacing={1}>
                         <Grid item xs={6}>
@@ -938,238 +891,11 @@ function Products(props) {
 
                         </Grid>
 
-                        <Grid item xs={6}>
-
-                <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-                    <Tab label="Visuel" {...a11yProps(0)} />
-                    <Tab label="Tableau" {...a11yProps(1)} />
-                </Tabs>
-                        </Grid>
                         </Grid>
 
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 340px' }, gap: 3, alignItems: 'start', px: { xs: 1, md: 2 }, pb: 3 }}>
             <Box sx={{ minWidth: 0 }}>
-            <TabPanel value={value} index={1}>
-                <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '40px' }}>
-                    <Grid container spacing={2}>
-
-                        <Grid item xs={4}>
-
-
-                        </Grid>
-                        <Grid item xs={4}>
-                            {/*                    <Slider defaultValue={[3,9]} valueLabelDisplay="auto" step={0.5} min={3} max={9} />  */}
-                        </Grid>
-
-
-        </Grid>
-
-    </Box>
-
-            {!mobile && 
-    <Paper sx={{ width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '20px' }}>
-        <TableContainer sx={{ maxHeight: 440 }}>
-            <Table stickyHeader aria-label="sticky table">
-                <TableHead>
-                    <TableRow>
-                        <TableCell align="left" colSpan={3}> Plexi </TableCell>
-                        <TableCell align="left" colSpan={5}> Verin Gauche </TableCell>
-                        <TableCell align="left" colSpan={10}> Devers </TableCell>
-                    </TableRow>
-                    <TableRow>
-                        {[...Array(19).keys()].map((column) => ( <TableCell key={column + 1} style={{ top: 57}} > {column + 1} </TableCell>))}
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-
-                    {[...Array(10).keys()].map((index) => (
-                        <TableRow  key={index}>
-                            {[...Array(19).keys()].map((column) => {
-                                const tmp = voies.filter((e) => e.couloir_id == column + 1)[index]
-                                if (tmp) {
-                                    return <TableCell class="mycell" key={tmp.id} style={{backgroundColor:tmp.color, color: tmp.color}} onClick={handleClickOpen}>{tmp.id}</TableCell>
-                                } else {
-                                    return <TableCell> </TableCell>
-                                }
-                            })}
-                                </TableRow>
-                    )).filter((e) => (e.props.children.find((e) => (e.props.class)) )
-                    )}
-
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                    <TableContainer sx={{ maxHeight: 440, paddingTop: '100px'}}>
-                        <Table stickyHeader aria-label="sticky table">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell align="left" colSpan={3}> Verin Droit </TableCell>
-                                    <TableCell align="left" colSpan={5}> Dalle </TableCell>
-                                    <TableCell align="left" colSpan={4}> 9m </TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    {[...Array(12).keys()].map((column) => ( <TableCell key={column + 20} style={{ top: 57}} > {column + 20} </TableCell>))}
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-
-                                {[...Array(10).keys()].map((index) => (
-                                    <TableRow  key={index}>
-                                        {[...Array(12).keys()].map((column) => {
-                                            const tmp = voies.filter((e) => e.couloir_id == column + 20)[index]
-                                            if (tmp) {
-                                                return <TableCell class="mycell" key={tmp.id} style={{backgroundColor:tmp.color, color: tmp.color}} onClick={handleClickOpen}>{tmp.id}</TableCell>
-                                            } else {
-                                                return <TableCell></TableCell>
-                                            }
-                                        })}
-                                            </TableRow>
-                                )).filter((e) => (e.props.children.find((e) => (e.props.class)) )
-                                )}
-
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-
-                            </Paper>
-            }
-            {mobile && 
-    <Paper sx={{ width: '90%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '20px' }}>
-        <TableContainer sx={{ maxHeight: 440, maxWidth: fixedWidth - 25}}>
-            <Table stickyHeader aria-label="sticky table">
-                <TableHead>
-                    <TableRow>
-                        <TableCell align="left" colSpan={3}> Plexi </TableCell>
-                        <TableCell align="left" colSpan={4}> Verin Gauche </TableCell>
-                    </TableRow>
-                    <TableRow>
-                        {[...Array(7).keys()].map((column) => ( <TableCell key={column + 1} style={{ top: 57}} > {column + 1} </TableCell>))}
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-
-                    {[...Array(10).keys()].map((index) => (
-                        <TableRow  key={index}>
-                            {[...Array(7).keys()].map((column) => {
-                                const tmp = voies.filter((e) => e.couloir_id == column + 1)[index]
-                                if (tmp) {
-                                    return <TableCell class="mycell" key={tmp.id} style={{backgroundColor:tmp.color, color: tmp.color}} onClick={handleClickOpen}>{tmp.id}</TableCell>
-                                } else {
-                                    return <TableCell> </TableCell>
-                                }
-                            })}
-                                </TableRow>
-                    )).filter((e) => (e.props.children.find((e) => (e.props.class)) )
-                    )}
-
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-   
-                    <TableContainer sx={{ maxHeight: 440, maxWidth: fixedWidth - 25, paddingTop: '100px'}}>
-                        <Table stickyHeader aria-label="sticky table">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell align="left" colSpan={10}> Devers </TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    {[...Array(10).keys()].map((column) => ( <TableCell key={column + 10} style={{top: 57}} > {column + 10} </TableCell>))}
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-
-                                                   {[...Array(10).keys()].map((index) => (
-                        <TableRow  key={index}>
-                            {[...Array(10).keys()].map((column) => {
-                                const tmp = voies.filter((e) => e.couloir_id == column + 10)[index]
-                                if (tmp) {
-                                    return <TableCell class="mycell" key={tmp.id} style={{backgroundColor:tmp.color, color: tmp.color}} onClick={handleClickOpen}>{tmp.id}</TableCell>
-                                } else {
-                                    return <TableCell> </TableCell>
-                                }
-                            })}
-                                </TableRow>
-                    )).filter((e) => (e.props.children.find((e) => (e.props.class)) )
-                    )} 
-
-
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-
-                    <TableContainer sx={{ maxHeight: 440, maxWidth: fixedWidth - 25, paddingTop: '100px'}}>
-                        <Table stickyHeader aria-label="sticky table">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell align="left" colSpan={4}> Verin Droit </TableCell>
-                                    <TableCell align="left" colSpan={4}> Dalle </TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    {[...Array(8).keys()].map((column) => ( <TableCell key={column + 20} style={{ top: 57}} > {column + 20} </TableCell>))}
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-
-                                {[...Array(10).keys()].map((index) => (
-                                    <TableRow  key={index}>
-                                        {[...Array(8).keys()].map((column) => {
-                                            const tmp = voies.filter((e) => e.couloir_id == column + 20)[index]
-                                            if (tmp) {
-                                                return <TableCell class="mycell" key={tmp.id} style={{backgroundColor:tmp.color, color: tmp.color}} onClick={handleClickOpen}>{tmp.id}</TableCell>
-                                            } else {
-                                                return <TableCell></TableCell>
-                                            }
-                                        })}
-                                            </TableRow>
-                                )).filter((e) => (e.props.children.find((e) => (e.props.class)) )
-                                )}
-
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-
-                    <TableContainer sx={{ maxHeight: 440, maxWidth: fixedWidth - 25, paddingTop: '100px'}}>
-                        <Table stickyHeader aria-label="sticky table">
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell align="left" colSpan={4}> 9m </TableCell>
-                                </TableRow>
-                                <TableRow>
-                                    {[...Array(4).keys()].map((column) => ( <TableCell key={column + 28} style={{ top: 57}} > {column + 28} </TableCell>))}
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-
-                                {[...Array(10).keys()].map((index) => (
-                                    <TableRow  key={index}>
-                                        {[...Array(4).keys()].map((column) => {
-                                            const tmp = voies.filter((e) => e.couloir_id == column + 28)[index]
-                                            if (tmp) {
-                                                return <TableCell class="mycell" key={tmp.id} style={{backgroundColor:tmp.color, color: tmp.color}} onClick={handleClickOpen}>{tmp.id}</TableCell>
-                                            } else {
-                                                return <TableCell></TableCell>
-                                            }
-                                        })}
-                                            </TableRow>
-                                )).filter((e) => (e.props.children.find((e) => (e.props.class)) )
-                                )}
-
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-
-
-                            </Paper>
-            }
-
-
-
-
-
-                        </TabPanel>
-
-                        <TabPanel value={value} index={0} >
 
                             <WallTopo
                                 areas={MAP.areas}
@@ -1179,10 +905,6 @@ function Products(props) {
                                 onLaneClick={areaClick}
                             />
 
-
-                        </TabPanel>
-
-                    </Box>
                     </Box>
 
                     <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden', position: { lg: 'sticky' }, top: { lg: 88 } }}>
@@ -1221,6 +943,7 @@ function Products(props) {
                             </List>
                         )}
                     </Paper>
+                    </Box>
                     </Box>
 
 
