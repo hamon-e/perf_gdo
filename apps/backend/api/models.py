@@ -68,6 +68,8 @@ class VersionVoie(Base):
     id = Column(Integer, primary_key=True, index=True)
     date = Column(DateTime)
     active = Column(Boolean, nullable=False, default=False)
+    parent_version_id = Column(Integer, ForeignKey("versionvoie.id"), nullable=True)
+    subversion = Column(Integer, nullable=False, default=0)
 
 class CouloirType(Base):
     __tablename__ = "couloirtype"
@@ -93,6 +95,7 @@ class Voie(Base):
     active = Column(Boolean)
 
     versionvoie_id = Column(Integer, ForeignKey("versionvoie.id"))
+    source_voie_id = Column(Integer, ForeignKey("voie.id"), nullable=True)
 
 class UserSeance(Base):
     __tablename__ = "userseance"

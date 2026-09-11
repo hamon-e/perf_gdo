@@ -169,8 +169,18 @@ def compute_dashboard_coverage(db: Session, current_user: schemas.User):
             'max_lvl': 0,
             'tete_ratio': 0,
         }
-    all_user = db.query(models.UserSeance.voie_id).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.top == 100).filter(models.UserSeance.voie_id.in_(db.query(models.Voie.id).filter(models.Voie.versionvoie_id == version.id))).distinct().all()
-    all_user_tete = db.query(models.UserSeance.en_tete).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.voie_id.in_(db.query(models.Voie.id).filter(models.Voie.versionvoie_id == version.id))).all()
+    routes = db.query(models.Voie).filter(models.Voie.versionvoie_id == version.id).all()
+    routes_by_id = {route.id: route for route in routes}
+    current_voie_by_lineage = {
+        ancestor_id: voie_id
+        for voie_id, ancestors in get_voie_lineage_map(db, version.id).items()
+        for ancestor_id in ancestors
+    }
+    all_user = {
+        current_voie_by_lineage[elem[0]]
+        for elem in db.query(models.UserSeance.voie_id).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.top == 100).filter(models.UserSeance.voie_id.in_(list(current_voie_by_lineage))).distinct().all()
+    }
+    all_user_tete = db.query(models.UserSeance.en_tete).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.voie_id.in_(list(current_voie_by_lineage))).all()
     tmp = {
     'coverage': 0,
     'coverage_dalle': 0,
@@ -187,8 +197,8 @@ def compute_dashboard_coverage(db: Session, current_user: schemas.User):
         else:
             tmp['moulinette'] = tmp['moulinette'] + 1
 
-    for elem in all_user:
-        voie = db.query(models.Voie).filter(models.Voie.id == elem[0]).first()
+    for voie_id in all_user:
+        voie = routes_by_id[voie_id]
         if voie.difficulty >= tmp['max_lvl']:
             tmp['max_lvl'] = voie.difficulty
         tmp['coverage'] = tmp['coverage'] + 1
@@ -201,7 +211,7 @@ def compute_dashboard_coverage(db: Session, current_user: schemas.User):
         else:
             tmp['coverage_devers'] = tmp['coverage_devers'] + 1
 
-    all = db.query(models.Voie).filter(models.Voie.versionvoie_id == version.id).all()
+    all = routes
     nbr = {
     'nbr': 0,
     'nbr_dalle': 0,
@@ -300,6 +310,61 @@ def post_versionvoie(db: Session, date: datetime):
     db.refresh(version)
     return version
 
+def post_subversionvoie(db: Session, version_id: int):
+    """Create a complete, editable snapshot in the same topo version family."""
+    source = db.query(models.VersionVoie).filter(models.VersionVoie.id == version_id).first()
+    if not source:
+        return None
+
+    root_id = source.parent_version_id or source.id
+    latest_revision = (
+        db.query(models.VersionVoie.subversion)
+        .filter(
+            (models.VersionVoie.id == root_id)
+            | (models.VersionVoie.parent_version_id == root_id)
+        )
+        .order_by(models.VersionVoie.subversion.desc())
+        .first()
+    )
+    version = models.VersionVoie(
+        date=source.date,
+        active=False,
+        parent_version_id=root_id,
+        subversion=(latest_revision[0] if latest_revision else 0) + 1,
+    )
+    db.add(version)
+    db.flush()
+
+    source_routes = db.query(models.Voie).filter(models.Voie.versionvoie_id == source.id).all()
+    db.add_all([
+        models.Voie(
+            couloir_id=route.couloir_id,
+            color=route.color,
+            difficulty=route.difficulty,
+            active=route.active,
+            versionvoie_id=version.id,
+            source_voie_id=route.id,
+        )
+        for route in source_routes
+    ])
+    db.commit()
+    db.refresh(version)
+    return version
+
+def get_voie_lineage_map(db: Session, version_id: int):
+    """Map each route of a version to the ids of itself and its unchanged ancestors."""
+    routes = db.query(models.Voie.id).filter(models.Voie.versionvoie_id == version_id).all()
+    parents = dict(db.query(models.Voie.id, models.Voie.source_voie_id).all())
+    lineage = {}
+    for (voie_id,) in routes:
+        chain = [voie_id]
+        cursor = parents.get(voie_id)
+        while cursor is not None and cursor not in chain:
+            chain.append(cursor)
+            cursor = parents.get(cursor)
+        lineage[voie_id] = chain
+    return lineage
+
 def get_active_versionvoie(db: Session):
     """Return the explicitly active wall version, with a legacy-data fallback."""
     return (
@@ -335,6 +400,7 @@ def post_voie(db: Session, current_user: schemas.User, voie: schemas.Voie):
         db.add(models.Voie(**tmp))
         db.commit()
     else:
+        tmp['source_voie_id'] = None
         db.query(models.Voie).filter(models.Voie.id == id).update(tmp)
         db.commit()
 
@@ -409,7 +475,16 @@ def delete_userseance(db: Session, current_user: schemas.User, userseance_id: in
 
 def get_palmares(db: Session, current_user: schemas.User):
     tmp = db.query(models.UserSeance.voie_id).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.top == 100).filter(models.UserSeance.pause == 0).distinct().all()
-    return [r.voie_id for r in tmp]
+    ticked = [r.voie_id for r in tmp]
+    version = get_active_versionvoie(db)
+    if not version:
+        return ticked
+    current_voie_by_lineage = {
+        ancestor_id: voie_id
+        for voie_id, ancestors in get_voie_lineage_map(db, version.id).items()
+        for ancestor_id in ancestors
+    }
+    return list(dict.fromkeys(ticked + [current_voie_by_lineage[voie_id] for voie_id in ticked if voie_id in current_voie_by_lineage]))
 
 def get_colors(db: Session, current_user: schemas.User):
     tmp = db.query(models.Voie.color).distinct().all()
