@@ -62,6 +62,7 @@ export default function HistoryCalendar() {
   const [, setShowBar] = showBarHook;
   const [, setErrorMessage] = errorMessageHook;
   const [events, setEvents] = useState([]);
+  const [sessionDays, setSessionDays] = useState(() => new Set());
   const [selectedDate, setSelectedDate] = useState(null);
   const [attempts, setAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -80,10 +81,12 @@ export default function HistoryCalendar() {
     setLoading(true);
     try {
       const response = await axios.get(`${API_BASE_URL}/userseance_days?date=${formatDate(date)}`, authorization());
-      setEvents(response.data.map((day) => ({
-        id: formatDate(day),
+      const days = response.data.map((day) => formatDate(day));
+      setSessionDays(new Set(days));
+      setEvents(days.map((day) => ({
+        id: day,
         title: 'Séance enregistrée',
-        start: formatDate(day),
+        start: day,
         allDay: true,
         backgroundColor: '#1f6b45',
         borderColor: '#1f6b45',
@@ -152,6 +155,7 @@ export default function HistoryCalendar() {
             firstDay={1}
             height="auto"
             buttonText={{ today: "Aujourd'hui" }}
+            dayCellClassNames={(arg) => (sessionDays.has(formatDate(arg.date)) ? 'has-session' : '')}
           />
         </Paper>
 
