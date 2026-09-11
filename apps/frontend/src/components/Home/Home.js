@@ -18,6 +18,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
 import VerticalAlignTopIcon from '@mui/icons-material/VerticalAlignTop';
+import RouteOutlinedIcon from '@mui/icons-material/RouteOutlined';
 
 const emptyDashboard = {
   max_lvl: 0,
@@ -28,6 +29,7 @@ const emptyDashboard = {
   coverage_diedre: 0,
   coverage_9m: 0,
   nbr_of_seances: 0,
+  suggestions: [],
 };
 
 function formatDifficulty(difficulty) {
@@ -157,6 +159,50 @@ function Home(props) {
                   </Box>
                 ))}
               </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
+            <CardContent sx={{ p: { xs: 2.5, md: 3.5 } }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={1} sx={{ mb: 2.5 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 750 }}>Voies à essayer</Typography>
+                  <Typography color="text.secondary">Des propositions proches de votre niveau maximal.</Typography>
+                </Box>
+                <Button size="small" onClick={() => props.history.push('/home')}>Voir le mur</Button>
+              </Stack>
+              {loading ? (
+                <Grid container spacing={1.5}>
+                  {[0, 1, 2].map((item) => <Grid item xs={12} md={4} key={item}><Skeleton variant="rounded" height={112} /></Grid>)}
+                </Grid>
+              ) : dashboard.suggestions.length ? (
+                <Grid container spacing={1.5}>
+                  {dashboard.suggestions.map((suggestion) => (
+                    <Grid item xs={12} md={4} key={suggestion.voie_id}>
+                      <Button
+                        fullWidth
+                        onClick={() => props.history.push('/home')}
+                        sx={{ display: 'block', textAlign: 'left', textTransform: 'none', minHeight: 112, p: 2, color: 'text.primary', border: '1px solid', borderColor: 'divider', borderRadius: 2, '&:hover': { borderColor: '#1f6b45', backgroundColor: '#f5faf7' } }}
+                      >
+                        <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                          <Box sx={{ width: 36, height: 36, borderRadius: '50%', flexShrink: 0, backgroundColor: suggestion.color || '#d8dedb', border: '2px solid white', boxShadow: '0 0 0 1px rgba(0,0,0,.15)' }} />
+                          <Box>
+                            <Typography sx={{ fontWeight: 800 }}>{formatDifficulty(suggestion.difficulty)} · couloir {suggestion.couloir_id}</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.4 }}>{suggestion.reason}</Typography>
+                          </Box>
+                        </Stack>
+                      </Button>
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ color: 'text.secondary' }}>
+                  <RouteOutlinedIcon fontSize="small" />
+                  <Typography variant="body2">Aucune suggestion pour le moment : enregistrez quelques essais pour personnaliser vos propositions.</Typography>
+                </Stack>
+              )}
             </CardContent>
           </Card>
         </Grid>
