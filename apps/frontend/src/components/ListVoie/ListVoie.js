@@ -7,8 +7,6 @@ import { useContextObject } from '../Context/Context';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Dialog from '@mui/material/Dialog';
@@ -111,7 +109,7 @@ function sectorForLane(lane) {
 
 const SECTORS = ['Plexi + toit', 'Vérin gauche', 'Dévers', 'Vérin droit', 'Dalle', 'Mur de 9 m'];
 
-function versionLabel(version) {
+export function versionLabel(version) {
   const date = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(version.date));
   return `${date} · v1${version.subversion ? `.${version.subversion}` : ''}`;
 }
@@ -132,7 +130,7 @@ function coversDate(version, date) {
   return (!start || start <= date) && (!end || end > date);
 }
 
-function findVersionAt(versions, date) {
+export function findVersionAt(versions, date) {
   return versions
     .filter((version) => coversDate(version, date))
     .sort((a, b) => new Date(b.date) - new Date(a.date) || a.id - b.id)[0] || null;
@@ -312,28 +310,28 @@ export default function ListVoie() {
     }
   };
 
-  const createVersion = async () => {
-    if (!window.confirm('Créer une nouvelle version vide du mur ? Configurez ensuite ses dates de validité pour la rendre active.')) return;
+  const createTopo = async () => {
+    if (!window.confirm('Créer un nouveau topo vide ? Configurez ensuite ses dates de validité pour le rendre actif.')) return;
     setSaving(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/versionvoie`, { date: new Date().toISOString() }, authorization());
       await loadVersions(response.data.id);
     } catch (error) {
-      showError(error, 'Impossible de créer une version.');
+      showError(error, 'Impossible de créer un topo.');
     } finally {
       setSaving(false);
     }
   };
 
-  const createSubversion = async () => {
+  const createRevision = async () => {
     if (!selectedVersion) return;
-    if (!window.confirm('Créer une sous-version à partir de celle-ci ? Toutes les voies seront reprises et pourront être modifiées séparément.')) return;
+    if (!window.confirm('Créer une révision de ce topo ? Toutes les voies seront reprises et pourront être modifiées séparément.')) return;
     setSaving(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/versionvoie/${selectedVersion}/subversion`, {}, authorization());
       await loadVersions(response.data.id);
     } catch (error) {
-      showError(error, 'Impossible de créer la sous-version.');
+      showError(error, 'Impossible de créer la révision.');
     } finally {
       setSaving(false);
     }
@@ -410,7 +408,6 @@ export default function ListVoie() {
     }
   };
 
-  const laneCount = new Set(routes.map((route) => route.couloir_id)).size;
   const selectedVersionData = versions.find((version) => String(version.id) === String(selectedVersion)) || null;
   const currentActiveId = findVersionAt(versions, new Date())?.id ?? null;
 
@@ -424,21 +421,12 @@ export default function ListVoie() {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <Button variant="contained" startIcon={<InsightsOutlinedIcon />} onClick={() => history.push(`/analyse-mur?version=${selectedVersion}`)} disabled={!selectedVersion} sx={{ backgroundColor: '#1f6b45', '&:hover': { backgroundColor: '#185538' } }}>Analyse du mur</Button>
           <Button variant="outlined" startIcon={<PictureAsPdfOutlinedIcon />} onClick={downloadTopo} disabled={!selectedVersion || saving}>Exporter le topo PDF</Button>
-          <Button variant="outlined" startIcon={<AccountTreeOutlinedIcon />} onClick={createVersion} disabled={saving}>Nouvelle version</Button>
-          <Button variant="outlined" startIcon={<AccountTreeOutlinedIcon />} onClick={createSubversion} disabled={!selectedVersion || saving}>Créer une sous-version</Button>
-          <Button variant="outlined" color="success" startIcon={<EventOutlinedIcon />} onClick={openPeriodDialog} disabled={!selectedVersion || saving}>Configurer les dates</Button>
+          <Button variant="outlined" startIcon={<AccountTreeOutlinedIcon />} onClick={createTopo} disabled={saving}>Nouveau topo</Button>
+          <Button variant="outlined" startIcon={<AccountTreeOutlinedIcon />} onClick={createRevision} disabled={!selectedVersion || saving}>Nouvelle révision</Button>
+          <Button variant="outlined" startIcon={<EventOutlinedIcon />} onClick={openPeriodDialog} disabled={!selectedVersion || saving}>Configurer les dates</Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} disabled={!selectedVersion} sx={{ backgroundColor: '#1f6b45' }}>Ajouter une voie</Button>
         </Stack>
       </Stack>
-
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2, mb: 3 }}>
-        <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
-          <CardContent><RouteOutlinedIcon sx={{ color: '#1f6b45' }} /><Typography variant="h4" sx={{ fontWeight: 850 }}>{routes.length}</Typography><Typography color="text.secondary">voies dans cette version</Typography></CardContent>
-        </Card>
-        <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}>
-          <CardContent><AccountTreeOutlinedIcon sx={{ color: '#1f6b45' }} /><Typography variant="h4" sx={{ fontWeight: 850 }}>{laneCount}/31</Typography><Typography color="text.secondary">couloirs équipés</Typography></CardContent>
-        </Card>
-      </Box>
 
       <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden' }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ p: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
