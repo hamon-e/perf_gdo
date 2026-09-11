@@ -173,8 +173,7 @@ function Crenaux(props) {
        
     useEffect(() => {
         async function start() {
-            await refreshCrenaux()
-            await refreshCrenauType()
+            await Promise.all([refreshCrenaux(), refreshCrenauType()])
         }
         start()
         setHeaderTitle("Crenaux")
