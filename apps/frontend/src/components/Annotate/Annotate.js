@@ -164,6 +164,13 @@ function Products(props) {
 
     const [days, setDays] = React.useState([])
 
+    const selectedDateLabel = selectedDate
+        ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'full' }).format(
+            selectedDate.toDate ? selectedDate.toDate() : new Date(selectedDate)
+        )
+        : 'Séance sélectionnée';
+    const completedRoutes = insertedRoutes.filter((route) => route.top === 100).length;
+
     const handleChange = (event, newValue) => {
         setValue(newValue);
         g_value = newValue
@@ -523,10 +530,8 @@ function Products(props) {
         setSelectedPause(event.target.value)
     }
 
-    async function deleteRoute(event) {
-        //const tmp = insertedRoutes.filter((e) => e.id != event.target.parentElement.id)
-        //setInsertedRoutes(tmp)
-        var response = await axios.delete(API_BASE_URL+'/userseance?userseance_id=' + event.target.parentElement.id, { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
+    async function deleteRoute(routeId) {
+        var response = await axios.delete(API_BASE_URL+'/userseance?userseance_id=' + routeId, { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
         await refreshInsertedRoutes()
     }
 
@@ -843,6 +848,8 @@ function Products(props) {
                         </Grid>
 
             </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 340px' }, gap: 3, alignItems: 'start', px: { xs: 1, md: 2 }, pb: 3 }}>
+            <Box sx={{ minWidth: 0 }}>
             <TabPanel value={value} index={1}>
                 <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '40px' }}>
                     <Grid container spacing={2}>
@@ -1090,31 +1097,45 @@ function Products(props) {
                         </TabPanel>
 
                     </Box>
+                    </Box>
 
-
-                    <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '40px' }}>
-
-                        <Grid container spacing={2}>
-
-                            <Grid item xs={10}>
-                                <List>
-                                    { insertedRoutes.map((e) => 
-                                        <ListItem disablePadding>
-                                                <Box sx={{ width: '4ch', height: '4ch', backgroundColor: e.voie.color, textAlign: 'center', color: e.voie.color == '#000000' ? 'white !important' : 'black'}}  >
-                                                    <div style={{paddingTop: '5px'}}>{ difficultyFormat(e.voie.difficulty) }</div>
-                                                </Box>
-                                                <div style={{paddingLeft: '10px'}}>{"couloir: " + e.voie.couloir_id}</div>
-                                                <IconButton aria-label="delete" id={e.id} onClick={deleteRoute}>
-                                                    <DeleteIcon id={e.id}/>
-                                                </IconButton>
-                                        </ListItem>
-                                    )}
-                                    </List>
-
-
-                                </Grid>
-                            </Grid>
+                    <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden', position: { lg: 'sticky' }, top: { lg: 88 } }}>
+                        <Box sx={{ p: 2.25, borderBottom: '1px solid', borderColor: 'divider', backgroundColor: '#f6fbf8' }}>
+                            <Typography variant="overline" sx={{ color: '#1f6b45', fontWeight: 800, letterSpacing: '.08em' }}>Historique de la séance</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 800, textTransform: 'capitalize', lineHeight: 1.25 }}>{selectedDateLabel}</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: .75 }}>
+                                {insertedRoutes.length} voie{insertedRoutes.length > 1 ? 's' : ''} enregistrée{insertedRoutes.length > 1 ? 's' : ''} · {completedRoutes} réussie{completedRoutes > 1 ? 's' : ''}
+                            </Typography>
                         </Box>
+
+                        {insertedRoutes.length === 0 ? (
+                            <Box sx={{ px: 2.25, py: 5, textAlign: 'center' }}>
+                                <Typography sx={{ fontWeight: 700 }}>Aucune voie enregistrée</Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ mt: .5 }}>Sélectionnez une voie sur le mur pour l’ajouter à cette séance.</Typography>
+                            </Box>
+                        ) : (
+                            <List disablePadding sx={{ maxHeight: { lg: 'calc(100vh - 290px)' }, overflowY: 'auto' }}>
+                                {insertedRoutes.map((e) => (
+                                    <ListItem key={e.id} disablePadding secondaryAction={
+                                        <IconButton aria-label={`Supprimer la voie du couloir ${e.voie.couloir_id}`} onClick={() => deleteRoute(e.id)}>
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    } sx={{ px: 2.25, py: 1.25, borderBottom: '1px solid', borderColor: 'divider' }}>
+                                        <Box sx={{ width: 36, height: 36, borderRadius: 1.5, flexShrink: 0, backgroundColor: e.voie.color, display: 'grid', placeItems: 'center', color: e.voie.color === '#000000' ? 'white' : '#172018', fontWeight: 800, fontSize: '.78rem', border: '2px solid white', boxShadow: '0 0 0 1px rgba(0,0,0,.15)' }}>
+                                            {difficultyFormat(e.voie.difficulty)}
+                                        </Box>
+                                        <Box sx={{ ml: 1.25, pr: 5, minWidth: 0 }}>
+                                            <Typography sx={{ fontWeight: 750 }}>Couloir {e.voie.couloir_id}</Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {e.en_tete ? 'En tête' : 'Moulinette'} · {e.top === 100 ? 'Réussie' : `${e.top}% atteint`}{e.pause ? ` · ${e.pause} pause${e.pause > 1 ? 's' : ''}` : ''}
+                                            </Typography>
+                                        </Box>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        )}
+                    </Paper>
+                    </Box>
 
 
 
