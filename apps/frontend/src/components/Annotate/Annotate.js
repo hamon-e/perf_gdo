@@ -90,6 +90,7 @@ var g_value = 0;
 var g_imageIndex = 0;
 var lastMove = 0;
 var g_voies = [];
+const ROUTE_GRADE_RANGE_STORAGE_KEY = 'gdo.route-grade-range';
 
 
 
@@ -525,7 +526,17 @@ function Products(props) {
         const difficulties = response.data.map((route) => route.difficulty)
         if (difficulties.length) {
             const uniqueDifficulties = [...new Set(difficulties)].sort((first, second) => first - second)
-            setRouteGradeRange([0, uniqueDifficulties.length - 1])
+            let savedRange = null
+            try {
+                savedRange = JSON.parse(localStorage.getItem(ROUTE_GRADE_RANGE_STORAGE_KEY))
+            } catch (_error) {
+                // Une ancienne valeur mal formée ne doit pas bloquer le topo.
+            }
+            const savedStart = Array.isArray(savedRange) ? uniqueDifficulties.indexOf(savedRange[0]) : -1
+            const savedEnd = Array.isArray(savedRange) ? uniqueDifficulties.indexOf(savedRange[1]) : -1
+            setRouteGradeRange(savedStart >= 0 && savedEnd >= savedStart
+                ? [savedStart, savedEnd]
+                : [0, uniqueDifficulties.length - 1])
         }
         g_voies = response.data
     }
@@ -683,6 +694,15 @@ function Products(props) {
         .map((difficulty, index) => ({ difficulty, index }))
         .filter(({ difficulty }) => Number.isInteger(difficulty))
         .map(({ difficulty, index }) => ({ value: index, label: String(difficulty) }));
+
+    function handleRouteGradeRangeChange(_event, value) {
+        if (!Array.isArray(value)) return
+        setRouteGradeRange(value)
+        localStorage.setItem(ROUTE_GRADE_RANGE_STORAGE_KEY, JSON.stringify([
+            gradeOptions[value[0]],
+            gradeOptions[value[1]],
+        ]))
+    }
 
 
     //<img src="https://lesgdo.org/photo/hdv/M6c6df169982e9963e49c.png" style={{ 'max-width': '100%', height: 'auto'}}/>
@@ -899,7 +919,7 @@ function Products(props) {
                                 <Slider
                                     aria-label="Plage de cotations affichées"
                                     value={routeGradeRange}
-                                    onChange={(_event, value) => setRouteGradeRange(value)}
+                                    onChange={handleRouteGradeRangeChange}
                                     min={0}
                                     max={Math.max(gradeOptions.length - 1, 0)}
                                     step={1}
