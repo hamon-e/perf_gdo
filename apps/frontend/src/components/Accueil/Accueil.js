@@ -22,7 +22,7 @@ function Accueil(props) {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: ['100vh', '100dvh'],
         display: 'flex',
         alignItems: 'flex-end',
         p: { xs: 3, sm: 6, md: 10 },
