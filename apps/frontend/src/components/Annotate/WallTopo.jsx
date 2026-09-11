@@ -14,7 +14,7 @@ const MAX_ZOOM = 4;
 const ZOOM_STEP = 1.5;
 // Sur un mur zoomé, le déplacement doit couvrir plus de contenu qu'un geste
 // équivalent afin de ne pas obliger à multiplier les balayages sur mobile.
-const PAN_SPEED = 1.75;
+const PAN_SPEED = 1.35;
 
 function average(points) {
   return points.reduce((result, point) => ({
