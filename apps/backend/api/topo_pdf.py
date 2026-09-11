@@ -42,6 +42,10 @@ def grade_label(value: float) -> str:
     return f"{value:g}"
 
 
+# Off-white used to keep white routes visible on the white grid.
+OFF_WHITE = colors.HexColor("#f2eee1")
+
+
 def _colour(value: str):
     try:
         return colors.HexColor(value)
@@ -49,8 +53,8 @@ def _colour(value: str):
         return colors.HexColor("#8a8f98")
 
 
-def _is_light(colour) -> bool:
-    return (colour.red * 0.2126) + (colour.green * 0.7152) + (colour.blue * 0.0722) > 0.84
+def _is_white(colour) -> bool:
+    return min(colour.red, colour.green, colour.blue) > 0.93
 
 
 def _routes_by_cell(routes: Iterable):
@@ -95,9 +99,8 @@ def build_topo_pdf(routes: Iterable, version_date) -> bytes:
     # Sector names and lane numbers.
     pdf.setStrokeColor(colors.HexColor("#18251f"))
     pdf.setLineWidth(0.8)
-    pdf.rect(margin_x, top - header_height, 34, header_height, stroke=1, fill=0)
     pdf.setFillColor(colors.HexColor("#f1f5f2"))
-    pdf.rect(margin_x, top - header_height, 34, header_height, stroke=0, fill=1)
+    pdf.rect(margin_x, top - header_height, 34, header_height, stroke=1, fill=1)
     pdf.setFillColor(colors.HexColor("#18251f"))
     pdf.setFont("Helvetica-Bold", 7.5)
     pdf.drawCentredString(margin_x + 17, top - 19, "Couloir")
@@ -137,12 +140,8 @@ def build_topo_pdf(routes: Iterable, version_date) -> bytes:
             strip_width = column_width / len(cell_routes)
             for index, route in enumerate(cell_routes):
                 route_colour = _colour(route.color)
-                pdf.setFillColor(route_colour)
+                pdf.setFillColor(OFF_WHITE if _is_white(route_colour) else route_colour)
                 pdf.rect(x + (index * strip_width) + 0.7, y + 0.7, strip_width - 1.4, row_height - 1.4, stroke=0, fill=1)
-                if len(cell_routes) == 1 and _is_light(route_colour):
-                    pdf.setFillColor(colors.HexColor("#18251f"))
-                    pdf.setFont("Helvetica", 5.6)
-                    pdf.drawCentredString(x + (column_width / 2), y + 3.5, "blanc")
 
     # Stronger separators between wall sectors make the topo easy to scan.
     pdf.setStrokeColor(colors.HexColor("#18251f"))
@@ -153,13 +152,6 @@ def build_topo_pdf(routes: Iterable, version_date) -> bytes:
     pdf.setLineWidth(0.8)
     pdf.rect(margin_x, grid_bottom, grid_right - margin_x, top - grid_bottom, stroke=1, fill=0)
 
-    total_routes = sum(len(value) for value in cells.values())
-    footer_y = 21
-    pdf.setFillColor(colors.HexColor("#46564d"))
-    pdf.setFont("Helvetica", 7.5)
-    pdf.drawString(margin_x, footer_y, "Une case coloree indique la cotation et la couleur des prises de la voie.")
-    count_text = f"{total_routes} voie{'s' if total_routes != 1 else ''} - format A4 paysage"
-    pdf.drawRightString(page_width - margin_x, footer_y, count_text)
     pdf.showPage()
     pdf.save()
     return output.getvalue()
