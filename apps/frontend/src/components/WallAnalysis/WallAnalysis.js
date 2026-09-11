@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
+  ArcElement,
   BarElement,
   CategoryScale,
   Chart as ChartJS,
@@ -36,7 +37,7 @@ import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
-ChartJS.register(BarElement, CategoryScale, Legend, LinearScale, Tooltip);
+ChartJS.register(ArcElement, BarElement, CategoryScale, Legend, LinearScale, Tooltip);
 
 const authorization = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN_NAME)}` },
