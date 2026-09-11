@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, date
 import os
 
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_
 import bcrypt
 
 from typing import Optional
@@ -310,14 +311,29 @@ def get_progression(db: Session, current_user: schemas.User, months: int):
         })
     return result
 
-def get_versionvoie(db: Session):
-    return db.query(models.VersionVoie).order_by(models.VersionVoie.active.desc(), models.VersionVoie.date.desc(), models.VersionVoie.id.desc()).all()
+def _as_naive(value: datetime):
+    return value.replace(tzinfo=None) if value.tzinfo is not None else value
 
-def post_versionvoie(db: Session, date: datetime):
-    version = models.VersionVoie(
-        date=date,
-        active=not db.query(models.VersionVoie).filter(models.VersionVoie.active.is_(True)).first(),
-    )
+
+def _validate_period(start: datetime, end: Optional[datetime]):
+    if end is not None and end <= start:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="La date de fin doit être postérieure à la date de début.",
+        )
+
+
+def get_versionvoie(db: Session):
+    return db.query(models.VersionVoie).order_by(models.VersionVoie.date.desc(), models.VersionVoie.id.desc()).all()
+
+def post_versionvoie(db: Session, date: datetime, end_date: Optional[datetime] = None):
+    """Create a wall version. Without an explicit end date it stays an
+    unpublished draft (zero-length period) until its dates are configured."""
+    start = _as_naive(date)
+    end = _as_naive(end_date) if end_date is not None else start
+    if end_date is not None:
+        _validate_period(start, end)
+    version = models.VersionVoie(date=start, end_date=end)
     db.add(version)
     db.commit()
     db.refresh(version)
@@ -341,7 +357,7 @@ def post_subversionvoie(db: Session, version_id: int):
     )
     version = models.VersionVoie(
         date=source.date,
-        active=False,
+        end_date=source.end_date,
         parent_version_id=root_id,
         subversion=(latest_revision[0] if latest_revision else 0) + 1,
     )
@@ -378,22 +394,33 @@ def get_voie_lineage_map(db: Session, version_id: int):
         lineage[voie_id] = chain
     return lineage
 
-def get_active_versionvoie(db: Session):
-    """Return the explicitly active wall version, with a legacy-data fallback."""
+def get_active_versionvoie(db: Session, at: Optional[datetime] = None):
+    """Return the wall version whose validity period contains `at` (now by
+    default). When several periods overlap, the latest start wins; subversions
+    sharing their root's period never shadow it."""
+    at = _as_naive(at) if at is not None else datetime.now()
     return (
         db.query(models.VersionVoie)
-        .order_by(models.VersionVoie.active.desc(), models.VersionVoie.date.desc(), models.VersionVoie.id.desc())
+        .filter(models.VersionVoie.date.isnot(None))
+        .filter(models.VersionVoie.date <= at)
+        .filter(or_(models.VersionVoie.end_date.is_(None), models.VersionVoie.end_date > at))
+        .order_by(models.VersionVoie.date.desc(), models.VersionVoie.id.asc())
         .first()
     )
 
-def activate_versionvoie(db: Session, version_id: int):
+def update_versionvoie_dates(db: Session, version_id: int, date: datetime, end_date: Optional[datetime] = None):
+    """Configure the validity period of a wall version (open-ended when no end)."""
     version = db.query(models.VersionVoie).filter(models.VersionVoie.id == version_id).first()
     if not version:
-        return False
-    db.query(models.VersionVoie).update({models.VersionVoie.active: False}, synchronize_session=False)
-    version.active = True
+        return None
+    start = _as_naive(date)
+    end = _as_naive(end_date) if end_date is not None else None
+    _validate_period(start, end)
+    version.date = start
+    version.end_date = end
     db.commit()
-    return True
+    db.refresh(version)
+    return version
 
 def get_voies(db: Session, current_user: schemas.User, version_id: int):
     if version_id == -1:

@@ -69,27 +69,57 @@ def test_progression_uses_real_session_data(db):
     assert current_month["lead_ratio"] == 0.5
 
 
-def test_active_wall_version_controls_default_routes(db):
-    first_version = crud.post_versionvoie(db, datetime(2026, 1, 1))
-    second_version = crud.post_versionvoie(db, datetime(2026, 2, 1))
+def test_wall_version_is_active_over_its_configured_period(db):
+    january = crud.post_versionvoie(db, datetime(2026, 1, 1))
+    march = crud.post_versionvoie(db, datetime(2026, 3, 1))
     route_type = models.CouloirType(name="Dalle")
     db.add(route_type)
     db.commit()
     couloir = models.Couloir(type_id=route_type.id)
     db.add(couloir)
     db.commit()
-    first_route = models.Voie(couloir_id=couloir.id, color="#ff0000", difficulty=5.0, active=True, versionvoie_id=first_version.id)
-    second_route = models.Voie(couloir_id=couloir.id, color="#00ff00", difficulty=6.0, active=True, versionvoie_id=second_version.id)
-    db.add_all([first_route, second_route])
+    january_route = models.Voie(couloir_id=couloir.id, color="#ff0000", difficulty=5.0, active=True, versionvoie_id=january.id)
+    march_route = models.Voie(couloir_id=couloir.id, color="#00ff00", difficulty=6.0, active=True, versionvoie_id=march.id)
+    db.add_all([january_route, march_route])
     db.commit()
 
-    assert first_version.active is True
-    assert second_version.active is False
-    assert [route.id for route in crud.get_voies(db, None, -1)] == [first_route.id]
+    # Freshly created versions are drafts until their validity period is set.
+    assert january.active is False
+    assert march.active is False
+    assert crud.get_active_versionvoie(db, at=datetime(2026, 2, 15)) is None
+    assert crud.get_voies(db, None, -1) == []
 
-    assert crud.activate_versionvoie(db, second_version.id) is True
-    assert [route.id for route in crud.get_voies(db, None, -1)] == [second_route.id]
-    assert db.query(models.VersionVoie).filter(models.VersionVoie.active.is_(True)).count() == 1
+    crud.update_versionvoie_dates(db, january.id, datetime(2026, 1, 1), datetime(2026, 3, 1))
+    crud.update_versionvoie_dates(db, march.id, datetime(2026, 3, 1), None)
+
+    assert crud.get_active_versionvoie(db, at=datetime(2026, 2, 15)) == january
+    assert crud.get_active_versionvoie(db, at=datetime(2026, 3, 1)) == march
+    assert crud.get_active_versionvoie(db, at=datetime(2026, 6, 1)) == march
+    assert crud.get_active_versionvoie(db, at=datetime.now()) == march
+    assert january.active is False
+    assert march.active is True
+    assert [route.id for route in crud.get_voies(db, None, -1)] == [march_route.id]
+
+    with pytest.raises(HTTPException) as error:
+        crud.update_versionvoie_dates(db, march.id, datetime(2026, 3, 1), datetime(2026, 1, 1))
+    assert error.value.status_code == 422
+
+
+def test_subversion_shares_the_root_period_until_configured(db):
+    source = crud.post_versionvoie(db, datetime(2026, 1, 1))
+    crud.update_versionvoie_dates(db, source.id, datetime(2026, 1, 1), None)
+
+    revision = crud.post_subversionvoie(db, source.id)
+
+    assert revision.date == source.date
+    assert revision.end_date == source.end_date
+    # Same period, same start: the root keeps precedence over its revisions.
+    assert crud.get_active_versionvoie(db) == source
+
+    crud.update_versionvoie_dates(db, revision.id, datetime(2026, 5, 1), None)
+
+    assert crud.get_active_versionvoie(db, at=datetime(2026, 4, 30)) == source
+    assert crud.get_active_versionvoie(db, at=datetime(2026, 5, 1)) == revision
 
 
 def test_subversion_copies_routes_and_keeps_source_unchanged(db):
@@ -124,7 +154,7 @@ def test_subversion_copies_routes_and_keeps_source_unchanged(db):
     assert copied_route.id != source_route.id
     assert crud.get_voies(db, None, source.id)[0].difficulty == 5.0
     assert crud.get_voies(db, None, second_revision.id)[0].difficulty == 6.5
-    assert source.active is True
+    assert source.active is False
 
 
 def test_ticked_route_stays_ticked_across_subversions(db):
@@ -152,7 +182,7 @@ def test_ticked_route_stays_ticked_across_subversions(db):
     copied_route = crud.get_voies(db, None, revision.id)[0]
     assert copied_route.source_voie_id == source_route.id
 
-    crud.activate_versionvoie(db, revision.id)
+    crud.update_versionvoie_dates(db, revision.id, datetime(2026, 1, 1), None)
     assert copied_route.id in crud.get_palmares(db, user)
     coverage = crud.compute_dashboard_coverage(db, user)
     assert coverage["coverage"] == 1

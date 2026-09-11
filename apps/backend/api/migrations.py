@@ -34,22 +34,29 @@ def _apply_legacy_fixes() -> None:
 
         if "versionvoie" in tables:
             version_columns = {column["name"] for column in inspector.get_columns("versionvoie")}
-            if "active" not in version_columns:
-                connection.execute(text("ALTER TABLE versionvoie ADD COLUMN active BOOLEAN NOT NULL DEFAULT FALSE"))
             if "parent_version_id" not in version_columns:
                 connection.execute(text("ALTER TABLE versionvoie ADD COLUMN parent_version_id INTEGER REFERENCES versionvoie(id)"))
             if "subversion" not in version_columns:
                 connection.execute(text("ALTER TABLE versionvoie ADD COLUMN subversion INTEGER NOT NULL DEFAULT 0"))
-            has_active_version = connection.execute(
-                text("SELECT 1 FROM versionvoie WHERE active = TRUE LIMIT 1")
-            ).first()
-            if not has_active_version:
-                connection.execute(
-                    text(
-                        "UPDATE versionvoie SET active = TRUE "
-                        "WHERE id = (SELECT id FROM versionvoie ORDER BY date DESC, id DESC LIMIT 1)"
+            if "end_date" not in version_columns:
+                connection.execute(text("ALTER TABLE versionvoie ADD COLUMN end_date TIMESTAMP NULL"))
+                # Reconstruct validity periods the same way c3d8f61a94b7 does:
+                # each version stays valid until the next one starts, the
+                # active one (if the legacy column exists) remains open.
+                selected_columns = "id, date, active" if "active" in version_columns else "id, date"
+                rows = connection.execute(
+                    text(f"SELECT {selected_columns} FROM versionvoie ORDER BY date ASC, id ASC")
+                ).fetchall()
+                has_active_column = "active" in version_columns
+                for index, row in enumerate(rows):
+                    if (has_active_column and row.active) or index + 1 >= len(rows):
+                        end_date = None
+                    else:
+                        end_date = rows[index + 1].date
+                    connection.execute(
+                        text("UPDATE versionvoie SET end_date = :end_date WHERE id = :version_id"),
+                        {"end_date": end_date, "version_id": row.id},
                     )
-                )
 
         if "voie" in tables and "source_voie_id" not in {column["name"] for column in inspector.get_columns("voie")}:
             connection.execute(text("ALTER TABLE voie ADD COLUMN source_voie_id INTEGER REFERENCES voie(id)"))

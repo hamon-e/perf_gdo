@@ -170,13 +170,12 @@ def populate():
                     db.add(models.Couloir(id=lane_id, type_id=route_type.id))
         db.commit()
 
-        latest_version = None
-        created = False
+        created_versions = []
         for topo_date, lanes in TOPOS:
             version_date = datetime.combine(topo_date, time.min)
             version = db.query(models.VersionVoie).filter(models.VersionVoie.date == version_date).first()
             if not version:
-                version = models.VersionVoie(date=version_date, active=False)
+                version = models.VersionVoie(date=version_date, end_date=None)
                 db.add(version)
                 db.flush()
                 for lane, routes in lanes.items():
@@ -188,18 +187,16 @@ def populate():
                             active=True,
                             versionvoie_id=version.id,
                         ))
-                created = True
-            latest_version = version
+                created_versions.append(version)
         db.commit()
 
-        # Point the wall at the most recent imported topo, without touching
-        # versions already managed through the application afterwards.
-        if created and latest_version:
-            db.query(models.VersionVoie).filter(models.VersionVoie.id != latest_version.id).update(
-                {models.VersionVoie.active: False}, synchronize_session=False
-            )
-            latest_version.active = True
-            db.commit()
+        # A freshly imported topo stays valid until the next imported one; the
+        # most recent remains open-ended, versions managed through the app are
+        # left untouched.
+        for version, next_version in zip(created_versions, created_versions[1:]):
+            if version.end_date is None:
+                version.end_date = next_version.date
+        db.commit()
     finally:
         db.close()
 
