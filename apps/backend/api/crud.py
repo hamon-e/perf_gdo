@@ -23,6 +23,48 @@ def get_users(db: Session):
 def get_user_groups(db: Session):
     return db.query(models.UserGroup).order_by(models.UserGroup.name).all()
 
+def create_user_group(db: Session, name: str):
+    name = name.strip()
+    if not name:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Le nom du groupe ne peut pas être vide.",
+        )
+    if db.query(models.UserGroup).filter(models.UserGroup.name.ilike(name)).first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Un groupe portant ce nom existe déjà.",
+        )
+    group = models.UserGroup(name=name)
+    db.add(group)
+    db.commit()
+    db.refresh(group)
+    return group
+
+def rename_user_group(db: Session, group_id: int, name: str):
+    name = name.strip()
+    if not name:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Le nom du groupe ne peut pas être vide.",
+        )
+    group = db.query(models.UserGroup).filter(models.UserGroup.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Groupe introuvable.")
+    duplicate = db.query(models.UserGroup).filter(
+        models.UserGroup.id != group_id,
+        models.UserGroup.name.ilike(name),
+    ).first()
+    if duplicate:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Un groupe portant ce nom existe déjà.",
+        )
+    group.name = name
+    db.commit()
+    db.refresh(group)
+    return group
+
 def get_user_by_id(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 

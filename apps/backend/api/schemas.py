@@ -30,6 +30,10 @@ class UserGroup(Schema):
     name: str
 
 
+class UserGroupName(Schema):
+    name: str
+
+
 class User(Schema):
     id: Optional[int] = None
     name: str

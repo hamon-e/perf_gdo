@@ -77,6 +77,14 @@ async def signup(user_info: schemas.UserSignUp, db: Session = Depends(get_db)):
 async def read_user_groups(db: Session = Depends(get_db)):
     return crud.get_user_groups(db)
 
+@router.post("/user-groups", response_model=schemas.UserGroup, status_code=status.HTTP_201_CREATED)
+async def create_user_group(group: schemas.UserGroupName, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    return crud.create_user_group(db, group.name)
+
+@router.put("/user-groups/{group_id}", response_model=schemas.UserGroup)
+async def update_user_group(group_id: int, group: schemas.UserGroupName, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    return crud.rename_user_group(db, group_id, group.name)
+
 @router.post("/token", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = crud.authenticate_user(db, form_data.username, form_data.password)
