@@ -169,6 +169,13 @@ class UserSeance(Schema):
     voie: Optional[Voie] = None
 
 
+class VoieHistory(Schema):
+    voie: Voie
+    total_attempts: int
+    total_tops: int
+    sessions: List[UserSeance]
+
+
 class Contest(Schema):
     id: Optional[int] = None
     name: str

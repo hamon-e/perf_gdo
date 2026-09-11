@@ -244,6 +244,13 @@ async def post_crenau(crenau: schemas.Crenau, current_user: schemas.User = Depen
 async def get_userseance(date: date, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return crud.get_userseance(db, current_user, date)
 
+@router.get("/voie/{voie_id}/userseance", response_model=schemas.VoieHistory)
+async def get_voie_history(voie_id: int, current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    history = crud.get_voie_history(db, current_user, voie_id)
+    if not history:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Voie introuvable")
+    return history
+
 @router.get("/palmares", response_model=List[int])
 async def get_palmares(current_user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     return crud.get_palmares(db, current_user)

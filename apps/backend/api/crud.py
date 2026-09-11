@@ -515,6 +515,44 @@ def get_userseance_days_for_user(db: Session, user_id: int, date: date):
     ).distinct().all()
     return [entry.date for entry in entries]
 
+def get_voie_lineage_ids(db: Session, voie_id: int):
+    """Ids of the route, its unchanged ancestors and its copied descendants."""
+    lineage = [voie_id]
+    cursor = db.query(models.Voie.source_voie_id).filter(models.Voie.id == voie_id).scalar()
+    while cursor is not None and cursor not in lineage:
+        lineage.append(cursor)
+        cursor = db.query(models.Voie.source_voie_id).filter(models.Voie.id == cursor).scalar()
+    pending = [voie_id]
+    while pending:
+        children = db.query(models.Voie.id).filter(
+            models.Voie.source_voie_id.in_(pending),
+            models.Voie.id.notin_(lineage),
+        ).all()
+        pending = [child.id for child in children]
+        lineage.extend(pending)
+    return lineage
+
+
+def get_voie_history(db: Session, current_user: schemas.User, voie_id: int):
+    voie = db.query(models.Voie).filter(models.Voie.id == voie_id).first()
+    if not voie:
+        return None
+    sessions = (
+        db.query(models.UserSeance)
+        .filter(
+            models.UserSeance.user_id == current_user.id,
+            models.UserSeance.voie_id.in_(get_voie_lineage_ids(db, voie_id)),
+        )
+        .order_by(models.UserSeance.date.desc(), models.UserSeance.id.desc())
+        .all()
+    )
+    return {
+        "voie": voie,
+        "total_attempts": len(sessions),
+        "total_tops": sum(1 for session in sessions if session.top == 100),
+        "sessions": sessions,
+    }
+
 def post_userseance(db: Session, current_user: schemas.User, userseance: schemas.UserSeance):
     tmp = userseance.model_dump()
     del tmp['id']
