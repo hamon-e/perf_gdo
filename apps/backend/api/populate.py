@@ -5,7 +5,7 @@ import os
 
 from . import crud, models
 from .db import SessionLocal
-from .main import ensure_database_schema
+from .migrations import run_migrations
 
 
 # Numeric encoding of the french grades, as used by the frontend and the topo PDF.
@@ -130,7 +130,7 @@ def grade_to_difficulty(grade):
 
 
 def populate():
-    ensure_database_schema()
+    run_migrations()
     db = SessionLocal()
     try:
         roles = ((0, "admin"), (1, "basic"))
