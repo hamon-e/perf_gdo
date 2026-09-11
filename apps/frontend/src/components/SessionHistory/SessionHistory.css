@@ -32,8 +32,16 @@
     padding: 0.35rem 0.55rem;
   }
 
+  .fc .fc-daygrid-day.has-session {
+    background-color: #1f6b45;
+  }
+
+  .fc .fc-daygrid-day.has-session .fc-daygrid-day-number {
+    color: #ffffff;
+    font-weight: 750;
+  }
+
   .fc .fc-daygrid-event {
-    white-space: normal;
-    font-size: 0.7rem;
+    display: none;
   }
 }
