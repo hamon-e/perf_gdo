@@ -4,7 +4,7 @@ import { useHistory } from 'react-router-dom';
 
 import { ACCESS_TOKEN_NAME, API_BASE_URL } from '../../constants/apiConstants';
 import { useContextObject } from '../Context/Context';
-import './Products.css';
+import './SessionHistory.css';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';

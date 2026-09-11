@@ -1,6 +1,6 @@
 import React,{ useEffect, useState } from 'react';
 import { withRouter } from 'react-router-dom';
-import { ACCESS_TOKEN_NAME, API_BASE_URL, RESTAURANT_ID } from '../../constants/apiConstants';
+import { ACCESS_TOKEN_NAME, API_BASE_URL } from '../../constants/apiConstants';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import './Annotate.css';
@@ -93,8 +93,8 @@ var g_voies = [];
 
 
 
-function Products(props) {
-    const {isAdminHook, userHook, restaurantHook, headerTitleHook, openHook} = useContextObject();
+function SessionLogger(props) {
+    const {isAdminHook, userHook, headerTitleHook, openHook} = useContextObject();
     const [headerTitle, setHeaderTitle] = headerTitleHook;
 
     const [selectedDifficulty, setSelectedDifficulty] = React.useState(0);
@@ -669,7 +669,7 @@ function Products(props) {
 
     //<img src="https://lesgdo.org/photo/hdv/M6c6df169982e9963e49c.png" style={{ 'max-width': '100%', height: 'auto'}}/>
     return(
-        <div className="productpage">
+        <div className="session-page">
 
             <Dialog
                 open={open}
@@ -934,4 +934,4 @@ function Products(props) {
     )
 }
 
-export default withRouter(Products);
+export default withRouter(SessionLogger);

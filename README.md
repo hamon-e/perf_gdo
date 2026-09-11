@@ -249,8 +249,6 @@ Authorization: Bearer <token>
 - les dépendances frontend sont anciennes et contiennent encore plusieurs
   bibliothèques héritées ;
 - la couverture de tests reste limitée aux parcours critiques récents ;
-- certains écrans et noms (`Restaurant`, `Product`, `Trayvisor`) proviennent de
-  l'ancien projet et ne font plus partie du parcours principal ;
 - plusieurs règles métier et coordonnées du mur sont codées directement dans
   les composants ;
 - les jetons sont encore stockés dans `localStorage` et le module public de
@@ -261,7 +259,7 @@ Authorization: Bearer <token>
 1. Ajouter une suite de tests métier/API et des parcours end-to-end critiques.
 2. Migrer progressivement le frontend vers TypeScript et découper les gros
    composants.
-3. Nettoyer les composants et dépendances hérités de l'ancien produit.
+3. Auditer et retirer progressivement les dépendances frontend héritées.
 4. Migrer l'authentification vers des cookies sécurisés avec rotation des jetons.
 
 ### Roadmap produit et interface
