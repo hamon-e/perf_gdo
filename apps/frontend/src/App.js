@@ -69,8 +69,8 @@ const Main = styled('main', { shouldForwardProp: (prop) => !['drawerOpen', 'desk
 }) => ({
   flexGrow: 1,
   minWidth: 0,
-  minHeight: '100vh',
-  paddingBottom: desktop ? 0 : 72,
+  minHeight: ['100vh', '100dvh'],
+  paddingBottom: !desktop && navigationVisible ? 72 : 0,
   backgroundColor: '#f6f7fb',
   transition: theme.transitions.create('margin-left'),
   marginLeft: desktop && navigationVisible ? (drawerOpen ? 0 : -drawerWidth) : 0,
@@ -181,7 +181,7 @@ function AppShell() {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', minHeight: ['100vh', '100dvh'] }}>
       <CssBaseline />
       {showBar && (
         <AppBar position="fixed" drawerOpen={open} desktop={desktop}>
