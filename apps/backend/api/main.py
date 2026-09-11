@@ -20,6 +20,13 @@ def ensure_database_schema():
     """Create new tables and apply the small additive upgrade used by this app."""
     models.Base.metadata.create_all(bind=engine)
     inspector = inspect(engine)
+    for table_name in ("userseance", "voie"):
+        if table_name not in inspector.get_table_names():
+            continue
+        existing_indexes = {index["name"] for index in inspector.get_indexes(table_name)}
+        for index in models.Base.metadata.tables[table_name].indexes:
+            if index.name not in existing_indexes:
+                index.create(engine)
     if "user" in inspector.get_table_names() and "group_id" not in {column["name"] for column in inspector.get_columns("user")}:
         with engine.begin() as connection:
             connection.execute(text('ALTER TABLE "user" ADD COLUMN group_id INTEGER REFERENCES usergroup(id)'))
