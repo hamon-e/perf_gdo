@@ -44,7 +44,7 @@ jobs:
         run: |
           pnpm --dir apps/frontend install --frozen-lockfile
           CI=true NODE_OPTIONS=--openssl-legacy-provider \
-            pnpm --dir apps/frontend test --watchAll=false
+            pnpm --dir apps/frontend test
 
   build-push:
     needs: test
