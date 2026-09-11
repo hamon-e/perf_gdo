@@ -15,8 +15,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import HistoryIcon from '@mui/icons-material/History';
-import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
@@ -32,7 +30,6 @@ import PrivateRoute from './utils/PrivateRoute';
 import Header from './components/Header/Header';
 import LoginForm from './components/LoginForm/LoginForm';
 import SessionHistory from './components/SessionHistory/SessionHistory';
-import Menus from './components/Menus/Menus';
 import Users from './components/Users/Users';
 import UserGroups from './components/UserGroups/UserGroups';
 import Accueil from './components/Accueil/Accueil.js';
@@ -41,7 +38,6 @@ import ListVoie from './components/ListVoie/ListVoie';
 import WallAnalysis from './components/WallAnalysis/WallAnalysis';
 import SignUpForm from './components/SignUpForm/SignUpForm';
 import Home from './components/Home/Home';
-import Palmares from './components/Palmares/Palmares';
 import Contest from './components/Contest/Contest';
 import ContestRes from './components/Contest/ContestRes';
 import CreateContest from './components/CreateContest/CreateContest';
@@ -94,8 +90,6 @@ const memberItems = [
   { label: 'Accueil', path: '/dashboard', icon: HomeOutlinedIcon },
   { label: 'Séance', path: '/home', icon: AddCircleOutlineIcon },
   { label: 'Historique', path: '/historique', icon: HistoryIcon },
-  { label: 'Progrès', path: '/maprogression', icon: TrendingUpIcon },
-  { label: 'Palmarès', path: '/palmares', icon: EmojiEventsOutlinedIcon },
 ];
 
 const adminMenuItems = [
@@ -245,12 +239,10 @@ function AppShell() {
             <Route path="/accueil"><Accueil /></Route>
             <PrivateRoute path="/home"><Annotate /></PrivateRoute>
             <PrivateRoute path="/dashboard"><Home /></PrivateRoute>
-            <PrivateRoute path="/maprogression"><Menus /></PrivateRoute>
             <PrivateRoute path="/maseance"><Redirect to="/home" /></PrivateRoute>
             <PrivateRoute path="/listevoies"><ListVoie /></PrivateRoute>
             <PrivateRoute path="/analyse-mur"><WallAnalysis /></PrivateRoute>
             <PrivateRoute path="/historique"><SessionHistory /></PrivateRoute>
-            <PrivateRoute path="/palmares"><Palmares /></PrivateRoute>
             <PrivateRoute path="/users"><Users /></PrivateRoute>
             <PrivateRoute path="/user-groups"><UserGroups /></PrivateRoute>
             <Route><Redirect to="/dashboard" /></Route>
