@@ -69,6 +69,29 @@ def test_progression_uses_real_session_data(db):
     assert current_month["lead_ratio"] == 0.5
 
 
+def test_active_wall_version_controls_default_routes(db):
+    first_version = crud.post_versionvoie(db, datetime(2026, 1, 1))
+    second_version = crud.post_versionvoie(db, datetime(2026, 2, 1))
+    route_type = models.CouloirType(name="Dalle")
+    db.add(route_type)
+    db.commit()
+    couloir = models.Couloir(type_id=route_type.id)
+    db.add(couloir)
+    db.commit()
+    first_route = models.Voie(couloir_id=couloir.id, color="#ff0000", difficulty=5.0, active=True, versionvoie_id=first_version.id)
+    second_route = models.Voie(couloir_id=couloir.id, color="#00ff00", difficulty=6.0, active=True, versionvoie_id=second_version.id)
+    db.add_all([first_route, second_route])
+    db.commit()
+
+    assert first_version.active is True
+    assert second_version.active is False
+    assert [route.id for route in crud.get_voies(db, None, -1)] == [first_route.id]
+
+    assert crud.activate_versionvoie(db, second_version.id) is True
+    assert [route.id for route in crud.get_voies(db, None, -1)] == [second_route.id]
+    assert db.query(models.VersionVoie).filter(models.VersionVoie.active.is_(True)).count() == 1
+
+
 def test_user_cannot_delete_another_users_entry(db):
     owner = create_user(db, "owner@example.com")
     another_user = create_user(db, "another@example.com")

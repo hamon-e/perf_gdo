@@ -122,12 +122,13 @@ export default function ListVoie() {
     }
   };
 
-  const loadVersions = async () => {
+  const loadVersions = async (preferredVersionId = null) => {
     setLoading(true);
     try {
       const response = await axios.get(`${API_BASE_URL}/versionvoie`, authorization());
       setVersions(response.data);
-      const nextVersion = response.data[0]?.id || '';
+      const preferredVersion = response.data.find((version) => Number(version.id) === Number(preferredVersionId));
+      const nextVersion = preferredVersion?.id || response.data.find((version) => version.active)?.id || response.data[0]?.id || '';
       setSelectedVersion(nextVersion);
       await loadRoutes(nextVersion);
     } catch (error) {
@@ -204,11 +205,11 @@ export default function ListVoie() {
   };
 
   const createVersion = async () => {
-    if (!window.confirm('Créer une nouvelle version vide du mur ?')) return;
+    if (!window.confirm('Créer une nouvelle version vide du mur ? Vous pourrez l’activer une fois prête.')) return;
     setSaving(true);
     try {
-      await axios.post(`${API_BASE_URL}/versionvoie`, { date: new Date().toISOString() }, authorization());
-      await loadVersions();
+      const response = await axios.post(`${API_BASE_URL}/versionvoie`, { date: new Date().toISOString() }, authorization());
+      await loadVersions(response.data.id);
     } catch (error) {
       showError(error, 'Impossible de créer une version.');
     } finally {
@@ -216,7 +217,22 @@ export default function ListVoie() {
     }
   };
 
+  const activateSelectedVersion = async () => {
+    if (!selectedVersion || selectedVersionIsActive) return;
+    if (!window.confirm('Activer cette version du mur pour tous les adhérents ?')) return;
+    setSaving(true);
+    try {
+      await axios.patch(`${API_BASE_URL}/versionvoie/${selectedVersion}/active`, {}, authorization());
+      await loadVersions();
+    } catch (error) {
+      showError(error, "Impossible d'activer cette version.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const laneCount = new Set(routes.map((route) => route.couloir_id)).size;
+  const selectedVersionIsActive = versions.some((version) => Number(version.id) === Number(selectedVersion) && version.active);
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1240, mx: 'auto', p: { xs: 2, md: 4 } }}>
@@ -227,6 +243,7 @@ export default function ListVoie() {
         </Box>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <Button variant="outlined" startIcon={<AccountTreeOutlinedIcon />} onClick={createVersion} disabled={saving}>Nouvelle version</Button>
+          <Button variant="outlined" color="success" onClick={activateSelectedVersion} disabled={!selectedVersion || selectedVersionIsActive || saving}>Activer cette version</Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} disabled={!selectedVersion} sx={{ backgroundColor: '#1f6b45' }}>Ajouter une voie</Button>
         </Stack>
       </Stack>
@@ -250,7 +267,11 @@ export default function ListVoie() {
             onChange={(event) => { setSelectedVersion(event.target.value); loadRoutes(event.target.value); }}
             sx={{ minWidth: 220 }}
           >
-            {versions.map((version) => <MenuItem key={version.id} value={version.id}>{versionLabel(version)}</MenuItem>)}
+            {versions.map((version) => (
+              <MenuItem key={version.id} value={version.id}>
+                {versionLabel(version)}{version.active ? ' · Active' : ''}
+              </MenuItem>
+            ))}
           </TextField>
           <TextField
             placeholder="Couloir, secteur, cotation ou couleur"

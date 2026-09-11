@@ -80,6 +80,7 @@ class ProgressionPoint(Schema):
 class VersionVoie(Schema):
     id: Optional[int] = None
     date: datetime
+    active: bool = False
 
 
 class CouloirType(Schema):
