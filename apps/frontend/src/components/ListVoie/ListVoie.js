@@ -26,6 +26,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import TableSortLabel from '@mui/material/TableSortLabel';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -125,7 +126,8 @@ export default function ListVoie() {
   const [routes, setRoutes] = useState([]);
   const [search, setSearch] = useState('');
   const [sectorFilter, setSectorFilter] = useState('');
-  const [laneOrder, setLaneOrder] = useState('');
+  const [sortField, setSortField] = useState('couloir_id');
+  const [sortDirection, setSortDirection] = useState('asc');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -197,11 +199,23 @@ export default function ListVoie() {
       ].join(' ').toLowerCase().includes(query));
     }
     if (sectorFilter) result = result.filter((route) => sectorForLane(route.couloir_id) === sectorFilter);
-    if (laneOrder) {
-      result = [...result].sort((a, b) => (laneOrder === 'asc' ? a.couloir_id - b.couloir_id : b.couloir_id - a.couloir_id));
-    }
+    const direction = sortDirection === 'asc' ? 1 : -1;
+    result = [...result].sort((a, b) => {
+      if (sortField === 'difficulty') return direction * (a.difficulty - b.difficulty || a.couloir_id - b.couloir_id);
+      if (sortField === 'sector') return direction * (sectorForLane(a.couloir_id).localeCompare(sectorForLane(b.couloir_id), 'fr') || a.couloir_id - b.couloir_id);
+      return direction * (a.couloir_id - b.couloir_id);
+    });
     return result;
-  }, [routes, search, sectorFilter, laneOrder]);
+  }, [routes, search, sectorFilter, sortField, sortDirection]);
+
+  const toggleSort = (field) => {
+    if (sortField === field) {
+      setSortDirection((direction) => (direction === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
 
   const colorOptions = useMemo(() => {
     const seen = new Set();
@@ -398,18 +412,6 @@ export default function ListVoie() {
             <MenuItem value="">Tous les secteurs</MenuItem>
             {SECTORS.map((sector) => <MenuItem key={sector} value={sector}>{sector}</MenuItem>)}
           </TextField>
-          <TextField
-            select
-            label="Ordre par couloir"
-            size="small"
-            value={laneOrder}
-            onChange={(event) => setLaneOrder(event.target.value)}
-            sx={{ minWidth: 180 }}
-          >
-            <MenuItem value="">Défaut</MenuItem>
-            <MenuItem value="asc">Couloir croissant</MenuItem>
-            <MenuItem value="desc">Couloir décroissant</MenuItem>
-          </TextField>
         </Stack>
 
         {loading ? (
@@ -425,10 +427,16 @@ export default function ListVoie() {
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#f8faf9' }}>
-                  <TableCell>Voie</TableCell>
-                  <TableCell>Couloir</TableCell>
-                  <TableCell>Secteur</TableCell>
-                  <TableCell>Cotation</TableCell>
+                  <TableCell>Couleur</TableCell>
+                  <TableCell sortDirection={sortField === 'couloir_id' ? sortDirection : false}>
+                    <TableSortLabel active={sortField === 'couloir_id'} direction={sortField === 'couloir_id' ? sortDirection : 'asc'} onClick={() => toggleSort('couloir_id')}>Couloir</TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortField === 'sector' ? sortDirection : false}>
+                    <TableSortLabel active={sortField === 'sector'} direction={sortField === 'sector' ? sortDirection : 'asc'} onClick={() => toggleSort('sector')}>Secteur</TableSortLabel>
+                  </TableCell>
+                  <TableCell sortDirection={sortField === 'difficulty' ? sortDirection : false}>
+                    <TableSortLabel active={sortField === 'difficulty'} direction={sortField === 'difficulty' ? sortDirection : 'asc'} onClick={() => toggleSort('difficulty')}>Cotation</TableSortLabel>
+                  </TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -436,12 +444,9 @@ export default function ListVoie() {
                 {filteredRoutes.map((route) => (
                   <TableRow key={route.id} hover>
                     <TableCell>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Box sx={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: route.color, border: '2px solid white', boxShadow: '0 0 0 1px rgba(0,0,0,.2)' }} />
-                        <Typography sx={{ fontWeight: 700 }}>#{route.id}</Typography>
-                      </Stack>
+                      <Box sx={{ width: 22, height: 22, borderRadius: '50%', backgroundColor: route.color, border: '2px solid white', boxShadow: '0 0 0 1px rgba(0,0,0,.2)' }} />
                     </TableCell>
-                    <TableCell><Chip size="small" label={`N° ${route.couloir_id}`} /></TableCell>
+                    <TableCell><Chip size="small" label={route.couloir_id} /></TableCell>
                     <TableCell>{sectorForLane(route.couloir_id)}</TableCell>
                     <TableCell><Typography sx={{ fontWeight: 800, color: '#1f6b45' }}>{formatDifficulty(route.difficulty)}</Typography></TableCell>
                     <TableCell align="right">
