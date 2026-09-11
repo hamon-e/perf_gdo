@@ -106,6 +106,20 @@ test('takes the actual top edge for steep lanes', () => {
   expect(Number(end.getAttribute('cy'))).toBeLessThan(110);
 });
 
+test('centres lane one routes on its sloped top edge', () => {
+  const { container } = render(
+    <WallTopo
+      areas={[laneOne]}
+      routes={[routes[0]]}
+      coordinateScale={1}
+      onLaneClick={jest.fn()}
+    />,
+  );
+
+  const end = container.querySelectorAll('.wall-topo__endpoint')[1];
+  expect(Number(end.getAttribute('cx'))).toBeGreaterThan(200);
+});
+
 test('still opens the lane record on lane click', () => {
   const onLaneClick = jest.fn();
   render(

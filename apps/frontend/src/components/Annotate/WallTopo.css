@@ -78,8 +78,9 @@
 }
 
 .wall-topo__lane-hit:hover {
-  fill: rgba(31, 107, 69, 0.28);
-  stroke: #1f6b45;
+  fill: rgba(31, 107, 69, 0.48);
+  stroke: #0d4b2d;
+  stroke-width: 8;
 }
 
 .wall-topo__route-line,

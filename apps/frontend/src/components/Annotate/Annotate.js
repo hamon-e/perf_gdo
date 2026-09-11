@@ -110,7 +110,7 @@ function Products(props) {
     const [selectedDate, setSelectedDate] = React.useState(new Date())
 
     const [voies, setVoies] = React.useState([]);
-    const [routeGradeRange, setRouteGradeRange] = React.useState([0, 10]);
+    const [routeGradeRange, setRouteGradeRange] = React.useState([0, 0]);
 
     const [openMenu, setOpenMenu] = openHook;
     const [open, setOpen] = React.useState(false);
@@ -524,7 +524,8 @@ function Products(props) {
         await setVoies(response.data)
         const difficulties = response.data.map((route) => route.difficulty)
         if (difficulties.length) {
-            setRouteGradeRange([Math.min(...difficulties), Math.max(...difficulties)])
+            const uniqueDifficulties = [...new Set(difficulties)].sort((first, second) => first - second)
+            setRouteGradeRange([0, uniqueDifficulties.length - 1])
         }
         g_voies = response.data
     }
@@ -673,9 +674,15 @@ function Products(props) {
 
     const gradeOptions = [...new Set(voies.map((route) => route.difficulty))]
         .sort((first, second) => first - second);
+    const minimumDifficulty = gradeOptions[routeGradeRange[0]];
+    const maximumDifficulty = gradeOptions[routeGradeRange[1]];
     const displayedRoutes = voies.filter((route) => (
-        route.difficulty >= routeGradeRange[0] && route.difficulty <= routeGradeRange[1]
+        route.difficulty >= minimumDifficulty && route.difficulty <= maximumDifficulty
     ));
+    const gradeMarks = gradeOptions
+        .map((difficulty, index) => ({ difficulty, index }))
+        .filter(({ difficulty }) => Number.isInteger(difficulty))
+        .map(({ difficulty, index }) => ({ value: index, label: String(difficulty) }));
 
 
     //<img src="https://lesgdo.org/photo/hdv/M6c6df169982e9963e49c.png" style={{ 'max-width': '100%', height: 'auto'}}/>
@@ -887,18 +894,18 @@ function Products(props) {
                         <Grid item xs={12} sm={6}>
                             <Box sx={{ px: 1, pt: .5 }}>
                                 <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
-                                    Cotations affichées : {difficultyFormat(routeGradeRange[0])} à {difficultyFormat(routeGradeRange[1])}
+                                    Cotations affichées : {difficultyFormat(minimumDifficulty || 0)} à {difficultyFormat(maximumDifficulty || 0)}
                                 </Typography>
                                 <Slider
                                     aria-label="Plage de cotations affichées"
                                     value={routeGradeRange}
                                     onChange={(_event, value) => setRouteGradeRange(value)}
-                                    min={gradeOptions[0] || 0}
-                                    max={gradeOptions[gradeOptions.length - 1] || 10}
-                                    step={null}
-                                    marks={gradeOptions.map((difficulty) => ({ value: difficulty, label: difficultyFormat(difficulty) }))}
+                                    min={0}
+                                    max={Math.max(gradeOptions.length - 1, 0)}
+                                    step={1}
+                                    marks={gradeMarks}
                                     valueLabelDisplay="auto"
-                                    valueLabelFormat={difficultyFormat}
+                                    valueLabelFormat={(index) => difficultyFormat(gradeOptions[index] || 0)}
                                     disableSwap
                                 />
                             </Box>
