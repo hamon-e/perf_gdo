@@ -164,15 +164,20 @@ test('single finger drag pans the wall while zoomed', () => {
 
   fireEvent.click(screen.getByLabelText('Zoomer'));
   const viewport = container.querySelector('.wall-topo-viewport');
+  const content = container.querySelector('.wall-topo');
+  Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 300 });
+  Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: 300 });
+  Object.defineProperty(content, 'offsetWidth', { configurable: true, value: 820 });
+  Object.defineProperty(content, 'offsetHeight', { configurable: true, value: 500 });
   const fireTouch = (type, points) => {
     const event = new Event(type);
     event.touches = points.map(([x, y]) => ({ clientX: x, clientY: y }));
     fireEvent(viewport, event);
   };
 
-  fireTouch('touchstart', [[0, 0]]);
-  fireTouch('touchmove', [[0, 0]]);
+  fireTouch('touchstart', [[100, 100]]);
+  fireTouch('touchmove', [[50, 50]]);
   fireTouch('touchend', []);
 
-  expect(container.querySelector('.wall-topo').style.transform).toBe('translate(0px, 0px) scale(1.5)');
+  expect(content.style.transform).toBe('translate(-87.5px, -87.5px) scale(1.5)');
 });
