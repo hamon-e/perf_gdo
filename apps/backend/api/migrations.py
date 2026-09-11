@@ -54,6 +54,20 @@ def _apply_legacy_fixes() -> None:
         if "voie" in tables and "source_voie_id" not in {column["name"] for column in inspector.get_columns("voie")}:
             connection.execute(text("ALTER TABLE voie ADD COLUMN source_voie_id INTEGER REFERENCES voie(id)"))
 
+        # Databases stamped past head never run eaeefbb999a2, so create its
+        # indexes here as well (idempotent).
+        for table_name in ("userseance", "voie"):
+            if table_name not in tables:
+                continue
+            existing_indexes = {index["name"] for index in inspector.get_indexes(table_name)}
+            wanted_indexes = {
+                "userseance": [("ix_userseance_user_id_date", ["user_id", "date"]), ("ix_userseance_voie_id", ["voie_id"])],
+                "voie": [("ix_voie_versionvoie_id", ["versionvoie_id"])],
+            }
+            for index_name, columns in wanted_indexes[table_name]:
+                if index_name not in existing_indexes:
+                    connection.execute(text(f'CREATE INDEX {index_name} ON {table_name} ({", ".join(columns)})'))
+
 
 def run_migrations() -> None:
     """Bring the database schema up to date with the migration history."""

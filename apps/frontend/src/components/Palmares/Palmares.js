@@ -335,8 +335,7 @@ function Palmares(props) {
 
     useEffect(() => {
         async function start() {
-            await refreshVoie()
-            await getPalmares()
+            await Promise.all([refreshVoie(), getPalmares()])
         }
         start()
         setHeaderTitle("Palmares")

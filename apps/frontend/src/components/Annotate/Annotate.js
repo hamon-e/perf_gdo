@@ -628,9 +628,7 @@ function Products(props) {
 
     useEffect(() => {
         async function start() {
-            await refreshVoie()
-            await refreshInsertedRoutes()
-            await getDays()
+            await Promise.all([refreshVoie(), refreshInsertedRoutes(), getDays()])
         }
         start()
         setHeaderTitle("Ma séance")

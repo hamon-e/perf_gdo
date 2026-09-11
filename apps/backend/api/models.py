@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime, Float
+from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String, DateTime, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects import postgresql
 
@@ -94,7 +94,7 @@ class Voie(Base):
     difficulty = Column(Float)
     active = Column(Boolean)
 
-    versionvoie_id = Column(Integer, ForeignKey("versionvoie.id"))
+    versionvoie_id = Column(Integer, ForeignKey("versionvoie.id"), index=True)
     source_voie_id = Column(Integer, ForeignKey("voie.id"), nullable=True)
 
 class UserSeance(Base):
@@ -103,11 +103,15 @@ class UserSeance(Base):
     id = Column(Integer, primary_key=True, index=True)
     date = Column(DateTime)
     user_id = Column(Integer, ForeignKey("user.id"))
-    voie_id = Column(Integer, ForeignKey("voie.id"))
+    voie_id = Column(Integer, ForeignKey("voie.id"), index=True)
     voie = relationship('Voie')
     en_tete = Column(Boolean)
     top = Column(Integer)
     pause = Column(Integer)
+
+    __table_args__ = (
+        Index("ix_userseance_user_id_date", "user_id", "date"),
+    )
 
 class CrenauType(Base):
     __tablename__ = "crenautype"
