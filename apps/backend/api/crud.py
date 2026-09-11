@@ -68,6 +68,19 @@ def rename_user_group(db: Session, group_id: int, name: str):
 def get_user_by_id(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
+def assign_user_group(db: Session, user_id: int, group_id: Optional[int]):
+    user = get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Utilisateur introuvable.")
+    if group_id is not None:
+        group = db.query(models.UserGroup).filter(models.UserGroup.id == group_id).first()
+        if not group:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Groupe introuvable.")
+    user.group_id = group_id
+    db.commit()
+    db.refresh(user)
+    return user
+
 def new_user(db: Session, user: schemas.User):
     tmp = user.model_dump()
     del tmp['category']
