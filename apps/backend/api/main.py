@@ -27,6 +27,16 @@ def ensure_database_schema():
         with engine.begin() as connection:
             connection.execute(text('ALTER TABLE versionvoie ADD COLUMN active BOOLEAN NOT NULL DEFAULT FALSE'))
     if "versionvoie" in inspector.get_table_names():
+        version_columns = {column["name"] for column in inspector.get_columns("versionvoie")}
+        with engine.begin() as connection:
+            if "parent_version_id" not in version_columns:
+                connection.execute(text('ALTER TABLE versionvoie ADD COLUMN parent_version_id INTEGER REFERENCES versionvoie(id)'))
+            if "subversion" not in version_columns:
+                connection.execute(text('ALTER TABLE versionvoie ADD COLUMN subversion INTEGER NOT NULL DEFAULT 0'))
+    if "voie" in inspector.get_table_names() and "source_voie_id" not in {column["name"] for column in inspector.get_columns("voie")}:
+        with engine.begin() as connection:
+            connection.execute(text('ALTER TABLE voie ADD COLUMN source_voie_id INTEGER REFERENCES voie(id)'))
+    if "versionvoie" in inspector.get_table_names():
         with engine.begin() as connection:
             has_active_version = connection.execute(text('SELECT 1 FROM versionvoie WHERE active = TRUE LIMIT 1')).first()
             if not has_active_version:
@@ -156,6 +166,13 @@ async def get_versionvoie(current_user: schemas.User = Depends(get_current_user)
 @router.post("/versionvoie", response_model=schemas.VersionVoie)
 async def post_versionvoie(date: schemas.VersionVoie, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
     return crud.post_versionvoie(db, date.date)
+
+@router.post("/versionvoie/{version_id}/subversion", response_model=schemas.VersionVoie)
+async def post_subversionvoie(version_id: int, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):
+    version = crud.post_subversionvoie(db, version_id)
+    if not version:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Version du mur introuvable")
+    return version
 
 @router.patch("/versionvoie/{version_id}/active", response_model=bool)
 async def activate_versionvoie(version_id: int, current_user: schemas.User = Depends(get_current_admin), db: Session = Depends(get_db)):

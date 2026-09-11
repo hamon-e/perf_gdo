@@ -108,7 +108,8 @@ function sectorForLane(lane) {
 }
 
 function versionLabel(version) {
-  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(version.date));
+  const date = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(version.date));
+  return `${date} · v1${version.subversion ? `.${version.subversion}` : ''}`;
 }
 
 export default function ListVoie() {
@@ -266,6 +267,20 @@ export default function ListVoie() {
     }
   };
 
+  const createSubversion = async () => {
+    if (!selectedVersion) return;
+    if (!window.confirm('Créer une sous-version à partir de celle-ci ? Toutes les voies seront reprises et pourront être modifiées séparément.')) return;
+    setSaving(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/versionvoie/${selectedVersion}/subversion`, {}, authorization());
+      await loadVersions(response.data.id);
+    } catch (error) {
+      showError(error, 'Impossible de créer la sous-version.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const downloadTopo = async () => {
     if (!selectedVersion) return;
     setSaving(true);
@@ -322,6 +337,7 @@ export default function ListVoie() {
           <Button variant="contained" startIcon={<InsightsOutlinedIcon />} onClick={() => history.push(`/analyse-mur?version=${selectedVersion}`)} disabled={!selectedVersion} sx={{ backgroundColor: '#1f6b45', '&:hover': { backgroundColor: '#185538' } }}>Analyse du mur</Button>
           <Button variant="outlined" startIcon={<PictureAsPdfOutlinedIcon />} onClick={downloadTopo} disabled={!selectedVersion || saving}>Exporter le topo PDF</Button>
           <Button variant="outlined" startIcon={<AccountTreeOutlinedIcon />} onClick={createVersion} disabled={saving}>Nouvelle version</Button>
+          <Button variant="outlined" startIcon={<AccountTreeOutlinedIcon />} onClick={createSubversion} disabled={!selectedVersion || saving}>Créer une sous-version</Button>
           <Button variant="outlined" color="success" onClick={activateSelectedVersion} disabled={!selectedVersion || selectedVersionIsActive || saving}>Activer cette version</Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} disabled={!selectedVersion} sx={{ backgroundColor: '#1f6b45' }}>Ajouter une voie</Button>
         </Stack>

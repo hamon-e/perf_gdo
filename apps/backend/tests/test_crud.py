@@ -92,6 +92,86 @@ def test_active_wall_version_controls_default_routes(db):
     assert db.query(models.VersionVoie).filter(models.VersionVoie.active.is_(True)).count() == 1
 
 
+def test_subversion_copies_routes_and_keeps_source_unchanged(db):
+    source = crud.post_versionvoie(db, datetime(2026, 1, 1))
+    route_type = models.CouloirType(name="Dalle")
+    db.add(route_type)
+    db.commit()
+    couloir = models.Couloir(type_id=route_type.id)
+    db.add(couloir)
+    db.commit()
+    source_route = models.Voie(
+        couloir_id=couloir.id,
+        color="#ff0000",
+        difficulty=5.0,
+        active=True,
+        versionvoie_id=source.id,
+    )
+    db.add(source_route)
+    db.commit()
+
+    first_revision = crud.post_subversionvoie(db, source.id)
+    copied_route = crud.get_voies(db, None, first_revision.id)[0]
+    copied_route.difficulty = 6.5
+    db.commit()
+    second_revision = crud.post_subversionvoie(db, first_revision.id)
+
+    assert first_revision.parent_version_id == source.id
+    assert first_revision.subversion == 1
+    assert second_revision.parent_version_id == source.id
+    assert second_revision.subversion == 2
+    assert first_revision.date == source.date
+    assert copied_route.id != source_route.id
+    assert crud.get_voies(db, None, source.id)[0].difficulty == 5.0
+    assert crud.get_voies(db, None, second_revision.id)[0].difficulty == 6.5
+    assert source.active is True
+
+
+def test_ticked_route_stays_ticked_across_subversions(db):
+    user = create_user(db, "grimpeur@example.com")
+    source = crud.post_versionvoie(db, datetime(2026, 1, 1))
+    route_type = models.CouloirType(name="Dalle")
+    db.add(route_type)
+    db.commit()
+    couloir = models.Couloir(type_id=route_type.id)
+    db.add(couloir)
+    db.commit()
+    source_route = models.Voie(
+        couloir_id=couloir.id,
+        color="#ff0000",
+        difficulty=5.0,
+        active=True,
+        versionvoie_id=source.id,
+    )
+    db.add(source_route)
+    db.commit()
+    db.add(models.UserSeance(date=datetime.now(), user_id=user.id, voie_id=source_route.id, en_tete=True, top=100, pause=0))
+    db.commit()
+
+    revision = crud.post_subversionvoie(db, source.id)
+    copied_route = crud.get_voies(db, None, revision.id)[0]
+    assert copied_route.source_voie_id == source_route.id
+
+    crud.activate_versionvoie(db, revision.id)
+    assert copied_route.id in crud.get_palmares(db, user)
+    coverage = crud.compute_dashboard_coverage(db, user)
+    assert coverage["coverage"] == 1
+    assert coverage["max_lvl"] == 5.0
+    assert coverage["tete_ratio"] == 1.0
+
+    crud.post_voie(db, user, schemas.Voie(
+        id=copied_route.id,
+        couloir_id=copied_route.couloir_id,
+        color=copied_route.color,
+        difficulty=6.5,
+        versionvoie_id=revision.id,
+    ))
+    edited_route = crud.get_voies(db, None, revision.id)[0]
+    assert edited_route.source_voie_id is None
+    assert edited_route.id not in crud.get_palmares(db, user)
+    assert crud.compute_dashboard_coverage(db, user)["coverage"] == 0
+
+
 def test_user_cannot_delete_another_users_entry(db):
     owner = create_user(db, "owner@example.com")
     another_user = create_user(db, "another@example.com")

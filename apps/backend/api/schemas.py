@@ -81,6 +81,8 @@ class VersionVoie(Schema):
     id: Optional[int] = None
     date: datetime
     active: bool = False
+    parent_version_id: Optional[int] = None
+    subversion: int = 0
 
 
 class CouloirType(Schema):
