@@ -118,6 +118,16 @@ class Dashboard(Schema):
     coverage_diedre: float
     coverage_9m: float
     nbr_of_seances: int
+    suggestions: List['RouteSuggestion']
+
+
+class RouteSuggestion(Schema):
+    voie_id: int
+    couloir_id: int
+    color: str
+    difficulty: float
+    reason: str
+    last_attempt: Optional[datetime] = None
 
 
 class Voie(Schema):

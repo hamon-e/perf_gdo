@@ -275,9 +275,90 @@ def compute_dashboard_nbr_of_seances(db: Session, current_user: schemas.User):
     nbr_of_seances = db.query(models.UserSeance.date).filter(models.UserSeance.user_id == current_user.id).filter(models.UserSeance.date >= start).filter(models.UserSeance.date <= end).distinct().count()
     return nbr_of_seances
 
+def get_dashboard_suggestions(db: Session, current_user: schemas.User, max_level: float):
+    """Return actionable routes from the active wall, ordered close to the user's level."""
+    version = get_active_versionvoie(db)
+    if not version:
+        return []
+
+    routes = db.query(models.Voie).filter(models.Voie.versionvoie_id == version.id).all()
+    if not routes:
+        return []
+
+    lineage = get_voie_lineage_map(db, version.id)
+    route_by_ancestor = {
+        ancestor_id: route_id
+        for route_id, ancestors in lineage.items()
+        for ancestor_id in ancestors
+    }
+    attempts_by_route = {route.id: [] for route in routes}
+    if route_by_ancestor:
+        attempts = (
+            db.query(models.UserSeance)
+            .filter(models.UserSeance.user_id == current_user.id)
+            .filter(models.UserSeance.voie_id.in_(list(route_by_ancestor)))
+            .all()
+        )
+        for attempt in attempts:
+            route_id = route_by_ancestor.get(attempt.voie_id)
+            if route_id is not None:
+                attempts_by_route[route_id].append(attempt)
+
+    # Keep suggestions challenging but realistic. A new user starts from the
+    # easiest currently available routes.
+    target_level = max_level or min(route.difficulty for route in routes)
+    def proximity(route):
+        return (abs(route.difficulty - target_level), -route.difficulty, route.id)
+
+    stale_before = datetime.now() - timedelta(days=42)
+    candidates = {
+        'new': [],
+        'retry': [],
+        'lead': [],
+    }
+    for route in routes:
+        route_attempts = attempts_by_route[route.id]
+        if not route_attempts:
+            candidates['new'].append((route, None))
+            continue
+
+        last_attempt = max((attempt.date for attempt in route_attempts if attempt.date), default=None)
+        has_clean_top = any(attempt.top == 100 and not attempt.pause for attempt in route_attempts)
+        has_top_rope_top = any(attempt.top == 100 and not attempt.en_tete for attempt in route_attempts)
+        has_lead_top = any(attempt.top == 100 and attempt.en_tete for attempt in route_attempts)
+
+        if not has_clean_top and (last_attempt is None or last_attempt < stale_before):
+            candidates['retry'].append((route, last_attempt))
+        if has_top_rope_top and not has_lead_top:
+            candidates['lead'].append((route, last_attempt))
+
+    labels = {
+        'new': 'À découvrir',
+        'retry': 'À reprendre : pas encore réussie sans pause',
+        'lead': 'Déjà enchaînée en moulinette : tentez-la en tête',
+    }
+    suggestions = []
+    used_routes = set()
+    for category in ('new', 'retry', 'lead'):
+        available = [candidate for candidate in candidates[category] if candidate[0].id not in used_routes]
+        if not available:
+            continue
+        route, last_attempt = min(available, key=lambda candidate: proximity(candidate[0]))
+        used_routes.add(route.id)
+        suggestions.append({
+            'voie_id': route.id,
+            'couloir_id': route.couloir_id,
+            'color': route.color,
+            'difficulty': route.difficulty,
+            'reason': labels[category],
+            'last_attempt': last_attempt,
+        })
+    return suggestions
+
 def get_dashboard(db: Session, current_user: schemas.User):
     tmp = compute_dashboard_coverage(db, current_user)
     tmp['nbr_of_seances'] = compute_dashboard_nbr_of_seances(db, current_user)
+    tmp['suggestions'] = get_dashboard_suggestions(db, current_user, tmp['max_lvl'])
     return tmp
 
 def get_progression(db: Session, current_user: schemas.User, months: int):
