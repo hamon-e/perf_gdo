@@ -98,7 +98,7 @@ test('takes the actual top edge for steep lanes', () => {
       areas={[slopedLaneEleven]}
       routes={[{ id: 45, couloir_id: 11, color: '#ffff00', difficulty: 8 }]}
       coordinateScale={1}
-      onLaneClick={jest.fn()}
+      onLaneClick={vi.fn()}
     />,
   );
 
@@ -113,7 +113,7 @@ test('centres lane one routes on its sloped top edge', () => {
       areas={[laneOne]}
       routes={[routes[0]]}
       coordinateScale={1}
-      onLaneClick={jest.fn()}
+      onLaneClick={vi.fn()}
     />,
   );
 

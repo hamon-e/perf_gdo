@@ -402,7 +402,7 @@ function Contest(props) {
                                 </div>
 
                     <Grid container spacing={2}>
-                        <Grid size={12}> 
+                        <Grid size={12}>
                                 <div style={{paddingTop: '10px'}}>
 
         <FormControl>
@@ -419,7 +419,7 @@ function Contest(props) {
         </FormControl>
     </div>
     </Grid>
-                        <Grid size={6}> 
+                        <Grid size={6}>
                                 <div style={{paddingTop: '10px'}}>
         <FormControl>
             <FormLabel id="demo-controlled-radio-buttons-group">Difficulte</FormLabel>
