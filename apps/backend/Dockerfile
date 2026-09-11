@@ -6,6 +6,8 @@ ADD api/requirements.txt /data/api/requirements.txt
 
 RUN pip install -r /data/api/requirements.txt
 
+ADD alembic.ini /data/alembic.ini
+ADD migrations /data/migrations
 ADD api /data/api
 
 ARG APP_VERSION=dev

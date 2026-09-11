@@ -5,45 +5,18 @@ from typing import List
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from sqlalchemy import inspect, text
 from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
-from .db import SessionLocal, engine
+from .db import SessionLocal
+from .migrations import run_migrations
 from .topo_pdf import build_topo_pdf
 from io import BytesIO
 
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.security import OAuth2PasswordBearer
 
-def ensure_database_schema():
-    """Create new tables and apply the small additive upgrade used by this app."""
-    models.Base.metadata.create_all(bind=engine)
-    inspector = inspect(engine)
-    if "user" in inspector.get_table_names() and "group_id" not in {column["name"] for column in inspector.get_columns("user")}:
-        with engine.begin() as connection:
-            connection.execute(text('ALTER TABLE "user" ADD COLUMN group_id INTEGER REFERENCES usergroup(id)'))
-    if "versionvoie" in inspector.get_table_names() and "active" not in {column["name"] for column in inspector.get_columns("versionvoie")}:
-        with engine.begin() as connection:
-            connection.execute(text('ALTER TABLE versionvoie ADD COLUMN active BOOLEAN NOT NULL DEFAULT FALSE'))
-    if "versionvoie" in inspector.get_table_names():
-        version_columns = {column["name"] for column in inspector.get_columns("versionvoie")}
-        with engine.begin() as connection:
-            if "parent_version_id" not in version_columns:
-                connection.execute(text('ALTER TABLE versionvoie ADD COLUMN parent_version_id INTEGER REFERENCES versionvoie(id)'))
-            if "subversion" not in version_columns:
-                connection.execute(text('ALTER TABLE versionvoie ADD COLUMN subversion INTEGER NOT NULL DEFAULT 0'))
-    if "voie" in inspector.get_table_names() and "source_voie_id" not in {column["name"] for column in inspector.get_columns("voie")}:
-        with engine.begin() as connection:
-            connection.execute(text('ALTER TABLE voie ADD COLUMN source_voie_id INTEGER REFERENCES voie(id)'))
-    if "versionvoie" in inspector.get_table_names():
-        with engine.begin() as connection:
-            has_active_version = connection.execute(text('SELECT 1 FROM versionvoie WHERE active = TRUE LIMIT 1')).first()
-            if not has_active_version:
-                connection.execute(text('UPDATE versionvoie SET active = TRUE WHERE id = (SELECT id FROM versionvoie ORDER BY date DESC, id DESC LIMIT 1)'))
-
-
-ensure_database_schema()
+run_migrations()
 
 app = FastAPI()
 router = APIRouter()

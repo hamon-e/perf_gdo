@@ -60,8 +60,6 @@ peuvent être obtenus progressivement :
   Next.js ;
 - générer le client TypeScript depuis le schéma OpenAPI de FastAPI afin de
   retrouver des contrats typés de bout en bout, proches de l'expérience tRPC ;
-- ajouter Alembic pour versionner le schéma SQL, comme le feraient Prisma ou
-  Drizzle ;
 - conserver Material UI, déjà cohérent dans l'application, plutôt que cumuler
   une migration fonctionnelle avec un remplacement par Tailwind.
 
@@ -174,6 +172,30 @@ API_DB=postgresql://postgres:password@localhost:5432/postgres \
   PYTHONPATH=apps/backend .venv/bin/python -m api.populate
 ```
 
+### Migrations
+
+Le schéma SQL est versionné avec Alembic dans `apps/backend/migrations/`. Les
+migrations en attente sont appliquées automatiquement au démarrage du backend
+(et via `python -m api.populate`) ; une base créée avant l'introduction
+d'Alembic est mise à niveau puis marquée à la révision initiale lors du premier
+démarrage.
+
+Pour faire évoluer le schéma, modifiez `apps/backend/api/models.py` puis
+générez une révision :
+
+```sh
+make db                                  # PostgreSQL doit tourner
+make migration MSG="ajout table topos"   # génère un fichier dans migrations/versions/
+```
+
+Relisez et ajustez le fichier généré (les migrations automatiques ne détectent
+pas tout : renommages, conversions de données, suppression de colonnes), puis
+appliquez-la et vérifiez le résultat :
+
+```sh
+make migrate
+```
+
 ## Configuration
 
 | Variable | Valeur locale par défaut | Description |
@@ -196,6 +218,8 @@ secrets distincts en production.
 | --- | --- |
 | `make install` | installe les dépendances backend et frontend |
 | `make db` | démarre uniquement PostgreSQL |
+| `make migrate` | applique les migrations Alembic en attente |
+| `make migration MSG="..."` | génère une migration depuis les modèles SQLAlchemy |
 | `make dev-backend` | démarre FastAPI avec rechargement automatique |
 | `make dev-frontend` | démarre le serveur de développement React |
 | `make build` | produit le build statique du frontend |
@@ -225,7 +249,6 @@ Authorization: Bearer <token>
 - les dépendances frontend sont anciennes et contiennent encore plusieurs
   bibliothèques héritées ;
 - la couverture de tests reste limitée aux parcours critiques récents ;
-- les tables sont créées au démarrage avec `create_all`, sans migrations ;
 - certains écrans et noms (`Restaurant`, `Product`, `Trayvisor`) proviennent de
   l'ancien projet et ne font plus partie du parcours principal ;
 - plusieurs règles métier et coordonnées du mur sont codées directement dans
@@ -235,12 +258,11 @@ Authorization: Bearer <token>
 
 ## Priorités proposées
 
-1. Ajouter Alembic pour les migrations PostgreSQL.
-2. Ajouter une suite de tests métier/API et des parcours end-to-end critiques.
-3. Migrer progressivement le frontend vers TypeScript et découper les gros
+1. Ajouter une suite de tests métier/API et des parcours end-to-end critiques.
+2. Migrer progressivement le frontend vers TypeScript et découper les gros
    composants.
-4. Nettoyer les composants et dépendances hérités de l'ancien produit.
-5. Migrer l'authentification vers des cookies sécurisés avec rotation des jetons.
+3. Nettoyer les composants et dépendances hérités de l'ancien produit.
+4. Migrer l'authentification vers des cookies sécurisés avec rotation des jetons.
 
 ### Roadmap produit et interface
 

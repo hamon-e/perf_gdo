@@ -2,8 +2,9 @@ PYTHON ?= python3
 VENV ?= .venv
 FRONTEND := apps/frontend
 BACKEND := apps/backend
+MSG ?= migration
 
-.PHONY: install install-backend install-backend-dev install-frontend db dev-backend dev-frontend build test up down
+.PHONY: install install-backend install-backend-dev install-frontend db migrate migration dev-backend dev-frontend build test up down
 
 install: install-backend install-frontend
 
@@ -25,6 +26,16 @@ install-frontend:
 
 db:
 	docker compose up -d database
+
+# Apply pending migrations (runs automatically at backend startup too).
+migrate:
+	API_DB="$${API_DB:-postgresql://postgres:password@localhost:5432/postgres}" \
+		$(VENV)/bin/alembic -c $(BACKEND)/alembic.ini upgrade head
+
+# Generate a migration from the current models: make migration MSG="add foo"
+migration:
+	API_DB="$${API_DB:-postgresql://postgres:password@localhost:5432/postgres}" \
+		$(VENV)/bin/alembic -c $(BACKEND)/alembic.ini revision --autogenerate -m "$(MSG)"
 
 dev-backend: install-backend
 	API_DB="$${API_DB:-postgresql://postgres:password@localhost:5432/postgres}" \
