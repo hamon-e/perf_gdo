@@ -10,7 +10,7 @@ import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index.css';
 import CustomNoResultsOverlay from '../DataGrid/CustomNoResultsOverlay.js'
 
-import ImageMapper from 'react-img-mapper';
+import WallTopo from './WallTopo';
 
 import Typography from '@mui/material/Typography';
 
@@ -1170,27 +1170,13 @@ function Products(props) {
 
                         <TabPanel value={value} index={0} >
 
-                            {mobile &&
-
-                            <Box sx={{ width: '100%', mx: 'auto', overflowX: 'auto' }}>
-                    <Grid container spacing={2}  onTouchStart={touchstart} onTouchEnd={touchend}>
-
-                        {imageIndex == 0 && <ImageMapper src={URL_1} map={MAP_1} width={939/2.8} height={1596/2.8} onClick={areaClick}/> }
-                        {imageIndex == 1 && <ImageMapper src={URL_2} map={MAP_2} width={1056/3} height={1656/3} onClick={areaClick}/> }
-                        {imageIndex == 2 && <ImageMapper src={URL_3} map={MAP_3} width={1002/3} height={1690/3} onClick={areaClick}/> }
-                        {imageIndex == 3 && <ImageMapper src={URL_4} map={MAP_4} width={903/2.8} height={1452/2.8} onClick={areaClick}/> }
-                    </Grid>
-
-
-                            </Box>
-                            }
-
-                            {!mobile &&
-                            <Box sx={{ width: '100%', mx: 'auto', overflowX: 'auto' }}>
-                                <ImageMapper src={URL} map={MAP} width={2604/2.1} height={1596/2.1} onClick={areaClick}/>
-                            </Box>
-
-                            }
+                            <WallTopo
+                                areas={MAP.areas}
+                                routes={voies}
+                                coordinateScale={2.1}
+                                mobile={mobile}
+                                onLaneClick={areaClick}
+                            />
 
 
                         </TabPanel>
