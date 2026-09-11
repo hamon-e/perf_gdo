@@ -22,19 +22,23 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
-import Checkbox from '@mui/material/Checkbox';
-import Select from '@mui/material/Select';
 import Dialog from '@mui/material/Dialog';
 import Box from '@mui/material/Box';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import MenuItem from '@mui/material/MenuItem';
 
 import InboxIcon from '@mui/icons-material/Inbox';
 import DraftsIcon from '@mui/icons-material/Drafts';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ColorLensOutlinedIcon from '@mui/icons-material/ColorLensOutlined';
+import HeightRoundedIcon from '@mui/icons-material/HeightRounded';
+import PauseCircleOutlineRoundedIcon from '@mui/icons-material/PauseCircleOutlineRounded';
+import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 
 import Skeleton from '@mui/material/Skeleton';
 
@@ -59,8 +63,6 @@ import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
 import IconButton from '@mui/material/IconButton';
 
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 
 import { PickersDay } from '@mui/x-date-pickers/PickersDay';
@@ -163,6 +165,13 @@ function Products(props) {
     const [imageIndex, setImageIndex] = React.useState(0);
 
     const [days, setDays] = React.useState([])
+
+    const selectedDateLabel = selectedDate
+        ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'full' }).format(
+            selectedDate.toDate ? selectedDate.toDate() : new Date(selectedDate)
+        )
+        : 'Séance sélectionnée';
+    const completedRoutes = insertedRoutes.filter((route) => route.top === 100).length;
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
@@ -491,22 +500,16 @@ function Products(props) {
         setSelectedTete(!selectedTete)
     }
 
-    function handleSelectedTopChange(event) {
-        setSelectedTop(!selectedTop)
-    }
-
-    function handleSelectedColorChange(event) {
-        setSelectedColor(event.target.value)
-        const tmp = voies.find((e) => e.couloir_id == selectedNumber && e.color == event.target.value)
-        setSelectedId(tmp.id)
-        setSelectedDifficulty(tmp.difficulty)
-    }
-
     function chooseColor(event) {
-        setSelectedColor(event.target.id)
-        const tmp = voies.find((e) => e.couloir_id == selectedNumber && e.color == event.target.id)
+        const color = event.currentTarget.dataset.color
+        setSelectedColor(color)
+        const tmp = voies.find((e) => e.couloir_id == selectedNumber && e.color == color)
         setSelectedId(tmp.id)
         setSelectedDifficulty(tmp.difficulty)
+    }
+
+    function returnToRouteChoice() {
+        setSelectedColor(false)
     }
 
     function handleSelectedNumberChange(event) {
@@ -523,10 +526,8 @@ function Products(props) {
         setSelectedPause(event.target.value)
     }
 
-    async function deleteRoute(event) {
-        //const tmp = insertedRoutes.filter((e) => e.id != event.target.parentElement.id)
-        //setInsertedRoutes(tmp)
-        var response = await axios.delete(API_BASE_URL+'/userseance?userseance_id=' + event.target.parentElement.id, { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
+    async function deleteRoute(routeId) {
+        var response = await axios.delete(API_BASE_URL+'/userseance?userseance_id=' + routeId, { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
         await refreshInsertedRoutes()
     }
 
@@ -693,6 +694,9 @@ function Products(props) {
         const floor = Math.floor(difficulty)
         const decimal = difficulty - floor
         console.log(decimal)
+        if (Math.abs(decimal) < 0.01) {
+            return String(floor)
+        }
         if (decimal >= 0.24 && decimal <= 0.26) {
             return floor + "a"
         }
@@ -712,7 +716,7 @@ function Products(props) {
             return floor + "c+"
         }
         console.log(difficulty)
-        return "Bug"
+        return String(difficulty)
 
     }
 
@@ -721,83 +725,183 @@ function Products(props) {
     return(
         <div className="productpage">
 
-            <Dialog open={open} onClose={handleClose} >
-                {selectedColor && <div>
-                <DialogTitle id="alert-dialog-title">Enregistrer la voie</DialogTitle>
-                <DialogContent>
-                    <Box sx={{ flexGrow: 1 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={10}> </Grid>
-                            <Grid item xs={10}>
-                                <Box sx={{ width: '25ch' }} component="form" >
-                                    <div>
-                                        <TextField fullWidth select 
-                                        value={selectedNumber}
-                                        label="Couloir"
-                                        onChange={handleSelectedNumberChange}
+            <Dialog
+                open={open}
+                onClose={handleClose}
+                fullWidth
+                maxWidth="sm"
+                aria-labelledby="route-dialog-title"
+                PaperProps={{
+                    sx: {
+                        m: { xs: 1.5, sm: 3 },
+                        width: { xs: 'calc(100% - 24px)', sm: '100%' },
+                        maxHeight: { xs: 'calc(100% - 24px)', sm: 'calc(100% - 64px)' },
+                        borderRadius: { xs: 3, sm: 4 },
+                        overflow: 'hidden',
+                        boxShadow: '0 28px 80px rgba(15, 36, 27, 0.28)'
+                    }
+                }}
+                BackdropProps={{ sx: { backgroundColor: 'rgba(11, 24, 18, 0.64)', backdropFilter: 'blur(4px)' } }}
+            >
+                <Box className="route-dialog__header">
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                        {selectedColor ? (
+                            <IconButton
+                                aria-label="Revenir au choix de la voie"
+                                onClick={returnToRouteChoice}
+                                className="route-dialog__icon-button"
+                            >
+                                <ArrowBackRoundedIcon />
+                            </IconButton>
+                        ) : (
+                            <Box className="route-dialog__step">1</Box>
+                        )}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography variant="overline" sx={{ opacity: 0.72, letterSpacing: 1.4, lineHeight: 1 }}>
+                                Ma séance
+                            </Typography>
+                            <DialogTitle id="route-dialog-title" sx={{ p: 0, mt: 0.75, color: 'inherit', fontSize: { xs: '1.35rem', sm: '1.55rem' }, fontWeight: 800 }}>
+                                {selectedColor ? 'Renseigner mon essai' : `Couloir ${selectedNumber}`}
+                            </DialogTitle>
+                            <Typography sx={{ mt: 0.5, color: 'rgba(255,255,255,.76)', fontSize: '0.9rem' }}>
+                                {selectedColor ? 'Ajustez le résultat avant de l’enregistrer.' : 'Choisissez la couleur de la voie grimpée.'}
+                            </Typography>
+                        </Box>
+                        <IconButton aria-label="Fermer" onClick={handleClose} className="route-dialog__icon-button">
+                            <CloseRoundedIcon />
+                        </IconButton>
+                    </Box>
+                </Box>
+
+                {!selectedColor && (
+                    <DialogContent className="route-dialog__content">
+                        <Box className="route-dialog__choice-grid">
+                            {selectedColors.map((color) => {
+                                const route = voies.find((item) => item.couloir_id == selectedNumber && item.color == color)
+                                return (
+                                    <Button
+                                        key={`${selectedNumber}-${color}`}
+                                        type="button"
+                                        data-color={color}
+                                        onClick={chooseColor}
+                                        className="route-dialog__route-choice"
+                                        aria-label={`Voie ${route ? difficultyFormat(route.difficulty) : ''}, couleur ${color}`}
                                     >
-                                            { [ ...Array(31).keys() ].map((x) => <MenuItem value={x + 1}>{x + 1}</MenuItem>) }
-                                        </TextField>
-                                    </div>
-                                    <div>
-                                        <Select fullWidth 
-                                        value={selectedColor}
-                                        label="Voie"
-                                        onChange={handleSelectedColorChange}
-                                        sx={{backgroundColor: selectedColor, color: selectedColor == '#000000' ? 'white !important' : 'black', '&.MuiMenuItem-root:hover': {
-            border: "2px solid green"
-          }
-}}
-                                   >
-                                            {selectedColors.map((e) => (
-                                                <MenuItem value={e}
-                                                sx={{backgroundColor: e + " !important", color: e == '#000000' ? 'white' : 'black'}}
-                                            >{ difficultyFormat(voies.find((x) => x.couloir_id == selectedNumber && x.color == e).difficulty) }</MenuItem>
-                                            ))}
-                                    </Select>
-                                </div>
-                                <div>  
-                                    <Typography id="input-slider" gutterBottom> Hauteur </Typography> 
-                                    <Slider onChange={handleSelectedTopChange} getAriaValueText={valuetext} value={selectedTop} valueLabelDisplay="auto" step={10} marks={[ { value: 10, label: '10%', }, { value: 50, label: '50%', }, { value: 100, label: '100%' } ]} min={10} max={100} /> 
-                                </div>
-                                <div>
-                                    <Typography id="input-slider" gutterBottom> Pauses </Typography>
-                                    <Slider onChange={handleSelectedPauseChange} value={selectedPause} valueLabelDisplay="auto" step={1} marks={[{value:0, label:"0"}, {value:5, label:"5"}]} min={0} max={5} />
-                                </div>
-                                <div>
-                                    <FormControlLabel control={<Checkbox checked={selectedTete} onChange={handleSelectedTeteChange} />} label="En tête" />
-                                </div>
+                                        <Box className="route-dialog__color" sx={{ backgroundColor: color }}>
+                                            <CheckRoundedIcon />
+                                        </Box>
+                                        <Box sx={{ textAlign: 'left', flex: 1 }}>
+                                            <Typography className="route-dialog__grade">
+                                                {route ? difficultyFormat(route.difficulty) : '—'}
+                                            </Typography>
+                                            <Typography className="route-dialog__choice-label">Sélectionner cette voie</Typography>
+                                        </Box>
+                                        <Typography aria-hidden="true" className="route-dialog__arrow">→</Typography>
+                                    </Button>
+                                )
+                            })}
+                        </Box>
+                        {selectedColors.length === 0 && (
+                            <Box className="route-dialog__empty">
+                                <ColorLensOutlinedIcon />
+                                <Typography>Aucune voie disponible dans ce couloir.</Typography>
+                            </Box>
+                        )}
+                    </DialogContent>
+                )}
 
-
+                {selectedColor && (
+                    <React.Fragment>
+                        <DialogContent className="route-dialog__content route-dialog__content--form">
+                            <Box className="route-dialog__summary">
+                                <Box className="route-dialog__selected-color" sx={{ backgroundColor: selectedColor }} />
+                                <Box sx={{ flex: 1 }}>
+                                    <Typography className="route-dialog__summary-label">Voie sélectionnée</Typography>
+                                    <Typography className="route-dialog__summary-title">
+                                        {difficultyFormat(selectedDifficulty)} · Couloir {selectedNumber}
+                                    </Typography>
+                                </Box>
+                                <Button size="small" onClick={returnToRouteChoice} sx={{ color: '#1f6b45', fontWeight: 700 }}>
+                                    Modifier
+                                </Button>
                             </Box>
 
-                        </Grid>
-                    </Grid>
-                </Box>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={handleClose}>Annuler</Button>
-                <Button variant="contained" onClick={submitForm}>Enregistrer</Button>
-            </DialogActions>
-    </div>
-                }
-    {!selectedColor && <div>
-                <DialogTitle id="alert-dialog-title"> {"Choisir Voie: Couloir " + selectedNumber} </DialogTitle>
-                <DialogContent>
-                    <Box sx={{ flexGrow: 1 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={10}>
-                                { selectedColors.map((e) => 
-                                <Box sx={{ width: '25ch', height: '5ch', backgroundColor: e, cursor: 'pointer'}} id={e} onClick={chooseColor} > </Box>
-                                )}
-                            </Grid>
-                    </Grid>
-                </Box>
-            </DialogContent>
+                            <Box className="route-dialog__fields">
+                                <TextField
+                                    fullWidth
+                                    select
+                                    value={selectedNumber}
+                                    label="Couloir"
+                                    onChange={handleSelectedNumberChange}
+                                    SelectProps={{ MenuProps: { PaperProps: { sx: { maxHeight: 280 } } } }}
+                                >
+                                    {[...Array(31).keys()].map((x) => <MenuItem key={x + 1} value={x + 1}>Couloir {x + 1}</MenuItem>)}
+                                </TextField>
 
+                                <Box className="route-dialog__control-card">
+                                    <Box className="route-dialog__control-heading">
+                                        <Box className="route-dialog__control-icon"><HeightRoundedIcon /></Box>
+                                        <Box>
+                                            <Typography className="route-dialog__control-title">Hauteur atteinte</Typography>
+                                            <Typography className="route-dialog__control-help">Jusqu’où êtes-vous monté ?</Typography>
+                                        </Box>
+                                        <Typography className="route-dialog__value">{selectedTop}%</Typography>
+                                    </Box>
+                                    <Slider
+                                        aria-label="Hauteur atteinte"
+                                        onChange={handleSelectedTopChange}
+                                        getAriaValueText={valuetext}
+                                        value={selectedTop}
+                                        step={10}
+                                        marks={[{ value: 10, label: '10%' }, { value: 50, label: '50%' }, { value: 100, label: 'Top' }]}
+                                        min={10}
+                                        max={100}
+                                    />
+                                </Box>
 
-        </div>}
-        </Dialog>
+                                <Box className="route-dialog__control-card">
+                                    <Box className="route-dialog__control-heading">
+                                        <Box className="route-dialog__control-icon"><PauseCircleOutlineRoundedIcon /></Box>
+                                        <Box>
+                                            <Typography className="route-dialog__control-title">Pauses</Typography>
+                                            <Typography className="route-dialog__control-help">Nombre d’arrêts dans la voie</Typography>
+                                        </Box>
+                                        <Typography className="route-dialog__value">{selectedPause}</Typography>
+                                    </Box>
+                                    <Slider
+                                        aria-label="Nombre de pauses"
+                                        onChange={handleSelectedPauseChange}
+                                        value={selectedPause}
+                                        step={1}
+                                        marks={[{ value: 0, label: '0' }, { value: 5, label: '5' }]}
+                                        min={0}
+                                        max={5}
+                                    />
+                                </Box>
+
+                                <Box className="route-dialog__lead-row">
+                                    <Box className="route-dialog__control-icon"><TrendingUpRoundedIcon /></Box>
+                                    <Box sx={{ flex: 1 }}>
+                                        <Typography className="route-dialog__control-title">Grimpée en tête</Typography>
+                                        <Typography className="route-dialog__control-help">Vous avez clippé les dégaines en montant</Typography>
+                                    </Box>
+                                    <Switch
+                                        checked={selectedTete}
+                                        onChange={handleSelectedTeteChange}
+                                        inputProps={{ 'aria-label': 'Grimpée en tête' }}
+                                    />
+                                </Box>
+                            </Box>
+                        </DialogContent>
+                        <DialogActions className="route-dialog__actions">
+                            <Button onClick={handleClose} className="route-dialog__cancel">Annuler</Button>
+                            <Button variant="contained" onClick={submitForm} className="route-dialog__submit" startIcon={<CheckRoundedIcon />}>
+                                Enregistrer l’essai
+                            </Button>
+                        </DialogActions>
+                    </React.Fragment>
+                )}
+            </Dialog>
 
 
         <Box sx={{ width: '100%', maxWidth: 1440, mx: 'auto', overflowX: 'hidden' }}>
@@ -843,6 +947,8 @@ function Products(props) {
                         </Grid>
 
             </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) 340px' }, gap: 3, alignItems: 'start', px: { xs: 1, md: 2 }, pb: 3 }}>
+            <Box sx={{ minWidth: 0 }}>
             <TabPanel value={value} index={1}>
                 <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '40px' }}>
                     <Grid container spacing={2}>
@@ -1090,31 +1196,45 @@ function Products(props) {
                         </TabPanel>
 
                     </Box>
+                    </Box>
 
-
-                    <Box sx={{ flexGrow: 1 }} sx={{ flexGrow: 1, width: '85%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '40px' }}>
-
-                        <Grid container spacing={2}>
-
-                            <Grid item xs={10}>
-                                <List>
-                                    { insertedRoutes.map((e) => 
-                                        <ListItem disablePadding>
-                                                <Box sx={{ width: '4ch', height: '4ch', backgroundColor: e.voie.color, textAlign: 'center', color: e.voie.color == '#000000' ? 'white !important' : 'black'}}  >
-                                                    <div style={{paddingTop: '5px'}}>{ difficultyFormat(e.voie.difficulty) }</div>
-                                                </Box>
-                                                <div style={{paddingLeft: '10px'}}>{"couloir: " + e.voie.couloir_id}</div>
-                                                <IconButton aria-label="delete" id={e.id} onClick={deleteRoute}>
-                                                    <DeleteIcon id={e.id}/>
-                                                </IconButton>
-                                        </ListItem>
-                                    )}
-                                    </List>
-
-
-                                </Grid>
-                            </Grid>
+                    <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3, overflow: 'hidden', position: { lg: 'sticky' }, top: { lg: 88 } }}>
+                        <Box sx={{ p: 2.25, borderBottom: '1px solid', borderColor: 'divider', backgroundColor: '#f6fbf8' }}>
+                            <Typography variant="overline" sx={{ color: '#1f6b45', fontWeight: 800, letterSpacing: '.08em' }}>Historique de la séance</Typography>
+                            <Typography variant="h6" sx={{ fontWeight: 800, textTransform: 'capitalize', lineHeight: 1.25 }}>{selectedDateLabel}</Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: .75 }}>
+                                {insertedRoutes.length} voie{insertedRoutes.length > 1 ? 's' : ''} enregistrée{insertedRoutes.length > 1 ? 's' : ''} · {completedRoutes} réussie{completedRoutes > 1 ? 's' : ''}
+                            </Typography>
                         </Box>
+
+                        {insertedRoutes.length === 0 ? (
+                            <Box sx={{ px: 2.25, py: 5, textAlign: 'center' }}>
+                                <Typography sx={{ fontWeight: 700 }}>Aucune voie enregistrée</Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ mt: .5 }}>Sélectionnez une voie sur le mur pour l’ajouter à cette séance.</Typography>
+                            </Box>
+                        ) : (
+                            <List disablePadding sx={{ maxHeight: { lg: 'calc(100vh - 290px)' }, overflowY: 'auto' }}>
+                                {insertedRoutes.map((e) => (
+                                    <ListItem key={e.id} disablePadding secondaryAction={
+                                        <IconButton aria-label={`Supprimer la voie du couloir ${e.voie.couloir_id}`} onClick={() => deleteRoute(e.id)}>
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    } sx={{ px: 2.25, py: 1.25, borderBottom: '1px solid', borderColor: 'divider' }}>
+                                        <Box sx={{ width: 36, height: 36, borderRadius: 1.5, flexShrink: 0, backgroundColor: e.voie.color, display: 'grid', placeItems: 'center', color: e.voie.color === '#000000' ? 'white' : '#172018', fontWeight: 800, fontSize: '.78rem', border: '2px solid white', boxShadow: '0 0 0 1px rgba(0,0,0,.15)' }}>
+                                            {difficultyFormat(e.voie.difficulty)}
+                                        </Box>
+                                        <Box sx={{ ml: 1.25, pr: 5, minWidth: 0 }}>
+                                            <Typography sx={{ fontWeight: 750 }}>Couloir {e.voie.couloir_id}</Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {e.en_tete ? 'En tête' : 'Moulinette'} · {e.top === 100 ? 'Réussie' : `${e.top}% atteint`}{e.pause ? ` · ${e.pause} pause${e.pause > 1 ? 's' : ''}` : ''}
+                                            </Typography>
+                                        </Box>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        )}
+                    </Paper>
+                    </Box>
 
 
 

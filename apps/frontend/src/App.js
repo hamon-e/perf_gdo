@@ -19,6 +19,7 @@ import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
 import LogoutIcon from '@mui/icons-material/Logout';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -33,6 +34,7 @@ import LoginForm from './components/LoginForm/LoginForm';
 import Products from './components/Products/Products';
 import Menus from './components/Menus/Menus';
 import Users from './components/Users/Users';
+import UserGroups from './components/UserGroups/UserGroups';
 import Accueil from './components/Accueil/Accueil.js';
 import Annotate from './components/Annotate/Annotate';
 import ListVoie from './components/ListVoie/ListVoie';
@@ -100,6 +102,7 @@ const adminItems = [
   { label: 'Ajouter une séance', path: '/home', icon: AddCircleOutlineIcon },
   { label: 'Historique', path: '/historique', icon: HistoryIcon },
   { label: 'Utilisateurs', path: '/users', icon: PeopleOutlineIcon },
+  { label: 'Groupes', path: '/user-groups', icon: GroupsOutlinedIcon },
   { label: 'Voies', path: '/listevoies', icon: FormatListNumberedIcon },
 ];
 
@@ -236,6 +239,7 @@ function AppShell() {
             <PrivateRoute path="/historique"><Products /></PrivateRoute>
             <PrivateRoute path="/palmares"><Palmares /></PrivateRoute>
             <PrivateRoute path="/users"><Users /></PrivateRoute>
+            <PrivateRoute path="/user-groups"><UserGroups /></PrivateRoute>
             <Route><Redirect to="/dashboard" /></Route>
           </Switch>
         </Box>

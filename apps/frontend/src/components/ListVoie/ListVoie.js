@@ -39,7 +39,16 @@ const authorization = () => ({
   headers: { Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN_NAME)}` },
 });
 
-const emptyForm = { id: null, couloir_id: 1, difficulty: 5.25, color: '#e53935' };
+// Cotations are stored as numbers for sorting and statistics.  Keep the mapping
+// explicit here so that the management UI always speaks the climbers' notation.
+const gradeSuffixes = [
+  [0.25, 'a'],
+  [0.35, 'a+'],
+  [0.5, 'b'],
+  [0.6, 'b+'],
+  [0.75, 'c'],
+  [0.85, 'c+'],
+];
 
 // Palette historically available while building a wall topo.  Keep the values
 // as hexadecimal colours so they can also be used by the native colour input.
@@ -60,13 +69,30 @@ const TOPO_PRESET_COLORS = [
 
 const isHexColor = (color) => /^#[0-9a-f]{6}$/i.test(color || '');
 
-function formatDifficulty(value) {
-  if (!value) return '—';
-  const floor = Math.floor(value);
-  const decimal = value - floor;
-  const suffixes = [[0.25, 'a'], [0.35, 'a+'], [0.5, 'b'], [0.6, 'b+'], [0.75, 'c'], [0.85, 'c+']];
-  const closest = suffixes.reduce((best, item) => Math.abs(item[0] - decimal) < Math.abs(best[0] - decimal) ? item : best);
-  return `${floor}${closest[1]}`;
+const emptyForm = { id: null, couloir_id: 1, difficulty: '5a', color: '#e53935' };
+
+export function formatDifficulty(value) {
+  const difficulty = Number(value);
+  if (!Number.isFinite(difficulty)) return '—';
+
+  const grade = gradeSuffixes.find(([decimal]) => (
+    Math.abs((difficulty - Math.floor(difficulty)) - decimal) < 0.001
+  ));
+
+  return grade ? `${Math.floor(difficulty)}${grade[1]}` : String(difficulty).replace('.', ',');
+}
+
+export function parseDifficulty(value) {
+  const match = String(value).trim().toLowerCase().match(/^(\d+)(a|b|c)(\+)?$/);
+  if (!match) return null;
+
+  const [, level, letter, plus] = match;
+  const suffix = `${letter}${plus || ''}`;
+  const grade = gradeSuffixes.find(([, candidate]) => candidate === suffix);
+  const numericLevel = Number(level);
+
+  if (!grade || numericLevel < 3 || numericLevel > 9) return null;
+  return numericLevel + grade[0];
 }
 
 function sectorForLane(lane) {
@@ -177,13 +203,18 @@ export default function ListVoie() {
   };
 
   const openEdit = (route) => {
-    setForm({ id: route.id, couloir_id: route.couloir_id, difficulty: route.difficulty, color: route.color });
+    setForm({ id: route.id, couloir_id: route.couloir_id, difficulty: formatDifficulty(route.difficulty), color: route.color });
     setDialogOpen(true);
   };
 
   const saveRoute = async () => {
+    const difficulty = parseDifficulty(form.difficulty);
     if (!selectedVersion || !form.couloir_id || !form.difficulty || !isHexColor(form.color)) {
       setErrorMessage('Renseignez le couloir, la cotation et une couleur hexadécimale valide.');
+      return;
+    }
+    if (difficulty === null) {
+      setErrorMessage('Utilisez une cotation entre 3a et 9c+ (par exemple 5a ou 6b+).');
       return;
     }
     setSaving(true);
@@ -192,7 +223,7 @@ export default function ListVoie() {
         ...(form.id ? { id: form.id } : {}),
         versionvoie_id: Number(selectedVersion),
         couloir_id: Number(form.couloir_id),
-        difficulty: Number(form.difficulty),
+        difficulty,
         color: form.color,
       }, authorization());
       setRegisteredColors((colors) => isHexColor(form.color) && !colors.some((color) => color.toLowerCase() === form.color.toLowerCase())
@@ -327,7 +358,15 @@ export default function ListVoie() {
             <TextField select label="Couloir" value={form.couloir_id} onChange={(event) => setForm({ ...form, couloir_id: event.target.value })} fullWidth>
               {[...Array(31).keys()].map((lane) => <MenuItem key={lane + 1} value={lane + 1}>Couloir {lane + 1} · {sectorForLane(lane + 1)}</MenuItem>)}
             </TextField>
-            <TextField label="Cotation numérique" type="number" value={form.difficulty} onChange={(event) => setForm({ ...form, difficulty: event.target.value })} inputProps={{ min: 3.25, max: 9, step: 0.05 }} helperText={`Aperçu : ${formatDifficulty(Number(form.difficulty))}`} fullWidth />
+            <TextField
+              label="Cotation"
+              value={form.difficulty}
+              onChange={(event) => setForm({ ...form, difficulty: event.target.value })}
+              placeholder="5a"
+              helperText="Saisissez une cotation de 3a à 9c+ (par exemple 5a, 6b+ ou 7c)."
+              inputProps={{ autoCapitalize: 'none', spellCheck: false }}
+              fullWidth
+            />
             <Box>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>Couleurs enregistrées</Typography>
               <Stack direction="row" flexWrap="wrap" gap={1}>
