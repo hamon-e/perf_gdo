@@ -91,21 +91,20 @@ const AppBar = styled(MuiAppBar, { shouldForwardProp: (prop) => prop !== 'drawer
 }));
 
 const memberItems = [
-  { label: "Vue d'ensemble", path: '/dashboard', icon: HomeOutlinedIcon },
-  { label: 'Ajouter une séance', path: '/home', icon: AddCircleOutlineIcon },
+  { label: 'Accueil', path: '/dashboard', icon: HomeOutlinedIcon },
+  { label: 'Séance', path: '/home', icon: AddCircleOutlineIcon },
   { label: 'Historique', path: '/historique', icon: HistoryIcon },
-  { label: 'Progression', path: '/maprogression', icon: TrendingUpIcon },
+  { label: 'Progrès', path: '/maprogression', icon: TrendingUpIcon },
   { label: 'Palmarès', path: '/palmares', icon: EmojiEventsOutlinedIcon },
 ];
 
-const adminItems = [
-  { label: "Vue d'ensemble", path: '/dashboard', icon: HomeOutlinedIcon },
-  { label: 'Ajouter une séance', path: '/home', icon: AddCircleOutlineIcon },
-  { label: 'Historique', path: '/historique', icon: HistoryIcon },
+const adminMenuItems = [
   { label: 'Utilisateurs', path: '/users', icon: PeopleOutlineIcon },
   { label: 'Groupes', path: '/user-groups', icon: GroupsOutlinedIcon },
   { label: 'Topo', path: '/listevoies', icon: FormatListNumberedIcon },
 ];
+
+const adminItems = [...memberItems, ...adminMenuItems];
 
 function AppShell() {
   const theme = useTheme();
@@ -124,7 +123,7 @@ function AppShell() {
   const [showBar] = showBarHook;
   const [open, setOpen] = openHook;
   const [headerTitle] = headerTitleHook;
-  const navigationItems = isAdmin ? adminItems : memberItems;
+  const drawerItems = desktop ? (isAdmin ? adminItems : memberItems) : adminMenuItems;
 
   const closeDrawerOnMobile = () => {
     if (!desktop) setOpen(false);
@@ -154,7 +153,7 @@ function AppShell() {
       </Toolbar>
       <Divider />
       <List sx={{ px: 1.5, py: 2 }}>
-        {navigationItems.map((item) => {
+        {drawerItems.map((item) => {
           const Icon = item.icon;
           return (
             <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
@@ -187,23 +186,35 @@ function AppShell() {
       {showBar && (
         <AppBar position="fixed" drawerOpen={open} desktop={desktop}>
           <Toolbar sx={{ minHeight: 64 }}>
-            <IconButton
-              color="inherit"
-              aria-label="Ouvrir le menu"
-              onClick={() => setOpen(true)}
-              edge="start"
-              sx={{ mr: 2, ...(desktop && open && { display: 'none' }) }}
-            >
-              <MenuIcon />
-            </IconButton>
+            {(desktop || isAdmin) && (
+              <IconButton
+                color="inherit"
+                aria-label="Ouvrir le menu"
+                onClick={() => setOpen(true)}
+                edge="start"
+                sx={{ mr: 2, ...(desktop && open && { display: 'none' }) }}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
             <Typography variant="h6" noWrap component="h1" sx={{ fontWeight: 700 }}>
               {headerTitle || 'Climbing'}
             </Typography>
+            {!desktop && (
+              <IconButton
+                color="inherit"
+                aria-label="Déconnexion"
+                onClick={logout}
+                sx={{ ml: 'auto' }}
+              >
+                <LogoutIcon />
+              </IconButton>
+            )}
           </Toolbar>
         </AppBar>
       )}
 
-      {showBar && (
+      {showBar && (desktop || isAdmin) && (
         <Drawer
           variant={desktop ? 'persistent' : 'temporary'}
           anchor="left"
@@ -251,7 +262,7 @@ function AppShell() {
       {showBar && !desktop && (
         <BottomNavigation
           showLabels
-          value={navigationItems.some((item) => item.path === location.pathname) ? location.pathname : false}
+          value={memberItems.some((item) => item.path === location.pathname) ? location.pathname : false}
           onChange={(_, path) => history.push(path)}
           sx={{
             position: 'fixed',
@@ -263,7 +274,7 @@ function AppShell() {
             borderColor: 'divider',
           }}
         >
-          {navigationItems.slice(0, 4).map((item) => {
+          {memberItems.map((item) => {
             const Icon = item.icon;
             return <BottomNavigationAction key={item.path} label={item.label} value={item.path} icon={<Icon />} />;
           })}
