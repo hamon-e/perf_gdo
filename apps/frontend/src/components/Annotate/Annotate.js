@@ -27,7 +27,6 @@ import Box from '@mui/material/Box';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import MenuItem from '@mui/material/MenuItem';
 
 import InboxIcon from '@mui/icons-material/Inbox';
 import DraftsIcon from '@mui/icons-material/Drafts';
@@ -465,12 +464,6 @@ function Products(props) {
         setSelectedColor(false)
     }
 
-    function handleSelectedNumberChange(event) {
-        setSelectedNumber(event.target.value)
-        setSelectedColor(false)
-        setSelectedColors(voies.filter((e) => e.couloir_id == event.target.value).map((e) => e.color))
-    }
-
     function handleSelectedTopChange(event) {
         setSelectedTop(event.target.value)
     }
@@ -780,17 +773,6 @@ function Products(props) {
                             </Box>
 
                             <Box className="route-dialog__fields">
-                                <TextField
-                                    fullWidth
-                                    select
-                                    value={selectedNumber}
-                                    label="Couloir"
-                                    onChange={handleSelectedNumberChange}
-                                    SelectProps={{ MenuProps: { PaperProps: { sx: { maxHeight: 280 } } } }}
-                                >
-                                    {[...Array(31).keys()].map((x) => <MenuItem key={x + 1} value={x + 1}>Couloir {x + 1}</MenuItem>)}
-                                </TextField>
-
                                 <Box className="route-dialog__control-card">
                                     <Box className="route-dialog__control-heading">
                                         <Box className="route-dialog__control-icon"><HeightRoundedIcon /></Box>
