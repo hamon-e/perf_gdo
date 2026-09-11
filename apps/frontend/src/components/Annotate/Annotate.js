@@ -48,7 +48,6 @@ import Autocomplete from '@mui/material/Autocomplete';
 
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
 
 import ImageList from '@mui/material/ImageList';
 import ImageListItem from '@mui/material/ImageListItem';
@@ -111,7 +110,7 @@ function Products(props) {
     const [selectedDate, setSelectedDate] = React.useState(new Date())
 
     const [voies, setVoies] = React.useState([]);
-    const [routeGradeFilter, setRouteGradeFilter] = React.useState('');
+    const [routeGradeRange, setRouteGradeRange] = React.useState([0, 10]);
 
     const [openMenu, setOpenMenu] = openHook;
     const [open, setOpen] = React.useState(false);
@@ -523,6 +522,10 @@ function Products(props) {
     async function refreshVoie() {
         var response = await axios.get(API_BASE_URL+'/voies', { headers: { 'Authorization': "bearer "+localStorage.getItem(ACCESS_TOKEN_NAME) }})
         await setVoies(response.data)
+        const difficulties = response.data.map((route) => route.difficulty)
+        if (difficulties.length) {
+            setRouteGradeRange([Math.min(...difficulties), Math.max(...difficulties)])
+        }
         g_voies = response.data
     }
 
@@ -670,9 +673,9 @@ function Products(props) {
 
     const gradeOptions = [...new Set(voies.map((route) => route.difficulty))]
         .sort((first, second) => first - second);
-    const displayedRoutes = routeGradeFilter === ''
-        ? voies
-        : voies.filter((route) => route.difficulty === Number(routeGradeFilter));
+    const displayedRoutes = voies.filter((route) => (
+        route.difficulty >= routeGradeRange[0] && route.difficulty <= routeGradeRange[1]
+    ));
 
 
     //<img src="https://lesgdo.org/photo/hdv/M6c6df169982e9963e49c.png" style={{ 'max-width': '100%', height: 'auto'}}/>
@@ -882,21 +885,23 @@ function Products(props) {
                         </Grid>
 
                         <Grid item xs={12} sm={6}>
-                            <TextField
-                                select
-                                fullWidth
-                                label="Cotation affichée"
-                                value={routeGradeFilter}
-                                onChange={(event) => setRouteGradeFilter(event.target.value)}
-                                helperText={routeGradeFilter === '' ? 'Toutes les voies sont visibles' : 'Seules les voies de cette cotation sont visibles'}
-                            >
-                                <MenuItem value="">Toutes les cotations</MenuItem>
-                                {gradeOptions.map((difficulty) => (
-                                    <MenuItem key={difficulty} value={String(difficulty)}>
-                                        {difficultyFormat(difficulty)}
-                                    </MenuItem>
-                                ))}
-                            </TextField>
+                            <Box sx={{ px: 1, pt: .5 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary' }}>
+                                    Cotations affichées : {difficultyFormat(routeGradeRange[0])} à {difficultyFormat(routeGradeRange[1])}
+                                </Typography>
+                                <Slider
+                                    aria-label="Plage de cotations affichées"
+                                    value={routeGradeRange}
+                                    onChange={(_event, value) => setRouteGradeRange(value)}
+                                    min={gradeOptions[0] || 0}
+                                    max={gradeOptions[gradeOptions.length - 1] || 10}
+                                    step={null}
+                                    marks={gradeOptions.map((difficulty) => ({ value: difficulty, label: difficultyFormat(difficulty) }))}
+                                    valueLabelDisplay="auto"
+                                    valueLabelFormat={difficultyFormat}
+                                    disableSwap
+                                />
+                            </Box>
                         </Grid>
 
                         </Grid>

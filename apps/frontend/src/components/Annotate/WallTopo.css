@@ -83,22 +83,13 @@
 }
 
 .wall-topo__route-line,
-.wall-topo__route-outline,
 .wall-topo__endpoint {
   pointer-events: none;
 }
 
-.wall-topo__route-outline {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.9);
-  stroke-width: 9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
 .wall-topo__route-line {
   fill: none;
-  stroke-width: 4.5;
+  stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
   /* Atténue les couleurs très vives tout en gardant le jaune contrasté. */

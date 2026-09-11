@@ -336,7 +336,6 @@ export default function WallTopo({ areas, routes, coordinateScale, mobile, onLan
                   const path = routePath(geometry, offset, route);
                   return (
                     <g key={route.id} className="wall-topo__route">
-                      <path d={path.d} className="wall-topo__route-outline" />
                       <path d={path.d} className="wall-topo__route-line" style={{ stroke: route.color }} />
                       <circle cx={path.start.x} cy={path.start.y} r="4" className="wall-topo__endpoint" style={{ fill: route.color }} />
                       <circle cx={path.end.x} cy={path.end.y} r="4" className="wall-topo__endpoint" style={{ fill: route.color }} />

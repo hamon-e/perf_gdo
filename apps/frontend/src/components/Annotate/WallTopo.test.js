@@ -35,9 +35,7 @@ test('draws one non-clickable line per route without grade labels', () => {
   );
 
   const lines = container.querySelectorAll('.wall-topo__route-line');
-  const outlines = container.querySelectorAll('.wall-topo__route-outline');
   expect(lines).toHaveLength(3);
-  expect(outlines).toHaveLength(3);
   lines.forEach((line) => {
     expect(line.getAttribute('d')).not.toContain('NaN');
   });
