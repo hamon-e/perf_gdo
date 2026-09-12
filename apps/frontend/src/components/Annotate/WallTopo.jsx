@@ -14,7 +14,7 @@ const MAX_ZOOM = 4;
 const ZOOM_STEP = 1.5;
 // Sur un mur zoomé, le déplacement doit couvrir plus de contenu qu'un geste
 // équivalent afin de ne pas obliger à multiplier les balayages sur mobile.
-const PAN_SPEED = 1.35;
+const PAN_SPEED = 1.5;
 
 function average(points) {
   return points.reduce((result, point) => ({
@@ -186,13 +186,18 @@ export default function WallTopo({ areas, routes, coordinateScale, mobile, onLan
     return { x: clientX - rect.left, y: clientY - rect.top };
   }, []);
 
+  // À zoom 1, le plan redevient nativement défilable : la position doit être
+  // portée par scrollLeft et jamais par une transformation résiduelle, sans
+  // quoi le contenu décalé ne déborde plus et le défilement natif se bloque.
+  const releaseToScroll = useCallback((targetOffset) => {
+    commitTransform(MIN_ZOOM, { x: 0, y: 0 });
+    const scroll = scrollRef.current;
+    if (scroll) scroll.scrollLeft = -targetOffset.x;
+  }, [commitTransform]);
+
   const applyZoomAt = useCallback((nextZoom, focus) => {
     const targetZoom = clampZoom(nextZoom);
     if (targetZoom === zoomRef.current) return;
-    if (targetZoom === MIN_ZOOM) {
-      commitTransform(MIN_ZOOM, { x: 0, y: 0 });
-      return;
-    }
     const baseOffset = { ...offsetRef.current };
     if (zoomRef.current === MIN_ZOOM) {
       const scroll = scrollRef.current;
@@ -203,11 +208,22 @@ export default function WallTopo({ areas, routes, coordinateScale, mobile, onLan
     }
     const anchorX = (focus.x - baseOffset.x) / zoomRef.current;
     const anchorY = (focus.y - baseOffset.y) / zoomRef.current;
-    commitTransform(targetZoom, clampOffset(targetZoom, {
+    const targetOffset = clampOffset(targetZoom, {
       x: focus.x - anchorX * targetZoom,
       y: focus.y - anchorY * targetZoom,
-    }));
-  }, [clampOffset, commitTransform]);
+    });
+    if (targetZoom === MIN_ZOOM) {
+      releaseToScroll(targetOffset);
+      return;
+    }
+    commitTransform(targetZoom, targetOffset);
+  }, [clampOffset, commitTransform, releaseToScroll]);
+
+  const resetTransform = useCallback(() => {
+    const scroll = scrollRef.current;
+    if (scroll) scroll.scrollLeft = 0;
+    commitTransform(MIN_ZOOM, { x: 0, y: 0 });
+  }, [commitTransform]);
 
   const zoomBy = useCallback((factor) => {
     const viewport = viewportRef.current;
@@ -270,10 +286,23 @@ export default function WallTopo({ areas, routes, coordinateScale, mobile, onLan
         const nextZoom = clampZoom(gesture.startZoom * (distance / gesture.startDistance));
         const anchorX = (gesture.startMid.x - gesture.startOffset.x) / gesture.startZoom;
         const anchorY = (gesture.startMid.y - gesture.startOffset.y) / gesture.startZoom;
-        commitTransform(nextZoom, clampOffset(nextZoom, {
+        const nextOffset = clampOffset(nextZoom, {
           x: mid.x - anchorX * nextZoom,
           y: mid.y - anchorY * nextZoom,
-        }));
+        });
+        if (nextZoom === MIN_ZOOM) {
+          releaseToScroll(nextOffset);
+          // Rebase le geste sur l'état rendu au scroll natif afin qu'un
+          // pincement repartant à la hausse reste visuellement continu.
+          gesture.startZoom = MIN_ZOOM;
+          gesture.startOffset = nextOffset;
+          gesture.startMid = mid;
+          gesture.startDistance = distance;
+        } else {
+          const scroll = scrollRef.current;
+          if (scroll && scroll.scrollLeft) scroll.scrollLeft = 0;
+          commitTransform(nextZoom, nextOffset);
+        }
       } else if (gesture.mode === 'pan' && event.touches.length === 1) {
         event.preventDefault();
         const touch = event.touches[0];
@@ -298,7 +327,7 @@ export default function WallTopo({ areas, routes, coordinateScale, mobile, onLan
       viewport.removeEventListener('touchend', handleTouchEnd);
       viewport.removeEventListener('touchcancel', handleTouchEnd);
     };
-  }, [clampOffset, commitTransform, mobile, viewportPoint]);
+  }, [clampOffset, commitTransform, mobile, releaseToScroll, viewportPoint]);
 
   const transform = zoomed || offset.x !== 0 || offset.y !== 0
     ? `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`
@@ -375,7 +404,7 @@ export default function WallTopo({ areas, routes, coordinateScale, mobile, onLan
             <IconButton
               size="small"
               aria-label="Réinitialiser le zoom"
-              onClick={() => applyZoomAt(MIN_ZOOM, { x: 0, y: 0 })}
+              onClick={resetTransform}
             >
               <CenterFocusWeakIcon fontSize="small" />
             </IconButton>

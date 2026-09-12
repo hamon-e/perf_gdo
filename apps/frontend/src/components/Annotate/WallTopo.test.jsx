@@ -214,5 +214,114 @@ test('single finger drag pans the wall while zoomed', () => {
   fireTouch('touchmove', [[50, 50]]);
   fireTouch('touchend', []);
 
-  expect(content.style.transform).toBe('translate(-87.5px, -87.5px) scale(1.5)');
+  expect(content.style.transform).toBe('translate(-75px, -75px) scale(1.5)');
+});
+
+test('pinching out back to zoom one restores native scroll when far right', () => {
+  const { container } = render(
+    <WallTopo
+      areas={[laneOne]}
+      routes={routes}
+      coordinateScale={1}
+      mobile
+      onLaneClick={vi.fn()}
+    />,
+  );
+
+  const scroll = container.querySelector('.wall-topo-scroll');
+  const viewport = container.querySelector('.wall-topo-viewport');
+  const content = container.querySelector('.wall-topo');
+  Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 300 });
+  Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: 300 });
+  Object.defineProperty(content, 'offsetWidth', { configurable: true, value: 820 });
+  Object.defineProperty(content, 'offsetHeight', { configurable: true, value: 500 });
+  const fireTouch = (type, points) => {
+    const event = new Event(type);
+    event.touches = points.map(([x, y]) => ({ clientX: x, clientY: y }));
+    fireEvent(viewport, event);
+  };
+
+  // Utilisateur tout à droite en défilement natif, puis pincement dézoomant.
+  scroll.scrollLeft = 520;
+  fireTouch('touchstart', [[50, 100], [150, 100]]);
+  fireTouch('touchmove', [[75, 100], [125, 100]]);
+  fireTouch('touchend', []);
+
+  expect(content.style.transform).toBe('');
+  expect(scroll.scrollLeft).toBe(520);
+  expect(container.querySelector('.wall-topo-viewport--zoomed')).toBeNull();
+});
+
+test('pinching back in after hitting the zoom floor keeps the view continuous', () => {
+  const { container } = render(
+    <WallTopo
+      areas={[laneOne]}
+      routes={routes}
+      coordinateScale={1}
+      mobile
+      onLaneClick={vi.fn()}
+    />,
+  );
+
+  const scroll = container.querySelector('.wall-topo-scroll');
+  const viewport = container.querySelector('.wall-topo-viewport');
+  const content = container.querySelector('.wall-topo');
+  Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 300 });
+  Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: 300 });
+  Object.defineProperty(content, 'offsetWidth', { configurable: true, value: 820 });
+  Object.defineProperty(content, 'offsetHeight', { configurable: true, value: 500 });
+  const fireTouch = (type, points) => {
+    const event = new Event(type);
+    event.touches = points.map(([x, y]) => ({ clientX: x, clientY: y }));
+    fireEvent(viewport, event);
+  };
+
+  scroll.scrollLeft = 520;
+  fireTouch('touchstart', [[50, 100], [150, 100]]);
+  // Dézoome sous le plancher puis re-zoome sans lever les doigts.
+  fireTouch('touchmove', [[75, 100], [125, 100]]);
+  fireTouch('touchmove', [[25, 100], [175, 100]]);
+
+  expect(scroll.scrollLeft).toBe(0);
+  expect(content.style.transform).toContain('scale(3)');
+  // Le milieu du pincement (x = 100) doit rester ancré sur le même point du mur.
+  const translate = content.style.transform.match(/translate\(([-\d.]+)px/);
+  const contentX = (100 - Number(translate[1])) / 3;
+  expect(contentX).toBeCloseTo(620, 0);
+});
+
+test('zoom out button landing on zoom one hands the position back to native scroll', () => {
+  const { container } = render(
+    <WallTopo
+      areas={[laneOne]}
+      routes={routes}
+      coordinateScale={1}
+      mobile
+      onLaneClick={vi.fn()}
+    />,
+  );
+
+  const scroll = container.querySelector('.wall-topo-scroll');
+  const viewport = container.querySelector('.wall-topo-viewport');
+  const content = container.querySelector('.wall-topo');
+  Object.defineProperty(viewport, 'clientWidth', { configurable: true, value: 300 });
+  Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: 300 });
+  Object.defineProperty(content, 'offsetWidth', { configurable: true, value: 820 });
+  Object.defineProperty(content, 'offsetHeight', { configurable: true, value: 500 });
+  const fireTouch = (type, points) => {
+    const event = new Event(type);
+    event.touches = points.map(([x, y]) => ({ clientX: x, clientY: y }));
+    fireEvent(viewport, event);
+  };
+
+  fireEvent.click(screen.getByLabelText('Zoomer'));
+  fireTouch('touchstart', [[100, 100]]);
+  fireTouch('touchmove', [[-1000, 100]]);
+  fireTouch('touchend', []);
+  expect(content.style.transform).toContain('translate(-930px');
+
+  fireEvent.click(screen.getByLabelText('Dézoomer'));
+  expect(content.style.transform).toBe('');
+  expect(scroll.scrollLeft).toBe(520);
+  expect(container.querySelector('.wall-topo-viewport--zoomed')).toBeNull();
 });
